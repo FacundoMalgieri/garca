@@ -18,6 +18,15 @@ interface FeaturesGridProps {
 const CARD_ACTIVE_DURATION = 150; // Card stays lit for 150px of scroll after appearing
 
 export function FeaturesGrid({ scrollY }: FeaturesGridProps) {
+  const [isDesktop, setIsDesktop] = useState(true); // Default to desktop for SSR
+  
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
+
   const features = [
     {
       icon: <DocumentIcon />,
@@ -63,19 +72,19 @@ export function FeaturesGrid({ scrollY }: FeaturesGridProps) {
     },
   ];
 
-  // Calculate parallax effect for when user scrolls past the section
-  // Start the exit effect after scroll 1100 (when cards are fully visible)
+  // Calculate parallax effect for when user scrolls past the section (desktop/tablet only)
+  // On mobile, this is handled by the parent container
   const exitProgress = Math.max(0, (scrollY - 1100) / 400);
-  const exitTransform = exitProgress * 100; // Move up to 100px up
-  const exitOpacity = Math.max(0, 1 - exitProgress * 0.8); // Fade to 20% opacity
+  const exitTransform = exitProgress * 100;
+  const exitOpacity = Math.max(0, 1 - exitProgress * 0.8);
 
   return (
     <div 
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      style={{
+      style={isDesktop ? {
         transform: `translateY(${-exitTransform}px)`,
         opacity: exitOpacity,
-      }}
+      } : undefined}
     >
       {features.map((feature, index) => (
         <FeatureCard

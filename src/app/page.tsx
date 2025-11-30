@@ -102,11 +102,13 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0);
 
   // Section refs for dynamic parallax
+  const featuresSectionRef = useRef<HTMLElement>(null);
   const currencySectionRef = useRef<HTMLElement>(null);
   const privacySectionRef = useRef<HTMLElement>(null);
   const supportSectionRef = useRef<HTMLElement>(null);
 
   // All sections use scroll progress for enter + exit effects
+  const featuresProgress = useSectionProgress(featuresSectionRef);
   const currencyProgress = useSectionProgress(currencySectionRef);
   const privacyProgress = useSectionProgress(privacySectionRef);
   const supportProgress = useSectionProgress(supportSectionRef);
@@ -117,6 +119,15 @@ export default function Home() {
 
   // Initial page load animation for Hero
   const [heroLoaded, setHeroLoaded] = useState(false);
+
+  // Detect if mobile for responsive parallax behavior
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Normal scroll tracking
   useEffect(() => {
@@ -287,27 +298,45 @@ export default function Home() {
       </section>
 
       {/* ========== FEATURES SECTION ========== */}
-      <section className="relative py-32 md:py-40 overflow-hidden">
+      <section ref={featuresSectionRef} className="relative py-32 md:py-40 overflow-hidden">
         {/* Entire section content with parallax entry/exit */}
         <div 
           className="relative max-w-6xl mx-auto px-6"
-          style={{
-            // Entry: emerge from below (scroll 0-400)
-            // Exit: lift up and fade (scroll > 1100)
-            transform: `translateY(${
-              scrollY < 400
-                ? Math.max(0, (400 - scrollY) * 0.15) // Entry - starts 60px below
-                : scrollY > 1100
-                  ? (scrollY - 1100) * -0.8 // Exit - same speed as Hero
-                  : 0
-            }px)`,
-            opacity:
-              scrollY < 200
-                ? Math.max(0.3, scrollY / 200) // Fade in starting at 30%
-                : scrollY > 1100
-                  ? Math.max(0, 1 - (scrollY - 1100) / 400) // Fade out
-                  : 1,
-          }}
+          style={
+            isMobile
+              ? {
+                  // Mobile: use progress-based parallax (responsive to section height)
+                  transform: `translateY(${
+                    featuresProgress < 0.1
+                      ? (1 - featuresProgress / 0.1) * 60
+                      : featuresProgress > 0.9
+                        ? -((featuresProgress - 0.9) / 0.1) * 150
+                        : 0
+                  }px)`,
+                  opacity:
+                    featuresProgress < 0.1
+                      ? Math.max(0.3, featuresProgress / 0.1)
+                      : featuresProgress > 0.9
+                        ? Math.max(0, 1 - (featuresProgress - 0.9) / 0.15)
+                        : 1,
+                }
+              : {
+                  // Desktop/Tablet: use hardcoded scrollY values (original behavior)
+                  transform: `translateY(${
+                    scrollY < 400
+                      ? Math.max(0, (400 - scrollY) * 0.15)
+                      : scrollY > 1100
+                        ? (scrollY - 1100) * -0.8
+                        : 0
+                  }px)`,
+                  opacity:
+                    scrollY < 200
+                      ? Math.max(0.3, scrollY / 200)
+                      : scrollY > 1100
+                        ? Math.max(0, 1 - (scrollY - 1100) / 400)
+                        : 1,
+                }
+          }
         >
           {/* Section header */}
           <div className="text-center mb-16">

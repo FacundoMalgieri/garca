@@ -15,7 +15,7 @@ export function Card({ children, className }: CardProps) {
       className={cn(
         "rounded-none md:rounded-lg bg-white dark:bg-background px-4 pt-3 pb-4 md:p-6",
         "shadow-none md:shadow-md dark:shadow-none",
-        "border-b md:border border-border dark:border-border",
+        "border-0 md:border md:border-border",
         className
       )}
     >
