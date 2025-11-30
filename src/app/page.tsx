@@ -188,19 +188,14 @@ export default function Home() {
 
             {/* Title - second to appear */}
             <h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 transition-all duration-700 ease-out"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-slate-800 dark:text-white transition-all duration-700 ease-out"
               style={{
                 opacity: heroLoaded ? 1 : 0,
                 transform: heroLoaded ? "translateY(0)" : "translateY(40px)",
                 transitionDelay: "100ms",
               }}
             >
-              <span className="text-slate-800 dark:text-white">Bienvenido a </span>
-              <span className="relative">
-                <span className="bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                  GARCA
-                </span>
-              </span>
+              Bienvenido a GARCA
             </h1>
 
             {/* Subtitle - third to appear */}

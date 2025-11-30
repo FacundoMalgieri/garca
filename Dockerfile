@@ -24,6 +24,12 @@ ENV NEXT_SHARP_IGNORE_GLOBAL_LIBVIPS=1
 # Disable Next.js telemetry for deterministic builds
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build-time args for NEXT_PUBLIC_* variables (must be available during build)
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
