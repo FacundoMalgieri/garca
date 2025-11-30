@@ -5,5 +5,5 @@ Allow: /
 Disallow: /api/
 Disallow: /panel
 
-Sitemap: https://garca.app/sitemap.xml
+Sitemap: https://garca.onrender.com/sitemap.xml
 

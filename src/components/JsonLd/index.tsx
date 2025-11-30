@@ -5,7 +5,7 @@
  * understand the content and purpose of GARCA.
  */
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.onrender.com";
 
 // Software Application Schema
 const softwareApplicationSchema = {
