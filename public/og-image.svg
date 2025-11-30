@@ -1,0 +1,17 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#262F55"/>
+  
+  <!-- Logo (scaled 1.1x from original, centered) -->
+  <!-- Original: center 250, r=250 outer, r=220 stroke, dots at 30/470, text 110px -->
+  <!-- Scaled 1.1x: r=275 outer, r=242 stroke, dots offset 242 from center -->
+  <circle cx="600" cy="315" r="275" fill="#262F55"/>
+  <circle cx="600" cy="315" r="242" fill="none" stroke="white" stroke-width="4.4"/>
+  
+  <!-- Text -->
+  <text x="600" y="359" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="121" fill="white">GARCA</text>
+  
+  <!-- Accent dots (on the stroke circle edge, same as original proportions) -->
+  <circle cx="358" cy="315" r="17.6" fill="#64D3DE"/>
+  <circle cx="842" cy="315" r="17.6" fill="#64D3DE"/>
+</svg>

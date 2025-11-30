@@ -1,0 +1,32 @@
+{
+  "name": "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
+  "short_name": "GARCA",
+  "description": "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos.",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#262F55",
+  "background_color": "#111111",
+  "display": "standalone",
+  "start_url": "/"
+}
+

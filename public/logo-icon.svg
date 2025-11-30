@@ -1,0 +1,7 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="250" cy="250" r="250" fill="#262F55"/>
+  <circle cx="250" cy="250" r="220" fill="none" stroke="white" stroke-width="4"/>
+  <text x="250" y="250" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-weight="bold" font-size="400" fill="white">G</text>
+  <circle cx="30" cy="250" r="16" fill="#64D3DE"/>
+  <circle cx="470" cy="250" r="16" fill="#64D3DE"/>
+</svg>

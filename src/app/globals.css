@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/* Configure dark mode to use class instead of media query */
+@variant dark (.dark &);
+
+@theme {
+  --color-background: #f1f3f5;
+  --color-foreground: #0a0a0a;
+  --color-muted: #e9ecef;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-primary: #262F55;
+  --color-primary-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #16a34a;
+  --color-success-foreground: #ffffff;
+}
+
+/* Dark mode colors using .dark class */
+.dark {
+  --color-background: #111111;
+  --color-foreground: #ededed;
+  --color-muted: #262626;
+  --color-muted-foreground: #a3a3a3;
+  --color-border: #404040;
+  --color-primary: #262F55;
+  --color-primary-foreground: #ffffff;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #22c55e;
+  --color-success-foreground: #ffffff;
+}
+
+/* Smooth scrolling and stable scrollbar */
+html {
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="number"] {
+  background-color: white !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.dark input[type="text"],
+.dark input[type="password"],
+.dark input[type="date"],
+.dark input[type="number"] {
+  background-color: var(--color-background) !important;
+  box-shadow: none;
+}
+
+/* Shimmer animation for loading bar */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted-foreground);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* ============================================
+   Landing Page Animations
+   ============================================ */
+
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slower {
+
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.25;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translateY(-30px);
+  }
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(0) translateX(0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translateY(-10px) translateX(5px) scale(1);
+    opacity: 0.8;
+  }
+
+  90% {
+    transform: translateY(-90px) translateX(15px) scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(-100px) translateX(20px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-x {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slower {
+  animation: pulse-slower 12s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 10s ease-in-out infinite;
+}
+
+.animate-float-particle {
+  animation: float-particle 10s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+/* 3D Flip Animation Classes */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Flash animation for feature cards */
+@keyframes flash {
+  0% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}

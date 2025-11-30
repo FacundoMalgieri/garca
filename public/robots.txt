@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow sensitive paths
+Disallow: /api/
+Disallow: /panel
+
+Sitemap: https://garca.app/sitemap.xml
+

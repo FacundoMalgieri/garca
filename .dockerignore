@@ -1,0 +1,39 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment (secrets!)
+.env
+.env.*
+!.env.example
+
+# Tests & Coverage
+coverage
+*.test.ts
+*.test.tsx
+__tests__
+
+# Development
+scripts
+*.md
+.eslintcache
+.turbo
+
+# OS
+.DS_Store
+Thumbs.db
+
