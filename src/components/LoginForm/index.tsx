@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { CompanySelector } from "@/components/CompanySelector";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import type { AFIPCompany } from "@/types/afip-scraper";
 
@@ -56,6 +56,7 @@ export function LoginForm({
   const [rememberCuit, setRememberCuit] = useState(false);
   const [step, setStep] = useState<FlowStep>("credentials");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   // Date range state - default to current year
   const today = new Date();
@@ -114,6 +115,9 @@ export function LoginForm({
     // Step 1: Fetch companies
     const success = await onFetchCompanies(cuit, password, turnstileToken || undefined);
     if (success) {
+      // Reset Turnstile to get a fresh token for the next request
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       setStep("company-select");
     }
   };
@@ -133,7 +137,7 @@ export function LoginForm({
   if (step === "company-select" && companies.length > 0) {
     return (
       <div className="space-y-4">
-        <CompanySelector companies={companies} onSelect={handleCompanySelect} />
+        <CompanySelector companies={companies} onSelect={handleCompanySelect} disabled={!turnstileToken} />
 
         {/* Back button */}
         {!isLoadingInvoices && (
@@ -157,6 +161,9 @@ export function LoginForm({
             </p>
           </div>
         )}
+
+        {/* Turnstile widget for second request */}
+        <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
       </div>
     );
   }
@@ -232,7 +239,7 @@ export function LoginForm({
           <PrivacyBanner />
 
           {/* Invisible Turnstile widget for bot protection */}
-          <TurnstileWidget onSuccess={handleTurnstileSuccess} />
+          <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
         </form>
       </CardContent>
     </Card>

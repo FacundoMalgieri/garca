@@ -6,12 +6,13 @@ import type { AFIPCompany } from "@/types/afip-scraper";
 interface CompanySelectorProps {
   companies: AFIPCompany[];
   onSelect: (company: AFIPCompany) => void;
+  disabled?: boolean;
 }
 
 /**
  * Component for selecting a company from the list of available companies.
  */
-export function CompanySelector({ companies, onSelect }: CompanySelectorProps) {
+export function CompanySelector({ companies, onSelect, disabled }: CompanySelectorProps) {
   if (companies.length === 0) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -40,18 +41,19 @@ export function CompanySelector({ companies, onSelect }: CompanySelectorProps) {
           <button
             key={company.index}
             onClick={() => onSelect(company)}
-            className="w-full p-4 text-left rounded-lg border border-border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors group cursor-pointer"
+            disabled={disabled}
+            className="w-full p-4 text-left rounded-lg border border-border bg-card hover:bg-muted/50 hover:border-muted-foreground/30 transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card disabled:hover:border-border"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                <p className="font-medium text-foreground truncate transition-colors">
                   {company.razonSocial}
                 </p>
                 {company.cuit && (
                   <p className="text-sm text-muted-foreground">CUIT: {formatCuit(company.cuit)}</p>
                 )}
               </div>
-              <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-2" />
+              <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0 ml-2" />
             </div>
           </button>
         ))}

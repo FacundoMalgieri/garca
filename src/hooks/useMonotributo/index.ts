@@ -25,7 +25,7 @@ export interface UseMonotributoReturn {
   error: string | null;
   tipoActividad: TipoActividad;
   updateTipoActividad: (tipo: TipoActividad) => void;
-  fetchMonotributoData: () => Promise<void>;
+  fetchMonotributoData: (turnstileToken?: string) => Promise<void>;
   status: MonotributoStatus | null;
 }
 
@@ -50,6 +50,7 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
 
   /**
    * Loads activity type and cached data from localStorage.
+   * Does NOT auto-fetch if no cache - requires manual refresh with Turnstile token.
    */
   const loadFromStorage = () => {
     // Load activity type
@@ -72,22 +73,29 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
       }
     }
 
-    // If no valid cache, fetch from API
-    fetchMonotributoData();
+    // If no valid cache, don't auto-fetch - user needs to click refresh with Turnstile
+    // This prevents unauthorized API calls
   };
 
   /**
    * Fetches Monotributo categories from the API.
+   * @param turnstileToken - Optional Turnstile token for security verification
    */
-  const fetchMonotributoData = async () => {
+  const fetchMonotributoData = async (turnstileToken?: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/monotributo");
+      const headers: Record<string, string> = {};
+      if (turnstileToken) {
+        headers["x-turnstile-token"] = turnstileToken;
+      }
+
+      const response = await fetch("/api/monotributo", { headers });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch monotributo data");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch monotributo data");
       }
 
       const monotributoData: MonotributoData = await response.json();
@@ -99,8 +107,8 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
         timestamp: Date.now(),
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch {
-      setError("No se pudieron cargar las categorías de monotributo");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudieron cargar las categorías de monotributo");
     } finally {
       setIsLoading(false);
     }

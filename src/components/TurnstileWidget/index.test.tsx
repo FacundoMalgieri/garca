@@ -52,7 +52,7 @@ describe("TurnstileWidget", () => {
 
       const widget = container.firstChild as HTMLElement;
       expect(widget).toBeInTheDocument();
-      expect(widget.className).toBe("turnstile-container");
+      expect(widget.className).toBe("turnstile-container absolute");
     });
 
     it("should accept onError callback", async () => {

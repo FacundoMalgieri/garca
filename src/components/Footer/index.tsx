@@ -26,6 +26,14 @@ export function Footer() {
               Términos
             </Link>
             <a
+              href="https://www.arca.gob.ar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+            >
+              ARCA Oficial
+            </a>
+            <a
               href="https://github.com/FacundoMalgieri/garca"
               target="_blank"
               rel="noopener noreferrer"

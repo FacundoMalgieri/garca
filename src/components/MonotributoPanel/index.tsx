@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
@@ -18,6 +19,20 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
     useMonotributo(ingresosAnuales);
   const { clearInvoices } = useInvoiceContext();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleRefresh = async () => {
+    if (!turnstileToken) return;
+    await fetchMonotributoData(turnstileToken);
+    // Reset turnstile for next use
+    turnstileRef.current?.reset();
+    setTurnstileToken(null);
+  };
 
   return (
     <Card className={cn("h-full flex flex-col", isCurrentYearData ? "min-h-[352px]" : "min-h-[352px]")}>
@@ -67,9 +82,31 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
             {error && (
               <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
                 {error} {' '}
-                <button onClick={fetchMonotributoData} className="mt-2 text-xs underline cursor-pointer">
-                  Reintentar
+                <button 
+                  onClick={handleRefresh} 
+                  disabled={!turnstileToken}
+                  className="mt-2 text-xs underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {turnstileToken ? "Reintentar" : "Verificando..."}
                 </button>
+                <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
+              </div>
+            )}
+
+            {/* No data state - needs to fetch */}
+            {!isLoading && !error && !data && (
+              <div className="py-8 text-center">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Las categorías de monotributo no están cargadas.
+                </p>
+                <button
+                  onClick={handleRefresh}
+                  disabled={!turnstileToken || isLoading}
+                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {turnstileToken ? "Cargar categorías" : "Verificando..."}
+                </button>
+                <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
               </div>
             )}
 
@@ -169,12 +206,14 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
                 {/* Action buttons */}
                 <div className="flex gap-2 items-center justify-center">
                   <button
-                    onClick={fetchMonotributoData}
-                    className="flex-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    onClick={handleRefresh}
+                    disabled={!turnstileToken || isLoading}
+                    className="flex-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Actualizar categorías
+                    {turnstileToken ? "Actualizar categorías" : "Verificando..."}
                     <RefreshIcon />
                   </button>
+                  <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
                   <a
                     href="https://www.arca.gob.ar/monotributo/categorias.asp"
                     target="_blank"

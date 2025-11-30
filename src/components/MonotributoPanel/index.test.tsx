@@ -140,10 +140,12 @@ describe("MonotributoPanel", () => {
     expect(mockUpdateTipoActividad).toHaveBeenCalledWith("venta");
   });
 
-  it("calls fetchMonotributoData when refresh button is clicked", () => {
+  it("shows refresh button in disabled state without turnstile token", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
-    fireEvent.click(screen.getByText("Actualizar categorías"));
-    expect(mockFetchMonotributoData).toHaveBeenCalled();
+    // Button shows "Verificando..." when no turnstile token is available
+    const refreshButton = screen.getByText("Verificando...");
+    expect(refreshButton).toBeInTheDocument();
+    expect(refreshButton).toBeDisabled();
   });
 
   it("renders external link to official categories", () => {

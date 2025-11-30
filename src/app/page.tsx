@@ -156,6 +156,13 @@ export default function Home() {
 
   return (
     <div className="relative overflow-x-hidden bg-background">
+      {/* SEO: Hidden H1 for search engines */}
+      <h1 className="sr-only">
+        GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA. 
+        Herramienta segura y privada para consultar facturas de AFIP/ARCA, 
+        calcular categorías de monotributo y exportar comprobantes a Excel.
+      </h1>
+
       {/* ========== HERO SECTION ========== */}
       <section
         className="relative flex items-center justify-center overflow-hidden"

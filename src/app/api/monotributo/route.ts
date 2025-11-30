@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { scrapeMonotributoCategories } from "@/lib/scrapers/monotributo";
-import { performBasicSecurityChecks } from "@/lib/security";
+import { performSecurityChecks } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  // Basic security checks: rate limiting + bot detection
-  // Turnstile not required - this endpoint returns public data (monotributo categories)
-  // and is protected by rate limiting (5 requests per minute) + client-side 24h cache
-  const securityCheck = performBasicSecurityChecks(request);
+  // Full security checks including Turnstile - scraper consumes server resources
+  // Token is extracted from x-turnstile-token header by performSecurityChecks
+  const securityCheck = await performSecurityChecks(request);
   if (!securityCheck.allowed) {
     return securityCheck.response;
   }

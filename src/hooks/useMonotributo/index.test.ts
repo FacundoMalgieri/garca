@@ -85,40 +85,44 @@ describe("useMonotributo", () => {
     Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
   });
 
-  it("should return initial state", () => {
+  it("should return initial state without auto-fetching", () => {
     const { result } = renderHook(() => useMonotributo(0));
 
     expect(result.current.tipoActividad).toBe("servicios");
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isLoading).toBe(false); // No auto-fetch without cache
     expect(result.current.error).toBeNull();
+    expect(result.current.data).toBeNull(); // No data until manual fetch
   });
 
-  it("should fetch data from API", async () => {
+  it("should fetch data from API when called with token", async () => {
     const { result } = renderHook(() => useMonotributo(5000000));
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.data).toEqual(mockMonotributoData);
+    expect(fetch).toHaveBeenCalledWith("/api/monotributo", {
+      headers: { "x-turnstile-token": "test-token" },
+    });
   });
 
-  it("should calculate status for category A", async () => {
+  it("should calculate status for category A after fetching", async () => {
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.status).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.status?.categoriaActual?.categoria).toBe("A");
     expect(result.current.status?.pagoMensual).toBe(15000);
   });
 
-  it("should calculate status for category B", async () => {
+  it("should calculate status for category B after fetching", async () => {
     const { result } = renderHook(() => useMonotributo(7000000));
 
-    await waitFor(() => {
-      expect(result.current.status).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.status?.categoriaActual?.categoria).toBe("B");
@@ -127,8 +131,8 @@ describe("useMonotributo", () => {
   it("should update tipo actividad", async () => {
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.data).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     act(() => {
@@ -142,8 +146,8 @@ describe("useMonotributo", () => {
   it("should use venta payment when tipo is venta", async () => {
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.data).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     act(() => {
@@ -156,8 +160,8 @@ describe("useMonotributo", () => {
   it("should calculate percentage used", async () => {
     const { result } = renderHook(() => useMonotributo(3225000)); // 50% of 6450000
 
-    await waitFor(() => {
-      expect(result.current.status).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.status?.porcentajeUtilizado).toBe(50);
@@ -166,8 +170,8 @@ describe("useMonotributo", () => {
   it("should calculate margin available", async () => {
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.status).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.status?.margenDisponible).toBe(6450000 - 3000000);
@@ -176,8 +180,8 @@ describe("useMonotributo", () => {
   it("should identify next category", async () => {
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.status).not.toBeNull();
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
     expect(result.current.status?.categoriaSiguiente?.categoria).toBe("B");
@@ -188,16 +192,17 @@ describe("useMonotributo", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: false,
+        json: () => Promise.resolve({ error: "Failed to fetch" }),
       })
     );
 
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      await result.current.fetchMonotributoData("test-token");
     });
 
-    expect(result.current.error).toBe("No se pudieron cargar las categorías de monotributo");
+    expect(result.current.error).toBe("Failed to fetch");
   });
 
   it("should load from cache if valid", async () => {
@@ -209,10 +214,13 @@ describe("useMonotributo", () => {
 
     const { result } = renderHook(() => useMonotributo(3000000));
 
-    // Should not call fetch because cache is valid
+    // Should load from cache without fetching
     await waitFor(() => {
       expect(result.current.data).toEqual(mockMonotributoData);
     });
+
+    // Fetch should not be called when cache is valid
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("should load saved activity type from storage", () => {

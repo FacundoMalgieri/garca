@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | GARCA",
   },
   description:
-    "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos. Consulta facturas, calcula monotributo y exporta a Excel.",
+    "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel. 100% privado.",
   keywords: [
     "AFIP",
     "ARCA",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     siteName: "GARCA",
     title: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
     description:
-      "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos.",
+      "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel.",
     images: [
       {
         url: "/og-image.png",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
     description:
-      "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador.",
+      "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel.",
     images: ["/og-image.png"],
   },
   alternates: {
