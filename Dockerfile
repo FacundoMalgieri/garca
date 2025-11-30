@@ -41,6 +41,9 @@ ENV NEXT_SHARP_IGNORE_GLOBAL_LIBVIPS=1
 ENV NEXT_TELEMETRY_DISABLED=1
 # Tell Playwright where to find pre-installed browsers (avoid runtime download)
 ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+# CRITICAL: Next.js standalone binds to localhost by default
+# Render needs 0.0.0.0 to route traffic to the container
+ENV HOSTNAME=0.0.0.0
 
 # Install runtime dependencies for Playwright
 RUN npx playwright install-deps chromium
