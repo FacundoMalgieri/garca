@@ -73,7 +73,7 @@ async function fillCuit(page: Page, cuit: string): Promise<void> {
   await cuitInput.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await cuitInput.click();
   await cuitInput.fill(cuit);
-  console.log("[AFIP Scraper] CUIT filled:", cuit);
+  console.log("[AFIP Scraper] CUIT filled");
 }
 
 /**
@@ -145,13 +145,14 @@ async function verifyLogin(page: Page): Promise<AFIPScraperResult> {
   const errorMessages = await page.locator(SELECTORS.LOGIN.ERROR_MESSAGE).allTextContents();
   if (errorMessages.length > 0) {
     const errorText = errorMessages.join(" ");
-    console.error("[AFIP Scraper] Login error:", errorText);
 
     if (isInvalidCredentialsError(errorText)) {
+      console.error("[AFIP Scraper] Login error: invalid credentials");
       return createErrorResult("Credenciales inválidas", AFIPErrorCode.INVALID_CREDENTIALS);
     }
 
     if (isBlockedAccountError(errorText)) {
+      console.error("[AFIP Scraper] Login error: account blocked");
       return createErrorResult("Cuenta bloqueada", AFIPErrorCode.ACCOUNT_BLOCKED);
     }
   }

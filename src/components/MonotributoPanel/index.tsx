@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
@@ -16,13 +15,12 @@ interface MonotributoPanelProps {
 }
 
 export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: MonotributoPanelProps) {
-  const { data, isLoading, error, tipoActividad, updateTipoActividad, fetchMonotributoData, status } =
-    useMonotributo(ingresosAnuales);
+  const { data, tipoActividad, updateTipoActividad, status } = useMonotributo(ingresosAnuales);
   const { clearInvoices, monotributoInfo } = useInvoiceContext();
-  
+
   // Use scraped activity type if available, otherwise allow manual selection
   const hasScrapedActivity = monotributoInfo?.tipoActividad !== null && monotributoInfo?.tipoActividad !== undefined;
-  
+
   // Sync scraped activity type with hook
   useEffect(() => {
     if (hasScrapedActivity && monotributoInfo?.tipoActividad && monotributoInfo.tipoActividad !== tipoActividad) {
@@ -30,32 +28,6 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
     }
   }, [hasScrapedActivity, monotributoInfo?.tipoActividad, tipoActividad, updateTipoActividad]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [hasAutoFetched, setHasAutoFetched] = useState(false);
-  const turnstileRef = useRef<TurnstileWidgetRef>(null);
-
-  const handleTurnstileSuccess = useCallback((token: string) => {
-    setTurnstileToken(token);
-  }, []);
-
-  // Auto-fetch when token is ready and no data exists
-  useEffect(() => {
-    if (turnstileToken && !data && !isLoading && !error && !hasAutoFetched && isCurrentYearData) {
-      setHasAutoFetched(true);
-      fetchMonotributoData(turnstileToken).then(() => {
-        turnstileRef.current?.reset();
-        setTurnstileToken(null);
-      });
-    }
-  }, [turnstileToken, data, isLoading, error, hasAutoFetched, isCurrentYearData, fetchMonotributoData]);
-
-  const handleRefresh = async () => {
-    if (!turnstileToken) return;
-    await fetchMonotributoData(turnstileToken);
-    // Reset turnstile for next use
-    turnstileRef.current?.reset();
-    setTurnstileToken(null);
-  };
 
   return (
     <Card className={cn("h-full flex flex-col", isCurrentYearData ? "min-h-[352px]" : "min-h-[352px]")}>
@@ -93,189 +65,142 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
         )}
 
         {/* Normal content when current year data exists */}
-        {isCurrentYearData && (
-          <>
-            {isLoading && (
-              <div className="py-8 text-center">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-2"></div>
-                <p className="text-xs text-muted-foreground">Cargando categorías...</p>
-              </div>
+        {isCurrentYearData && status && status.categoriaActual && (
+          <div className="space-y-4">
+            {/* Scraped Monotributo info from AFIP - includes current monthly payment */}
+            {monotributoInfo && (
+              <MonotributoInfoCard
+                monotributoInfo={monotributoInfo}
+                categorias={data.categorias}
+                tipoActividad={tipoActividad}
+              />
             )}
 
-            {error && (
-              <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-                {error} {' '}
-                <button 
-                  onClick={handleRefresh} 
-                  disabled={!turnstileToken}
-                  className="mt-2 text-xs underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {turnstileToken ? "Reintentar" : "Verificando..."}
-                </button>
-                <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
-              </div>
-            )}
-
-            {/* No data state - auto-fetching or waiting for token */}
-            {!isLoading && !error && !data && (
-              <div className="py-8 text-center">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-2"></div>
-                <p className="text-xs text-muted-foreground">
-                  {turnstileToken ? "Cargando categorías..." : "Verificando seguridad..."}
-                </p>
-                <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
-              </div>
-            )}
-
-            {!isLoading && !error && data && status && status.categoriaActual && (
-              <div className="space-y-4">
-                {/* Scraped Monotributo info from AFIP - includes current monthly payment */}
-                {monotributoInfo && (
-                  <MonotributoInfoCard 
-                    monotributoInfo={monotributoInfo} 
-                    categorias={data.categorias}
-                    tipoActividad={tipoActividad}
-                  />
-                )}
-
-                {/* Activity type - show as info if scraped, otherwise as selector */}
-                {!hasScrapedActivity && (
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-2 block">Tipo de actividad:</label>
-                    <div className="flex gap-2">
-                      <ActivityButton
-                        active={tipoActividad === "servicios"}
-                        onClick={() => updateTipoActividad("servicios")}
-                      >
-                        Servicios
-                      </ActivityButton>
-                      <ActivityButton active={tipoActividad === "venta"} onClick={() => updateTipoActividad("venta")}>
-                        Venta de Bienes
-                      </ActivityButton>
-                    </div>
-                  </div>
-                )}
-
-                {/* Calculated category for next recategorization */}
-                <div className="rounded-lg bg-primary/10 p-4 border-2 border-primary/20">
-                  <div className="text-center mb-2">
-                    <span className="text-sm text-muted-foreground block mb-1">
-                      {monotributoInfo ? "En la próxima recategorización tu categoría sería:" : "Tu categoría calculada:"}
-                    </span>
-                    <span className="text-4xl font-bold text-primary dark:text-white">
-                      {status.categoriaActual.categoria}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground text-center">
-                    Límite: ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                  </div>
-                </div>
-
-                {/* Progress */}
-                <div>
-                  <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                    <span>Ingresos acumulados</span>
-                    <span>{status.porcentajeUtilizado.toFixed(1)}%</span>
-                  </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        status.porcentajeUtilizado > 90
-                          ? "bg-destructive"
-                          : status.porcentajeUtilizado > 75
-                            ? "bg-yellow-500"
-                            : "bg-success"
-                      }`}
-                      style={{ width: `${Math.min(status.porcentajeUtilizado, 100)}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs mt-1">
-                    <span className="font-mono text-muted-foreground">
-                      ${status.ingresosAcumulados.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className="font-mono text-muted-foreground">
-                      ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Available margin */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Margen disponible:</span>
-                    <span className="font-mono font-medium">
-                      ${status.margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                  {status.categoriaSiguiente && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Para categoría {status.categoriaSiguiente.categoria}:</span>
-                      <span className="font-mono text-xs">
-                        $
-                        {(status.categoriaSiguiente.ingresosBrutos - status.ingresosAcumulados).toLocaleString("es-AR", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-border my-3"></div>
-
-                {/* Monthly payments - calculated category */}
-                <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      {monotributoInfo 
-                        ? `Pago mensual estimado (${status.categoriaActual.categoria}):` 
-                        : "Pago mensual:"}
-                    </span>
-                    <span className="font-mono font-bold text-lg text-primary dark:text-white">
-                      ${status.pagoMensual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  {monotributoInfo && (
-                    <div className="text-xs text-muted-foreground text-center">
-                      Basado en tus ingresos acumulados del año
-                    </div>
-                  )}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-2 items-center justify-center">
-                  <button
-                    onClick={handleRefresh}
-                    disabled={!turnstileToken || isLoading}
-                    className="flex-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Activity type - show as info if scraped, otherwise as selector */}
+            {!hasScrapedActivity && (
+              <div>
+                <label className="text-xs text-muted-foreground mb-2 block">Tipo de actividad:</label>
+                <div className="flex gap-2">
+                  <ActivityButton
+                    active={tipoActividad === "servicios"}
+                    onClick={() => updateTipoActividad("servicios")}
                   >
-                    {turnstileToken ? "Actualizar categorías" : "Verificando..."}
-                    <RefreshIcon />
-                  </button>
-                  <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
-                  <a
-                    href="https://www.arca.gob.ar/monotributo/categorias.asp"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    Ver categorías oficiales
-                    <ExternalLinkIcon />
-                  </a>
-                </div>
-
-                {/* Validity info and disclaimer */}
-                <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border space-y-1">
-                  {data.fechaVigencia && (
-                    <p>Vigente desde: {data.fechaVigencia}</p>
-                  )}
-                  <p className="text-muted-foreground/70">
-                    * Los topes de cada categoría pueden actualizarse en cada período de recategorización.
-                  </p>
+                    Servicios
+                  </ActivityButton>
+                  <ActivityButton active={tipoActividad === "venta"} onClick={() => updateTipoActividad("venta")}>
+                    Venta de Bienes
+                  </ActivityButton>
                 </div>
               </div>
             )}
-          </>
+
+            {/* Calculated category for next recategorization */}
+            <div className="rounded-lg bg-primary/10 p-4 border-2 border-primary/20">
+              <div className="text-center mb-2">
+                <span className="text-sm text-muted-foreground block mb-1">
+                  {monotributoInfo ? "En la próxima recategorización tu categoría sería:" : "Tu categoría calculada:"}
+                </span>
+                <span className="text-4xl font-bold text-primary dark:text-white">
+                  {status.categoriaActual.categoria}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground text-center">
+                Límite: ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                <span>Ingresos acumulados</span>
+                <span>{status.porcentajeUtilizado.toFixed(1)}%</span>
+              </div>
+              <div className="h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    status.porcentajeUtilizado > 90
+                      ? "bg-destructive"
+                      : status.porcentajeUtilizado > 75
+                        ? "bg-yellow-500"
+                        : "bg-success"
+                  }`}
+                  style={{ width: `${Math.min(status.porcentajeUtilizado, 100)}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="font-mono text-muted-foreground">
+                  ${status.ingresosAcumulados.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
+                <span className="font-mono text-muted-foreground">
+                  ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Available margin */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Margen disponible:</span>
+                <span className="font-mono font-medium">
+                  ${status.margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              {status.categoriaSiguiente && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Para categoría {status.categoriaSiguiente.categoria}:</span>
+                  <span className="font-mono text-xs">
+                    $
+                    {(status.categoriaSiguiente.ingresosBrutos - status.ingresosAcumulados).toLocaleString("es-AR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-border my-3"></div>
+
+            {/* Monthly payments - calculated category */}
+            <div className="rounded-lg bg-muted/50 p-3 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  {monotributoInfo
+                    ? `Pago mensual estimado (${status.categoriaActual.categoria}):`
+                    : "Pago mensual:"}
+                </span>
+                <span className="font-mono font-bold text-lg text-primary dark:text-white">
+                  ${status.pagoMensual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              {monotributoInfo && (
+                <div className="text-xs text-muted-foreground text-center">
+                  Basado en tus ingresos acumulados del año
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2 items-center justify-center">
+              <a
+                href="https://www.arca.gob.ar/monotributo/categorias.asp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1"
+              >
+                Ver categorías oficiales
+                <ExternalLinkIcon />
+              </a>
+            </div>
+
+            {/* Validity info and disclaimer */}
+            <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border space-y-1">
+              {data.fechaVigencia && <p>Vigente desde: {data.fechaVigencia}</p>}
+              <p className="text-muted-foreground/70">
+                * Los topes de cada categoría pueden actualizarse en cada período de recategorización.
+              </p>
+            </div>
+          </div>
         )}
       </CardContent>
 
@@ -299,23 +224,21 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
 /**
  * Displays scraped Monotributo info from AFIP portal.
  */
-function MonotributoInfoCard({ 
-  monotributoInfo, 
+function MonotributoInfoCard({
+  monotributoInfo,
   categorias,
-  tipoActividad 
-}: { 
+  tipoActividad,
+}: {
   monotributoInfo: MonotributoAFIPInfo;
   categorias: import("@/types/monotributo").CategoriaMonotributo[];
   tipoActividad: import("@/types/monotributo").TipoActividad;
 }) {
   // Find the current category from ARCA in the scraped data
-  const categoriaActualARCA = categorias.find(
-    (cat) => cat.categoria === monotributoInfo.categoria
-  );
-  const pagoMensualActual = categoriaActualARCA 
-    ? (tipoActividad === "servicios" 
-        ? categoriaActualARCA.total.servicios 
-        : categoriaActualARCA.total.venta)
+  const categoriaActualARCA = categorias.find((cat) => cat.categoria === monotributoInfo.categoria);
+  const pagoMensualActual = categoriaActualARCA
+    ? tipoActividad === "servicios"
+      ? categoriaActualARCA.total.servicios
+      : categoriaActualARCA.total.venta
     : null;
 
   return (
@@ -323,18 +246,16 @@ function MonotributoInfoCard({
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Tu actividad:</span>
         <span className="text-sm font-medium text-foreground">
-          {monotributoInfo.tipoActividad === "servicios" 
-            ? "Servicios" 
-            : monotributoInfo.tipoActividad === "venta" 
-              ? "Venta de Bienes" 
+          {monotributoInfo.tipoActividad === "servicios"
+            ? "Servicios"
+            : monotributoInfo.tipoActividad === "venta"
+              ? "Venta de Bienes"
               : monotributoInfo.actividadDescripcion || "No especificada"}
         </span>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Categoría actual:</span>
-        <span className="text-sm font-bold text-primary dark:text-white">
-          {monotributoInfo.categoria}
-        </span>
+        <span className="text-sm font-bold text-primary dark:text-white">{monotributoInfo.categoria}</span>
       </div>
       {pagoMensualActual && (
         <div className="flex items-center justify-between">
@@ -347,9 +268,7 @@ function MonotributoInfoCard({
       {monotributoInfo.proximaRecategorizacion && (
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Próxima recategorización:</span>
-          <span className="text-sm text-foreground">
-            {monotributoInfo.proximaRecategorizacion}
-          </span>
+          <span className="text-sm text-foreground">{monotributoInfo.proximaRecategorizacion}</span>
         </div>
       )}
     </div>
@@ -407,19 +326,6 @@ function InfoIcon() {
   );
 }
 
-function RefreshIcon() {
-  return (
-    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-      />
-    </svg>
-  );
-}
-
 function ExternalLinkIcon() {
   return (
     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -432,4 +338,3 @@ function ExternalLinkIcon() {
     </svg>
   );
 }
-

@@ -66,7 +66,6 @@ export async function getAFIPCompaniesWithEvents(
   try {
     emit(SCRAPER_EVENTS.start());
     console.log("[AFIP Companies] Starting company fetch...");
-    console.log("[AFIP Companies] CUIT:", credentials.cuit);
 
     browser = await chromium.launch({
       headless: DEFAULT_HEADLESS,
@@ -201,8 +200,6 @@ export async function scrapeAFIPInvoicesWithEvents(
     // Start event
     emit(SCRAPER_EVENTS.start());
     console.log("[AFIP Scraper] Starting scrape...");
-    console.log("[AFIP Scraper] CUIT:", credentials.cuit);
-    console.log("[AFIP Scraper] Date range:", filters.fechaDesde, "to", filters.fechaHasta);
 
     browser = await chromium.launch({
       headless,
@@ -244,7 +241,7 @@ export async function scrapeAFIPInvoicesWithEvents(
     }
 
     emit(SCRAPER_EVENTS.companySelect(company?.razonSocial || "Empresa"));
-    console.log("[AFIP Scraper] Selected company:", company?.razonSocial, "(CUIT:", company?.cuit, ")");
+    console.log("[AFIP Scraper] Company selected");
 
     // Filters events
     emit(SCRAPER_EVENTS.filtersApply(filters.fechaDesde, filters.fechaHasta));

@@ -2,117 +2,39 @@
 
 import { useEffect, useState } from "react";
 
-import type { MonotributoData, MonotributoStatus, TipoActividad } from "@/types/monotributo";
+import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import type { MonotributoStatus, TipoActividad } from "@/types/monotributo";
 
 const STORAGE_KEY = "monotributo-tipo-actividad";
-const CACHE_KEY = "monotributo-data-cache";
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-/**
- * Cached data structure.
- */
-interface CachedData {
-  data: MonotributoData;
-  timestamp: number;
-}
 
 /**
  * Return type for useMonotributo hook.
  */
 export interface UseMonotributoReturn {
-  data: MonotributoData | null;
-  isLoading: boolean;
-  error: string | null;
+  data: typeof MONOTRIBUTO_DATA;
   tipoActividad: TipoActividad;
   updateTipoActividad: (tipo: TipoActividad) => void;
-  fetchMonotributoData: (turnstileToken?: string) => Promise<void>;
   status: MonotributoStatus | null;
 }
 
 /**
  * Hook to manage Monotributo data and calculations.
  *
- * Fetches category data from the API, caches it locally,
- * and calculates the user's current status based on annual income.
+ * Uses static data that's updated twice a year via GitHub Actions.
+ * No API calls needed - data is bundled with the app.
  *
  * @param ingresosAnuales - Total annual income in pesos
  */
 export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
-  const [data, setData] = useState<MonotributoData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [tipoActividad, setTipoActividad] = useState<TipoActividad>("servicios");
 
-  // Load activity type and cached data on mount
+  // Load activity type on mount
   useEffect(() => {
-    loadFromStorage();
-  }, []);
-
-  /**
-   * Loads activity type and cached data from localStorage.
-   * Does NOT auto-fetch if no cache - requires manual refresh with Turnstile token.
-   */
-  const loadFromStorage = () => {
-    // Load activity type
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "servicios" || saved === "venta") {
       setTipoActividad(saved);
     }
-
-    // Load cached data if still valid
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      try {
-        const { data: cachedData, timestamp }: CachedData = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setData(cachedData);
-          return;
-        }
-      } catch {
-        // Silently fail - corrupted cache
-      }
-    }
-
-    // If no valid cache, don't auto-fetch - user needs to click refresh with Turnstile
-    // This prevents unauthorized API calls
-  };
-
-  /**
-   * Fetches Monotributo categories from the API.
-   * @param turnstileToken - Optional Turnstile token for security verification
-   */
-  const fetchMonotributoData = async (turnstileToken?: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const headers: Record<string, string> = {};
-      if (turnstileToken) {
-        headers["x-turnstile-token"] = turnstileToken;
-      }
-
-      const response = await fetch("/api/monotributo", { headers });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to fetch monotributo data");
-      }
-
-      const monotributoData: MonotributoData = await response.json();
-      setData(monotributoData);
-
-      // Save to cache
-      const cacheData: CachedData = {
-        data: monotributoData,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudieron cargar las categorías de monotributo");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, []);
 
   /**
    * Updates the activity type and persists to localStorage.
@@ -126,9 +48,9 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
    * Calculates the current Monotributo status based on annual income.
    */
   const calcularStatus = (): MonotributoStatus | null => {
-    if (!data || !data.categorias.length) return null;
+    if (!MONOTRIBUTO_DATA.categorias.length) return null;
 
-    const categorias = [...data.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
+    const categorias = [...MONOTRIBUTO_DATA.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
 
     // Find current category
     const categoriaActual =
@@ -153,12 +75,9 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
   };
 
   return {
-    data,
-    isLoading,
-    error,
+    data: MONOTRIBUTO_DATA,
     tipoActividad,
     updateTipoActividad,
-    fetchMonotributoData,
     status: calcularStatus(),
   };
 }

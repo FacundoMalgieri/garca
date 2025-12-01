@@ -1,0 +1,53 @@
+name: Update Monotributo Data
+
+on:
+  # Run twice a year: January 20 and July 20 at 10:00 UTC
+  # (After recategorization periods which are typically Jan 1-20 and Jul 1-20)
+  schedule:
+    - cron: "0 10 20 1 *" # January 20
+    - cron: "0 10 20 7 *" # July 20
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-monotributo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run update script
+        run: npm run update-monotributo
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/data/monotributo-categorias.ts; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in monotributo data"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in monotributo data"
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/data/monotributo-categorias.ts
+          git commit -m "chore: update monotributo categories data"
+          git push

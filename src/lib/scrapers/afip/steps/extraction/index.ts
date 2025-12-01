@@ -78,11 +78,8 @@ async function extractInvoiceFromRow(
   const cells = row.locator("td");
   const cellCount = await cells.count();
 
-  console.log(`[AFIP Scraper] Row ${index}: ${cellCount} cells`);
-
   // Skip rows that don't have enough cells
   if (cellCount < 8) {
-    console.log(`[AFIP Scraper] Row ${index}: Skipping - not enough cells`);
     return null;
   }
 
@@ -97,8 +94,6 @@ async function extractInvoiceFromRow(
   const importeText = (await importeCell.textContent()) || "0";
   const importeTitle = (await importeCell.getAttribute("title")) || "";
 
-  // Debug logging
-  logRowData(index, { fecha, tipo, numeroCompleto, cae, importeText, importeTitle });
 
   // Parse data
   const { puntoVenta, numero } = parseNumeroComprobante(numeroCompleto.trim());
@@ -146,27 +141,6 @@ async function extractInvoiceFromRow(
     };
   }
 
-  console.log(
-    `  [${index}] ✅ ${tipo.trim()} ${numeroCompleto.trim()} - $${importeTotal} ${moneda}${
-      exchangeRate ? ` (TC: $${exchangeRate})` : ""
-    }`
-  );
-
   return invoice;
-}
-
-/**
- * Logs row data for debugging.
- */
-function logRowData(
-  index: number,
-  data: { fecha: string; tipo: string; numeroCompleto: string; cae: string; importeText: string; importeTitle: string }
-) {
-  console.log(`  [${index}] Fecha: ${data.fecha.trim()}`);
-  console.log(`  [${index}] Tipo: ${data.tipo.trim()}`);
-  console.log(`  [${index}] Num: ${data.numeroCompleto.trim()}`);
-  console.log(`  [${index}] CAE: ${data.cae.trim()}`);
-  console.log(`  [${index}] Importe: ${data.importeText.trim()}`);
-  console.log(`  [${index}] Importe Title: ${data.importeTitle}`);
 }
 

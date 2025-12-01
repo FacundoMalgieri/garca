@@ -23,8 +23,8 @@ export async function downloadXMLs(page: Page, invoices: AFIPInvoice[]): Promise
     const invoice = invoices[i];
     try {
       await downloadInvoiceXML(page, invoice, i, invoices.length);
-    } catch (error) {
-      console.warn("[AFIP Scraper] Error downloading XML for invoice", invoice.numeroCompleto, ":", error);
+    } catch {
+      console.warn(`[AFIP Scraper] Error downloading XML for invoice ${i + 1}/${invoices.length}`);
     }
   }
 
@@ -34,15 +34,12 @@ export async function downloadXMLs(page: Page, invoices: AFIPInvoice[]): Promise
 /**
  * Downloads XML for a single invoice.
  */
-async function downloadInvoiceXML(page: Page, invoice: AFIPInvoice, index: number, total: number): Promise<void> {
-  console.log(`[AFIP Scraper] Processing invoice ${index + 1}/${total}: ${invoice.numeroCompleto}`);
-
+async function downloadInvoiceXML(page: Page, invoice: AFIPInvoice, _index: number, _total: number): Promise<void> {
   // Look for XML download button
   const xmlButton = page.locator(SELECTORS.XML.DOWNLOAD_BUTTON(invoice.numeroCompleto)).first();
 
   const buttonCount = await xmlButton.count();
   if (buttonCount === 0) {
-    console.warn(`[AFIP Scraper] No XML button found for invoice ${invoice.numeroCompleto}`);
     return;
   }
 
@@ -51,11 +48,9 @@ async function downloadInvoiceXML(page: Page, invoice: AFIPInvoice, index: numbe
 
   // Click the XML download button
   await xmlButton.click();
-  console.log(`[AFIP Scraper] Clicked XML download button`);
 
   // Wait for download to complete
   const download: Download = await downloadPromise;
-  console.log(`[AFIP Scraper] Download started: ${download.suggestedFilename()}`);
 
   // Process the download
   await processDownload(download, invoice);
@@ -71,15 +66,12 @@ async function processDownload(download: Download, invoice: AFIPInvoice): Promis
   // Save to temp location and read content
   const tempPath = join("/tmp", `afip-${Date.now()}.xml`);
   await download.saveAs(tempPath);
-  console.log(`[AFIP Scraper] Download saved to: ${tempPath}`);
 
   // Read and parse XML content
   const xmlContent = await fs.readFile(tempPath, "utf-8");
-  console.log(`[AFIP Scraper] XML content length: ${xmlContent.length} chars`);
 
   // Parse XML using our parser
   const parsedData = parseAfipXml(xmlContent);
-  console.log(`[AFIP Scraper] Parsed XML data:`, parsedData);
 
   // Store XML data in invoice object
   invoice.xmlUrl = download.url();
@@ -89,7 +81,7 @@ async function processDownload(download: Download, invoice: AFIPInvoice): Promis
   try {
     await fs.unlink(tempPath);
   } catch {
-    console.warn(`[AFIP Scraper] Could not delete temp file: ${tempPath}`);
+    // Ignore cleanup errors
   }
 }
 

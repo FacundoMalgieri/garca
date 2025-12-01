@@ -15,9 +15,6 @@ import { SELECTORS, TIMING } from "../../constants";
  */
 export async function applyFilters(page: Page, filters: AFIPInvoiceFilters): Promise<void> {
   console.log("[AFIP Scraper] Applying filters...");
-  console.log("[AFIP Scraper] Date from:", filters.fechaDesde);
-  console.log("[AFIP Scraper] Date to:", filters.fechaHasta);
-  console.log("[AFIP Scraper] Rol:", filters.rol);
 
   // Fill date from
   await fillDateInput(page, SELECTORS.FILTERS.DATE_FROM, filters.fechaDesde, "date from");
@@ -40,7 +37,7 @@ export async function applyFilters(page: Page, filters: AFIPInvoiceFilters): Pro
     const rolRadio = page.locator(`input[type="radio"][value*="${filters.rol}"]`).first();
     if ((await rolRadio.count()) > 0) {
       await rolRadio.check();
-      console.log("[AFIP Scraper] ✅ Selected rol:", filters.rol);
+      console.log("[AFIP Scraper] ✅ Selected rol");
     }
   }
 
@@ -57,7 +54,6 @@ export async function applyFilters(page: Page, filters: AFIPInvoiceFilters): Pro
 async function fillDateInput(page: Page, selector: string, value: string, fieldName: string): Promise<void> {
   const input = page.locator(selector).first();
   const count = await input.count();
-  console.log(`[AFIP Scraper] Found ${count} ${fieldName} input(s)`);
 
   if (count > 0) {
     await input.click();
@@ -65,7 +61,7 @@ async function fillDateInput(page: Page, selector: string, value: string, fieldN
     await page.keyboard.press("Meta+a"); // Select all (Mac)
     await input.fill(value);
     await page.keyboard.press("Tab"); // Trigger validation
-    console.log(`[AFIP Scraper] ✅ Filled ${fieldName}:`, value);
+    console.log(`[AFIP Scraper] ✅ Filled ${fieldName}`);
   }
 }
 
@@ -76,7 +72,7 @@ async function selectOption(page: Page, selector: string, value: string, fieldNa
   const select = page.locator(selector).first();
   if ((await select.count()) > 0) {
     await select.selectOption(value);
-    console.log(`[AFIP Scraper] ✅ Selected ${fieldName}:`, value);
+    console.log(`[AFIP Scraper] ✅ Selected ${fieldName}`);
   }
 }
 
@@ -88,7 +84,6 @@ async function clickBuscarButton(page: Page): Promise<void> {
   const buscarButton = page.locator(SELECTORS.FILTERS.BUSCAR_BUTTON).first();
 
   const buttonCount = await buscarButton.count();
-  console.log("[AFIP Scraper] Found", buttonCount, "buscar button(s)");
 
   if (buttonCount > 0) {
     await buscarButton.click();

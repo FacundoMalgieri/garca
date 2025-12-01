@@ -2,30 +2,23 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
-import type { MonotributoData, TipoActividad } from "@/types/monotributo";
+import type { TipoActividad } from "@/types/monotributo";
 
 import { formatInvoiceType } from "../formatters";
 
-/** Cache key for monotributo data in localStorage */
-const MONOTRIBUTO_CACHE_KEY = "monotributo-data-cache";
+/** Storage key for activity type preference */
 const MONOTRIBUTO_ACTIVITY_KEY = "monotributo-tipo-actividad";
 
 /**
- * Gets monotributo data from localStorage cache.
+ * Gets monotributo data and activity type preference.
  */
-function getMonotributoFromCache(): { data: MonotributoData | null; tipoActividad: TipoActividad } {
-  let data: MonotributoData | null = null;
+function getMonotributoData(): { data: typeof MONOTRIBUTO_DATA; tipoActividad: TipoActividad } {
   let tipoActividad: TipoActividad = "servicios";
 
   try {
-    const cached = localStorage.getItem(MONOTRIBUTO_CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      data = parsed.data || null;
-    }
-
     const savedActivity = localStorage.getItem(MONOTRIBUTO_ACTIVITY_KEY);
     if (savedActivity === "servicios" || savedActivity === "venta") {
       tipoActividad = savedActivity;
@@ -34,7 +27,7 @@ function getMonotributoFromCache(): { data: MonotributoData | null; tipoActivida
     // Silently fail
   }
 
-  return { data, tipoActividad };
+  return { data: MONOTRIBUTO_DATA, tipoActividad };
 }
 
 /**
@@ -319,10 +312,10 @@ export async function exportToPDF(
   // Monotributo section (if current year data exists)
   let monotributoEndY = 45;
   
-  // Get monotributo data from cache
-  const { data: monotributoData, tipoActividad } = getMonotributoFromCache();
+  // Get monotributo data (static) and activity preference
+  const { data: monotributoData, tipoActividad } = getMonotributoData();
   
-  if (yearTotals && yearTotals.totalPesos > 0 && monotributoData && monotributoData.categorias.length > 0) {
+  if (yearTotals && yearTotals.totalPesos > 0 && monotributoData.categorias.length > 0) {
     const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
     
     // Find calculated category based on income

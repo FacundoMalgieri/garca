@@ -77,7 +77,6 @@ async function navigateToComprobantes(page: Page, context: BrowserContext): Prom
  * This is more reliable than clicking direct links which often fail.
  */
 async function searchAndClickComprobantes(page: Page): Promise<void> {
-  console.log("[AFIP Scraper] Link not found in recent services, using search box...");
 
   const searchInput = page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).first();
 
@@ -113,7 +112,6 @@ async function handleNewTab(originalPage: Page, newPagePromise: Promise<Page>, c
     await newPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
 
     const newUrl = newPage.url();
-    console.log("[AFIP Scraper] Current URL in new tab:", newUrl);
 
     // Validate we're on the RCEL page
     if (newUrl.includes("rcel") || newUrl.includes("fe.afip.gob.ar")) {
@@ -129,7 +127,6 @@ async function handleNewTab(originalPage: Page, newPagePromise: Promise<Page>, c
     await originalPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
     
     const currentUrl = originalPage.url();
-    console.log("[AFIP Scraper] Current URL:", currentUrl);
 
     // Check if we're on the correct page (RCEL)
     if (currentUrl.includes("rcel") || currentUrl.includes("fe.afip.gob.ar")) {
@@ -180,7 +177,6 @@ interface CompanySelectionResult {
  */
 async function selectCompany(page: Page, companyIndex: number = 0): Promise<CompanySelectionResult> {
   console.log("[AFIP Scraper] Checking for company selection...");
-  console.log("[AFIP Scraper] Current URL:", page.url());
 
   // First, try to extract user info from header (CUIT - Nombre)
   const userInfo = await extractUserInfoFromHeader(page);
@@ -190,10 +186,7 @@ async function selectCompany(page: Page, companyIndex: number = 0): Promise<Comp
   console.log("[AFIP Scraper] Found", companyButtonCount, "company button(s)");
 
   if (companyButtonCount === 0) {
-    console.error("[AFIP Scraper] ❌ Company selection button not found. Navigation may have failed.");
-    console.error("[AFIP Scraper] Current URL:", page.url());
-    const pageTitle = await page.title();
-    console.error("[AFIP Scraper] Page title:", pageTitle);
+    console.error("[AFIP Scraper] ❌ Company selection button not found");
     throw new Error("No se pudo encontrar la selección de empresa. Verifique la navegación.");
   }
 
@@ -206,7 +199,6 @@ async function selectCompany(page: Page, companyIndex: number = 0): Promise<Comp
       // Button value is usually the company name
       const company = parseCompanyFromButton(buttonValue, userInfo, i);
       availableCompanies.push(company);
-      console.log(`[AFIP Scraper] Company ${i}: ${company.razonSocial} (CUIT: ${company.cuit})`);
     }
   }
 
@@ -219,8 +211,6 @@ async function selectCompany(page: Page, companyIndex: number = 0): Promise<Comp
 
   // Click the selected company button
   await companyButton.nth(selectedIndex).waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
-  const selectedButtonValue = await companyButton.nth(selectedIndex).getAttribute("value");
-  console.log("[AFIP Scraper] Clicking button with value:", selectedButtonValue);
 
   await companyButton.nth(selectedIndex).click();
   console.log("[AFIP Scraper] ✅ Company selected");
@@ -249,7 +239,6 @@ async function extractUserInfoFromHeader(page: Page): Promise<{ cuit: string; no
 
     if (userTableCount > 0) {
       const userText = await userTable.first().textContent();
-      console.log("[AFIP Scraper] User header text:", userText);
 
       if (userText) {
         // Format: "20354104076 - MALGIERI FACUNDO ARIEL"
@@ -345,7 +334,6 @@ export async function navigateToCompanySelection(page: Page, context: BrowserCon
  */
 async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
   console.log("[AFIP Scraper] Extracting available companies...");
-  console.log("[AFIP Scraper] Current URL:", page.url());
 
   // Wait for page to fully load - ARCA can be slow
   await page.waitForLoadState("networkidle");
@@ -369,29 +357,7 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
   console.log("[AFIP Scraper] Found", companyButtonCount, "company button(s)");
 
   if (companyButtonCount === 0) {
-    // Log page content for debugging
-    const pageTitle = await page.title();
-    console.error("[AFIP Scraper] ❌ Company selection button not found.");
-    console.error("[AFIP Scraper] Page title:", pageTitle);
-    console.error("[AFIP Scraper] Current URL:", page.url());
-    
-    // Log all inputs on the page for debugging
-    const allInputs = await page.locator("input").count();
-    const allButtons = await page.locator("button").count();
-    console.error(`[AFIP Scraper] Page has ${allInputs} inputs and ${allButtons} buttons`);
-    
-    // Check if we're on an error page or unexpected page
-    const bodyText = await page.locator("body").textContent().catch(() => "");
-    if (bodyText && bodyText.length < 2000) {
-      console.error("[AFIP Scraper] Page content preview:", bodyText.substring(0, 500));
-    }
-    
-    // Check for common error indicators
-    const hasError = await page.locator("text=error, text=Error, .error, .alert-danger").count();
-    if (hasError > 0) {
-      console.error("[AFIP Scraper] Error indicators found on page");
-    }
-    
+    console.error("[AFIP Scraper] ❌ Company selection button not found");
     throw new Error("No se pudo encontrar la selección de empresa. Verifique la navegación.");
   }
 
@@ -402,7 +368,6 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
     if (buttonValue) {
       const company = parseCompanyFromButton(buttonValue, userInfo, i);
       availableCompanies.push(company);
-      console.log(`[AFIP Scraper] Company ${i}: ${company.razonSocial} (CUIT: ${company.cuit})`);
     }
   }
 
@@ -417,7 +382,7 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
  * @returns Navigation result with selected company
  */
 export async function selectCompanyAndContinue(page: Page, companyIndex: number): Promise<NavigationResult> {
-  console.log("[AFIP Scraper] Selecting company at index:", companyIndex);
+  console.log("[AFIP Scraper] Selecting company...");
 
   // Extract companies and select
   const { company, availableCompanies } = await selectCompany(page, companyIndex);

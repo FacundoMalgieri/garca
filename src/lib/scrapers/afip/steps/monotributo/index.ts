@@ -49,7 +49,7 @@ export async function scrapeMonotributoInfo(
       return { success: false, info: null };
     }
 
-    console.log("[AFIP Monotributo] ✅ Successfully extracted Monotributo info:", info.categoria, info.tipoActividad);
+    console.log("[AFIP Monotributo] ✅ Successfully extracted Monotributo info");
 
     // Close the Monotributo tab if it's different from the original
     if (monotributoPage !== page) {
@@ -111,14 +111,12 @@ async function navigateToMonotributo(
       console.log("[AFIP Monotributo] ✅ New tab opened!");
       await newPage.waitForLoadState("networkidle");
       await newPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
-      console.log("[AFIP Monotributo] Current URL:", newPage.url());
       return newPage;
     } else {
       // No new tab, check if we navigated in the same page
       console.log("[AFIP Monotributo] No new tab, checking current page...");
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
-      console.log("[AFIP Monotributo] Current URL:", page.url());
 
       // Check if we're on a Monotributo page
       const url = page.url();
@@ -155,7 +153,6 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     // Extract name
     const nombreElement = page.locator(".jumbotron_body h2.h3").first();
     const nombreCompleto = await nombreElement.textContent().catch(() => null);
-    console.log("[AFIP Monotributo] Nombre:", nombreCompleto);
 
     if (!nombreCompleto) {
       console.log("[AFIP Monotributo] Could not find name element");
@@ -165,7 +162,6 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     // Extract CUIT
     const cuitElement = page.locator(".jumbotron_body p.lead").first();
     const cuitText = await cuitElement.textContent().catch(() => null);
-    console.log("[AFIP Monotributo] CUIT text:", cuitText);
 
     // Parse CUIT (format: "CUIT 20-35410407-6")
     const cuitMatch = cuitText?.match(/CUIT\s*([\d-]+)/i);
@@ -182,7 +178,6 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
 
     for (let i = 0; i < categoriaCount; i++) {
       const text = await categoriaElements.nth(i).textContent();
-      console.log(`[AFIP Monotributo] Lead paragraph ${i}:`, text);
 
       if (text && text.includes("Categoría")) {
         // Parse: "Categoría H LOCACIONES DE SERVICIOS"
@@ -198,10 +193,6 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
           } else if (actividadLower.includes("venta") || actividadLower.includes("mueble") || actividadLower.includes("comercio")) {
             tipoActividad = "venta";
           }
-
-          console.log("[AFIP Monotributo] Categoría:", categoria);
-          console.log("[AFIP Monotributo] Actividad:", actividadDescripcion);
-          console.log("[AFIP Monotributo] Tipo:", tipoActividad);
         }
       }
     }
@@ -214,7 +205,6 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     // Extract próxima recategorización
     const recategElement = page.locator("#divProxRecategorizacion strong").first();
     const proximaRecategorizacion = await recategElement.textContent().catch(() => null) || "";
-    console.log("[AFIP Monotributo] Próxima recategorización:", proximaRecategorizacion);
 
     return {
       categoria,
