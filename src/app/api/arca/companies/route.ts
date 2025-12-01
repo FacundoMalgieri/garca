@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { withConcurrencyLimit } from "@/lib/concurrency";
 import { decryptCredentials } from "@/lib/crypto";
 import { getAFIPCompanies } from "@/lib/scrapers/afip";
 import { performSecurityChecks } from "@/lib/security";
@@ -50,8 +51,10 @@ export async function POST(request: NextRequest) {
 
     console.log("[AFIP Companies API] Starting login and company fetch...");
 
-    // Get companies from AFIP
-    const result = await getAFIPCompanies({ cuit, password });
+    // Get companies from AFIP (with concurrency limit)
+    const result = await withConcurrencyLimit(() => 
+      getAFIPCompanies({ cuit, password })
+    );
 
     if (!result.success) {
       console.error("[AFIP Companies API] Failed:", result.error);

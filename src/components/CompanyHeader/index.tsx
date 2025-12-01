@@ -12,7 +12,7 @@ import { exportToCSV, exportToJSON, exportToPDF } from "../InvoiceTable/utils/ex
  * Displays company information header with summary stats and export actions.
  */
 export function CompanyHeader() {
-  const { state } = useInvoiceContext();
+  const { state, monotributoInfo } = useInvoiceContext();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const stats = useMemo(() => {
@@ -57,7 +57,7 @@ export function CompanyHeader() {
   const handleExportPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      await exportToPDF(state.invoices, state.company);
+      await exportToPDF(state.invoices, state.company, monotributoInfo);
     } catch (error) {
       console.error("Error generando PDF:", error);
       alert("Hubo un error al generar el PDF. Por favor, inténtelo de nuevo.");
@@ -75,7 +75,7 @@ export function CompanyHeader() {
     <>
       {/* Splash screen during PDF generation */}
       {isGeneratingPDF && (
-        <div className="fixed inset-0 z-50 bg-background">
+        <div id="pdf-loading-splash" className="fixed inset-0 z-50 bg-background">
           <LoadingSplash isLoading={true} message="Generando PDF" />
         </div>
       )}
@@ -86,7 +86,23 @@ export function CompanyHeader() {
           <BuildingIcon className="h-5 w-5 text-primary dark:text-white flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-lg text-foreground truncate">{state.company.razonSocial}</h2>
-            <p className="text-sm text-muted-foreground">CUIT: {formatCuit(state.company.cuit)}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-x-3">
+              <p className="text-sm text-muted-foreground">CUIT: {formatCuit(state.company.cuit)}</p>
+              {monotributoInfo && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <span className="text-muted-foreground/50 hidden sm:inline">|</span>
+                  <span>Categoría actual:</span>
+                  <span className="font-semibold text-primary dark:text-white">
+                    {monotributoInfo.categoria}
+                  </span>
+                  {monotributoInfo.tipoActividad && (
+                    <span className="text-xs text-muted-foreground/80">
+                      ({monotributoInfo.tipoActividad === "servicios" ? "Servicios" : "Venta de Bienes"})
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Export dropdown - positioned at the right */}

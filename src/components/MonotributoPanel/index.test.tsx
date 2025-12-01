@@ -17,9 +17,10 @@ const mockMonotributoStatus = {
     energiaElectrica: 5000,
     alquileres: 563459.99,
     precioUnitarioMax: 296735.02,
-    impuestoIntegrado: 7048.18,
+    impuestoIntegrado: { servicios: 7048.18, venta: 6500 },
     aportesSIPA: 11446.99,
     aportesObraSocial: 16297.11,
+    total: { servicios: 34792.28, venta: 34000 },
   },
   categoriaSiguiente: {
     categoria: "C",
@@ -28,14 +29,16 @@ const mockMonotributoStatus = {
     energiaElectrica: 6700,
     alquileres: 563459.99,
     precioUnitarioMax: 296735.02,
-    impuestoIntegrado: 12529.94,
+    impuestoIntegrado: { servicios: 12529.94, venta: 12000 },
     aportesSIPA: 12591.69,
     aportesObraSocial: 17926.82,
+    total: { servicios: 43048.45, venta: 42500 },
   },
   porcentajeUtilizado: 65.5,
   margenDisponible: 3947046.44,
   ingresosAcumulados: 7500000,
   pagoMensual: 34792.28,
+  tipoActividad: "servicios",
 };
 
 const mockMonotributoData = {
@@ -69,6 +72,7 @@ const mockMonotributoData = {
 vi.mock("@/contexts/InvoiceContext", () => ({
   useInvoiceContext: () => ({
     clearInvoices: mockClearInvoices,
+    monotributoInfo: null, // No scraped info by default
   }),
 }));
 
@@ -113,9 +117,10 @@ describe("MonotributoPanel", () => {
     expect(screen.getByText("Venta de Bienes")).toBeInTheDocument();
   });
 
-  it("displays current category", () => {
+  it("displays calculated category", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
-    expect(screen.getByText("Tu categoría:")).toBeInTheDocument();
+    // When no monotributoInfo is scraped, it shows "Tu categoría calculada:"
+    expect(screen.getByText("Tu categoría calculada:")).toBeInTheDocument();
     expect(screen.getByText("B")).toBeInTheDocument();
   });
 
@@ -131,6 +136,7 @@ describe("MonotributoPanel", () => {
 
   it("displays monthly payment", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+    // When no monotributoInfo is scraped, it shows just "Pago mensual:"
     expect(screen.getByText("Pago mensual:")).toBeInTheDocument();
   });
 
@@ -197,52 +203,15 @@ describe("MonotributoPanel", () => {
     
     expect(mockClearInvoices).not.toHaveBeenCalled();
   });
-});
 
-describe("MonotributoPanel - Loading State", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it("calls updateTipoActividad when servicios button is clicked", () => {
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+    fireEvent.click(screen.getByText("Servicios"));
+    expect(mockUpdateTipoActividad).toHaveBeenCalledWith("servicios");
   });
 
-  it("shows loading state", async () => {
-    // Re-mock with loading state
-    vi.doMock("@/hooks/useMonotributo", () => ({
-      useMonotributo: () => ({
-        data: null,
-        isLoading: true,
-        error: null,
-        tipoActividad: "servicios",
-        updateTipoActividad: mockUpdateTipoActividad,
-        fetchMonotributoData: mockFetchMonotributoData,
-        status: null,
-      }),
-    }));
-
-    // Note: Due to module caching, this test may not work as expected
-    // In a real scenario, you'd use more sophisticated mocking strategies
-  });
-});
-
-describe("MonotributoPanel - Error State", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("handles error state", async () => {
-    // Re-mock with error state
-    vi.doMock("@/hooks/useMonotributo", () => ({
-      useMonotributo: () => ({
-        data: null,
-        isLoading: false,
-        error: "Error loading data",
-        tipoActividad: "servicios",
-        updateTipoActividad: mockUpdateTipoActividad,
-        fetchMonotributoData: mockFetchMonotributoData,
-        status: null,
-      }),
-    }));
-
-    // Note: Due to module caching, this test may not work as expected
-    // In a real scenario, you'd use more sophisticated mocking strategies
+  it("displays next category info when available", () => {
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+    expect(screen.getByText(/Para categoría C:/)).toBeInTheDocument();
   });
 });

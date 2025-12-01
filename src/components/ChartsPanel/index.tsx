@@ -273,6 +273,17 @@ function getCurrentCategory(monotributoData: MonotributoData | null, ingresosAnu
 // Chart components
 // ============================================================================
 
+/**
+ * Rounds a number up to the next "nice" value for chart axis.
+ * E.g., 18.5M -> 19M, 16.8M -> 17M
+ */
+function roundUpToNiceValue(value: number): number {
+  const million = 1_000_000;
+  const inMillions = value / million;
+  // Round up to next integer million
+  return Math.ceil(inMillions) * million;
+}
+
 function ProgresoChart({
   monthlyData,
   currentCategory,
@@ -280,6 +291,18 @@ function ProgresoChart({
   monthlyData: MonthlyDataPoint[];
   currentCategory: { categoria: string; ingresosBrutos: number } | null;
 }) {
+  // Calculate Y-axis domain to always show the category limit line
+  const maxAccumulated = monthlyData.length > 0 
+    ? Math.max(...monthlyData.map(d => d.acumulado)) 
+    : 0;
+  
+  const categoryLimit = currentCategory?.ingresosBrutos || 0;
+  
+  // The max Y value should be the higher of: max data point or category limit
+  // Then round up to a nice value to ensure the reference line is always visible
+  const maxDataValue = Math.max(maxAccumulated, categoryLimit);
+  const yAxisMax = roundUpToNiceValue(maxDataValue * 1.05); // Add 5% padding then round up
+
   return (
     <div id="chart-progreso">
       <h3 className="text-sm font-medium text-muted-foreground mb-4">Ingresos Acumulados vs Límites de Categorías</h3>
@@ -293,7 +316,11 @@ function ProgresoChart({
           </defs>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis dataKey="month" fontSize={12} />
-          <YAxis fontSize={12} tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+          <YAxis 
+            fontSize={12} 
+            tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
+            domain={[0, yAxisMax]}
+          />
           <Tooltip
             formatter={(value: number) => [
               `$${value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,

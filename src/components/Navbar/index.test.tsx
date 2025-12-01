@@ -368,4 +368,139 @@ describe("Navbar", () => {
     mobileLinks = screen.getAllByText("Monotributo");
     expect(mobileLinks.length).toBe(1);
   });
+
+  it("scrolls to top when logo is clicked with invoices loaded", () => {
+    mockInvoices = [
+      {
+        fecha: "15/11/2025",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 2,
+        numero: 150,
+        numeroCompleto: "0002-00000150",
+        cuitEmisor: "20345678901",
+        razonSocialEmisor: "Test Company",
+        cuitReceptor: "30712345678",
+        razonSocialReceptor: "Client Company",
+        importeNeto: 1000000,
+        importeIVA: 210000,
+        importeTotal: 1210000,
+        moneda: "ARS",
+        cae: "75000000000000",
+      },
+    ];
+
+    const scrollToMock = vi.fn();
+    vi.stubGlobal("scrollTo", scrollToMock);
+
+    render(<Navbar />);
+
+    const logoLink = screen.getAllByRole("link")[0];
+    fireEvent.click(logoLink);
+
+    expect(scrollToMock).toHaveBeenCalledWith({
+      top: 0,
+      behavior: "smooth",
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it("navigates normally when logo is clicked without invoices", () => {
+    mockInvoices = [];
+
+    const scrollToMock = vi.fn();
+    vi.stubGlobal("scrollTo", scrollToMock);
+
+    render(<Navbar />);
+
+    const logoLink = screen.getAllByRole("link")[0];
+    fireEvent.click(logoLink);
+
+    // Should NOT scroll - should navigate instead
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
+  it("scrolls to section when desktop nav button is clicked", async () => {
+    mockInvoices = [
+      {
+        fecha: "15/11/2025",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 2,
+        numero: 150,
+        numeroCompleto: "0002-00000150",
+        cuitEmisor: "20345678901",
+        razonSocialEmisor: "Test Company",
+        cuitReceptor: "30712345678",
+        razonSocialReceptor: "Client Company",
+        importeNeto: 1000000,
+        importeIVA: 210000,
+        importeTotal: 1210000,
+        moneda: "ARS",
+        cae: "75000000000000",
+      },
+    ];
+
+    // Create a mock element with getBoundingClientRect
+    const mockElement = document.createElement("div");
+    mockElement.id = "monotributo";
+    mockElement.getBoundingClientRect = vi.fn().mockReturnValue({ top: 500 });
+    document.body.appendChild(mockElement);
+
+    const scrollToMock = vi.fn();
+    vi.stubGlobal("scrollTo", scrollToMock);
+    vi.stubGlobal("pageYOffset", 0);
+
+    render(<Navbar />);
+
+    // Click desktop nav button
+    const monotributoButton = screen.getByText("Monotributo");
+    fireEvent.click(monotributoButton);
+
+    // Wait for setTimeout
+    await vi.waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalled();
+    }, { timeout: 200 });
+
+    document.body.removeChild(mockElement);
+    vi.unstubAllGlobals();
+  });
+
+  it("opens mobile clear data dialog from mobile menu", () => {
+    mockInvoices = [
+      {
+        fecha: "15/11/2025",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 2,
+        numero: 150,
+        numeroCompleto: "0002-00000150",
+        cuitEmisor: "20345678901",
+        razonSocialEmisor: "Test Company",
+        cuitReceptor: "30712345678",
+        razonSocialReceptor: "Client Company",
+        importeNeto: 1000000,
+        importeIVA: 210000,
+        importeTotal: 1210000,
+        moneda: "ARS",
+        cae: "75000000000000",
+      },
+    ];
+
+    render(<Navbar />);
+
+    // Open mobile menu
+    const hamburgerButton = screen.getByRole("button", { name: /menú/i });
+    fireEvent.click(hamburgerButton);
+
+    // Find mobile clear data button (second occurrence)
+    const clearButtons = screen.getAllByText("Limpiar Datos");
+    fireEvent.click(clearButtons[1]); // Mobile button
+
+    // Dialog should open
+    expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
+  });
 });

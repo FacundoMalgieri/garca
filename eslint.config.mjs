@@ -73,6 +73,14 @@ export default [
                 Response: 'readonly',
                 Headers: 'readonly',
                 URLSearchParams: 'readonly',
+                // Streaming APIs
+                TextEncoder: 'readonly',
+                TextDecoder: 'readonly',
+                ReadableStream: 'readonly',
+                AbortController: 'readonly',
+                // Browser events
+                BeforeUnloadEvent: 'readonly',
+                PopStateEvent: 'readonly',
                 // Test globals
                 beforeEach: 'readonly',
                 afterEach: 'readonly',

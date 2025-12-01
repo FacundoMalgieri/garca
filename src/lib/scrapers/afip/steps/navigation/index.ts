@@ -56,60 +56,25 @@ export async function navigateToInvoices(
 
 /**
  * Navigates to "Comprobantes en línea" service.
+ * Always uses search box for reliability (direct links often fail).
  * May open in a new tab.
  */
 async function navigateToComprobantes(page: Page, context: BrowserContext): Promise<Page> {
-  console.log("[AFIP Scraper] Looking for 'Comprobantes en línea' link...");
-
-  const comprobantesLink = page.locator(SELECTORS.NAVIGATION.COMPROBANTES_LINK);
-  const linkCount = await comprobantesLink.count();
-  console.log("[AFIP Scraper] Found", linkCount, "matching link(s)");
+  console.log("[AFIP Scraper] Navigating to 'Comprobantes en línea' via search...");
 
   // Setup listener for new page/tab before clicking
   const newPagePromise = context.waitForEvent("page", { timeout: 15000 });
 
-  if (linkCount > 0) {
-    await clickComprobantesLink(page, comprobantesLink, linkCount);
-  } else {
-    await searchAndClickComprobantes(page);
-  }
+  // Always use search - it's more reliable than direct links
+  await searchAndClickComprobantes(page);
 
   // Wait for new tab to open
   return await handleNewTab(page, newPagePromise);
 }
 
 /**
- * Clicks the "Comprobantes en línea" link if found directly.
- */
-async function clickComprobantesLink(
-  _page: Page,
-  comprobantesLink: ReturnType<Page["locator"]>,
-  linkCount: number
-): Promise<void> {
-  let clicked = false;
-
-  for (let i = 0; i < linkCount; i++) {
-    const href = await comprobantesLink.nth(i).getAttribute("href");
-    console.log(`[AFIP Scraper] Link ${i}: ${href}`);
-
-    // Click the one that goes to RCEL
-    if (href && (href.includes("rcel") || href.includes("fe.afip.gob.ar"))) {
-      console.log("[AFIP Scraper] Found correct RCEL link, clicking...");
-      await comprobantesLink.nth(i).click();
-      clicked = true;
-      break;
-    }
-  }
-
-  // If we didn't find RCEL specifically, click the first one
-  if (!clicked && linkCount > 0) {
-    console.log("[AFIP Scraper] Clicking first 'Comprobantes en línea' link...");
-    await comprobantesLink.first().click();
-  }
-}
-
-/**
- * Uses search box to find "Comprobantes en línea".
+ * Uses search box to find and click "Comprobantes en línea".
+ * This is more reliable than clicking direct links which often fail.
  */
 async function searchAndClickComprobantes(page: Page): Promise<void> {
   console.log("[AFIP Scraper] Link not found in recent services, using search box...");

@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { ScraperProgress } from "@/hooks/useInvoices";
+
 interface LoadingSplashProps {
   isLoading: boolean;
   message?: string;
+  progress?: ScraperProgress | null;
 }
 
 const tips = [
@@ -59,7 +62,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function LoadingSplash({ isLoading, message = "Cargando" }: LoadingSplashProps) {
+export function LoadingSplash({ isLoading, message = "Cargando", progress }: LoadingSplashProps) {
   const shuffledTips = useMemo(() => shuffleArray(tips), []);
 
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -123,7 +126,7 @@ export function LoadingSplash({ isLoading, message = "Cargando" }: LoadingSplash
   const currentTip = shuffledTips[currentTipIndex];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+    <div id="loading-splash" className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="w-full max-w-md px-6 text-center space-y-8">
         {/* Logo */}
         <div className="flex justify-center">
@@ -149,23 +152,40 @@ export function LoadingSplash({ isLoading, message = "Cargando" }: LoadingSplash
 
         {/* Progress bar */}
         <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary animate-[shimmer_2s_ease-in-out_infinite]"
-            style={{
-              background: "linear-gradient(90deg, transparent, var(--color-primary), transparent)",
-              width: "50%",
-            }}
-          />
+          {progress && progress.progress > 0 ? (
+            <div
+              className="h-full transition-all duration-500 ease-out"
+              style={{
+                width: `${progress.progress}%`,
+                backgroundColor: "#64D3DE",
+              }}
+            />
+          ) : (
+            <div
+              className="h-full animate-[shimmer_2s_ease-in-out_infinite]"
+              style={{
+                background: "linear-gradient(90deg, transparent, #64D3DE, transparent)",
+                width: "50%",
+              }}
+            />
+          )}
         </div>
+
+        {/* Scraper progress message */}
+        {progress && progress.message && (
+          <div className="text-sm text-foreground font-medium animate-pulse">
+            {progress.message}
+          </div>
+        )}
 
         {/* Tips */}
         <div
-          className={`rounded-lg border border-border bg-card p-6 transition-opacity duration-300 h-[160px] ${
+          className={`rounded-lg border border-border bg-card p-6 transition-opacity duration-300 h-[160px] shadow-md dark:shadow-none ${
             fadeIn ? "opacity-100" : "opacity-0"
           }`}
         >
           <div className="flex items-start gap-3 text-left h-full">
-            <div className="flex-shrink-0 mt-0.5">
+            <div className="shrink-0 mt-0.5">
               <InfoIcon />
             </div>
             <div className="flex-1">

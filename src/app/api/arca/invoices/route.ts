@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { withConcurrencyLimit } from "@/lib/concurrency";
 import { decryptCredentials } from "@/lib/crypto";
 import { scrapeAFIPInvoices } from "@/lib/scrapers/afip";
 import { performSecurityChecks } from "@/lib/security";
@@ -91,12 +92,15 @@ export async function POST(request: NextRequest) {
       rol,
     };
 
-    const result = await scrapeAFIPInvoices(credentials, filters, {
-      headless,
-      downloadXML,
-      timeout: 60000,
-      companyIndex,
-    });
+    // Scrape with concurrency limit to prevent memory exhaustion
+    const result = await withConcurrencyLimit(() =>
+      scrapeAFIPInvoices(credentials, filters, {
+        headless,
+        downloadXML,
+        timeout: 60000,
+        companyIndex,
+      })
+    );
 
     if (!result.success) {
       console.error("[AFIP API] Scraping failed:", result.error);

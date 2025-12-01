@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { detectAutomation } from "./detect-automation";
-import { performSecurityChecks } from "./index";
+import { performBasicSecurityChecks, performSecurityChecks } from "./index";
 import { rateLimit } from "./rate-limit";
 import { getClientIP, getTurnstileToken, validateTurnstile } from "./turnstile";
 
@@ -217,5 +217,63 @@ describe("performSecurityChecks", () => {
       expect(result.allowed).toBe(true);
       expect(result.response).toBeUndefined();
     });
+  });
+});
+
+describe("performBasicSecurityChecks", () => {
+  const mockRequest = new Request("http://localhost/api/test");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(rateLimit).mockReturnValue(true);
+    vi.mocked(detectAutomation).mockReturnValue(false);
+  });
+
+  it("should return allowed when all basic checks pass", () => {
+    const result = performBasicSecurityChecks(mockRequest);
+
+    expect(result.allowed).toBe(true);
+    expect(result.response).toBeUndefined();
+  });
+
+  it("should return 429 when rate limited", async () => {
+    vi.mocked(rateLimit).mockReturnValue(false);
+
+    const result = performBasicSecurityChecks(mockRequest);
+
+    expect(result.allowed).toBe(false);
+    expect(result.response?.status).toBe(429);
+
+    const body = await result.response?.json();
+    expect(body.errorCode).toBe("RATE_LIMIT_EXCEEDED");
+  });
+
+  it("should return 403 when bot detected", async () => {
+    vi.mocked(detectAutomation).mockReturnValue(true);
+
+    const result = performBasicSecurityChecks(mockRequest);
+
+    expect(result.allowed).toBe(false);
+    expect(result.response?.status).toBe(403);
+
+    const body = await result.response?.json();
+    expect(body.errorCode).toBe("BOT_DETECTED");
+  });
+
+  it("should check rate limit before bot detection", () => {
+    vi.mocked(rateLimit).mockReturnValue(false);
+
+    performBasicSecurityChecks(mockRequest);
+
+    expect(rateLimit).toHaveBeenCalled();
+    expect(detectAutomation).not.toHaveBeenCalled();
+  });
+
+  it("should not check turnstile (basic checks only)", () => {
+    const result = performBasicSecurityChecks(mockRequest);
+
+    expect(result.allowed).toBe(true);
+    expect(getTurnstileToken).not.toHaveBeenCalled();
+    expect(validateTurnstile).not.toHaveBeenCalled();
   });
 });

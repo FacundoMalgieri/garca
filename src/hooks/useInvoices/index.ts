@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { encryptCredentials } from "@/lib/crypto";
-import type { AFIPCompany, AFIPInvoice } from "@/types/afip-scraper";
+import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
+const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 
 /**
  * Company information extracted from invoices.
@@ -14,6 +15,15 @@ const COMPANY_STORAGE_KEY = "garca_company";
 export interface CompanyInfo {
   cuit: string;
   razonSocial: string;
+}
+
+/**
+ * Progress state for streaming scraper.
+ */
+export interface ScraperProgress {
+  message: string;
+  progress: number; // 0-100
+  type: string;
 }
 
 /**
@@ -25,6 +35,7 @@ export interface InvoiceState {
   error: string | null;
   errorCode: string | null;
   company: CompanyInfo | null;
+  progress: ScraperProgress | null;
 }
 
 /**
@@ -34,6 +45,8 @@ export interface CompaniesState {
   companies: AFIPCompany[];
   isLoading: boolean;
   error: string | null;
+  progress: ScraperProgress | null;
+  monotributoInfo: MonotributoAFIPInfo | null;
 }
 
 /**
@@ -50,6 +63,7 @@ export interface DateRange {
 export interface UseInvoicesReturn {
   state: InvoiceState;
   companiesState: CompaniesState;
+  monotributoInfo: MonotributoAFIPInfo | null;
   fetchCompanies: (cuit: string, password: string, turnstileToken?: string) => Promise<boolean>;
   fetchInvoicesWithCompany: (
     cuit: string,
@@ -62,6 +76,8 @@ export interface UseInvoicesReturn {
   clearInvoices: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
+  cancelOperation: () => void;
+  isOperationInProgress: boolean;
 }
 
 /**
@@ -78,13 +94,31 @@ export function useInvoices(): UseInvoicesReturn {
     error: null,
     errorCode: null,
     company: null,
+    progress: null,
   });
 
   const [companiesState, setCompaniesState] = useState<CompaniesState>({
     companies: [],
     isLoading: false,
     error: null,
+    progress: null,
+    monotributoInfo: null,
   });
+
+  // Separate monotributoInfo state that persists across company selection
+  const [monotributoInfo, setMonotributoInfo] = useState<MonotributoAFIPInfo | null>(null);
+
+  // AbortController refs for cancellable requests
+  const companiesAbortRef = useRef<AbortController | null>(null);
+  const invoicesAbortRef = useRef<AbortController | null>(null);
+
+  // Cleanup abort controllers on unmount
+  useEffect(() => {
+    return () => {
+      companiesAbortRef.current?.abort();
+      invoicesAbortRef.current?.abort();
+    };
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -99,17 +133,23 @@ export function useInvoices(): UseInvoicesReturn {
   }, [state.invoices, state.company]);
 
   /**
-   * Loads invoices and company info from localStorage.
+   * Loads invoices, company info, and monotributo info from localStorage.
    */
   const loadFromStorage = () => {
     try {
       const storedInvoices = localStorage.getItem(STORAGE_KEY);
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
+      const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
 
       if (storedInvoices) {
         const invoices = JSON.parse(storedInvoices);
         const company = storedCompany ? JSON.parse(storedCompany) : extractCompanyInfo(invoices);
         setState((prev) => ({ ...prev, invoices, company }));
+      }
+
+      if (storedMonotributo) {
+        const monotributo = JSON.parse(storedMonotributo);
+        setMonotributoInfo(monotributo);
       }
     } catch {
       // Silently fail - localStorage might not be available
@@ -131,14 +171,36 @@ export function useInvoices(): UseInvoicesReturn {
   };
 
   /**
+   * Saves monotributo info to localStorage.
+   */
+  const saveMonotributoToStorage = (info: MonotributoAFIPInfo | null) => {
+    try {
+      if (info) {
+        localStorage.setItem(MONOTRIBUTO_STORAGE_KEY, JSON.stringify(info));
+      } else {
+        localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
+      }
+    } catch {
+      // Silently fail
+    }
+  };
+
+  /**
    * Step 1 of two-step flow: Fetches available companies.
+   * Uses Server-Sent Events for real-time progress updates.
    * Returns true if successful, false otherwise.
    */
   const fetchCompanies = async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
+    // Abort any existing request
+    companiesAbortRef.current?.abort();
+    companiesAbortRef.current = new AbortController();
+
     setCompaniesState({
       companies: [],
       isLoading: true,
       error: null,
+      progress: { message: "Iniciando...", progress: 0, type: "start" },
+      monotributoInfo: null,
     });
 
     try {
@@ -149,36 +211,143 @@ export function useInvoices(): UseInvoicesReturn {
         headers["x-turnstile-token"] = turnstileToken;
       }
 
-      const response = await fetch("/api/arca/companies", {
+      // Use SSE streaming endpoint
+      const response = await fetch("/api/arca/companies/stream", {
         method: "POST",
         headers,
         body: JSON.stringify(encryptedCredentials),
+        signal: companiesAbortRef.current.signal,
       });
 
-      const data = await response.json();
+      // Check if response is SSE stream
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("text/event-stream")) {
+        // Process SSE stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-      if (!data.success) {
+        if (!reader) {
+          throw new Error("No se pudo leer la respuesta del servidor");
+        }
+
+        let buffer = "";
+        let finalResult: { success: boolean; companies?: AFIPCompany[]; monotributoInfo?: MonotributoAFIPInfo | null; error?: string } | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const event = JSON.parse(line.slice(6));
+
+                if (event.type === "result") {
+                  finalResult = event.data;
+                } else if (event.type === "error") {
+                  setCompaniesState((prev) => ({
+                    ...prev,
+                    progress: { message: event.message, progress: 0, type: "error" },
+                  }));
+                } else {
+                  setCompaniesState((prev) => ({
+                    ...prev,
+                    progress: {
+                      message: event.message,
+                      progress: event.progress ?? 0,
+                      type: event.type,
+                    },
+                  }));
+                }
+              } catch {
+                // Ignore JSON parse errors
+              }
+            }
+          }
+        }
+
+        // Process final result
+        if (finalResult) {
+          if (!finalResult.success) {
+            setCompaniesState({
+              companies: [],
+              isLoading: false,
+              error: finalResult.error || "Error al obtener empresas",
+              progress: null,
+              monotributoInfo: null,
+            });
+            return false;
+          }
+
+          // Save monotributo info if available
+          const monotributo = finalResult.monotributoInfo || null;
+          if (monotributo) {
+            setMonotributoInfo(monotributo);
+            saveMonotributoToStorage(monotributo);
+          }
+
+          setCompaniesState({
+            companies: finalResult.companies || [],
+            isLoading: false,
+            error: null,
+            progress: null,
+            monotributoInfo: monotributo,
+          });
+
+          return true;
+        } else {
+          throw new Error("No se recibió resultado del servidor");
+        }
+      } else {
+        // Fallback to JSON response (for errors)
+        const data = await response.json();
+
+        if (!data.success) {
+          setCompaniesState({
+            companies: [],
+            isLoading: false,
+            error: data.error || "Error al obtener empresas",
+            progress: null,
+            monotributoInfo: null,
+          });
+          return false;
+        }
+
+        // Save monotributo info if available
+        const monotributo = data.monotributoInfo || null;
+        if (monotributo) {
+          setMonotributoInfo(monotributo);
+          saveMonotributoToStorage(monotributo);
+        }
+
         setCompaniesState({
-          companies: [],
+          companies: data.companies || [],
           isLoading: false,
-          error: data.error || "Error al obtener empresas",
+          error: null,
+          progress: null,
+          monotributoInfo: monotributo,
         });
+
+        return true;
+      }
+    } catch (error) {
+      // Don't update state if request was aborted
+      if (error instanceof Error && error.name === "AbortError") {
         return false;
       }
 
-      setCompaniesState({
-        companies: data.companies || [],
-        isLoading: false,
-        error: null,
-      });
-
-      return true;
-    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error desconocido";
       setCompaniesState({
         companies: [],
         isLoading: false,
         error: errorMessage,
+        progress: null,
+        monotributoInfo: null,
       });
       return false;
     }
@@ -186,6 +355,7 @@ export function useInvoices(): UseInvoicesReturn {
 
   /**
    * Step 2 of two-step flow: Fetches invoices for selected company.
+   * Uses Server-Sent Events for real-time progress updates.
    */
   const fetchInvoicesWithCompany = async (
     cuit: string,
@@ -195,11 +365,16 @@ export function useInvoices(): UseInvoicesReturn {
     rol: "EMISOR" | "RECEPTOR" = "EMISOR",
     turnstileToken?: string
   ) => {
+    // Abort any existing request
+    invoicesAbortRef.current?.abort();
+    invoicesAbortRef.current = new AbortController();
+
     setState((prev) => ({
       ...prev,
       isLoading: true,
       error: null,
       errorCode: null,
+      progress: { message: "Iniciando...", progress: 0, type: "start" },
     }));
 
     try {
@@ -213,7 +388,8 @@ export function useInvoices(): UseInvoicesReturn {
         headers["x-turnstile-token"] = turnstileToken;
       }
 
-      const response = await fetch("/api/arca/invoices", {
+      // Use SSE streaming endpoint
+      const response = await fetch("/api/arca/invoices/stream", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -225,45 +401,150 @@ export function useInvoices(): UseInvoicesReturn {
           downloadXML: true,
           companyIndex,
         }),
+        signal: invoicesAbortRef.current.signal,
       });
 
-      const data = await response.json();
+      // Check if response is SSE stream
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("text/event-stream")) {
+        // Process SSE stream
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-      if (!data.success) {
-        setState((prev) => ({
-          ...prev,
-          invoices: [],
+        if (!reader) {
+          throw new Error("No se pudo leer la respuesta del servidor");
+        }
+
+        let buffer = "";
+        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; error?: string; errorCode?: string } | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const event = JSON.parse(line.slice(6));
+                
+                if (event.type === "result") {
+                  // Final result received
+                  finalResult = event.data;
+                } else if (event.type === "error") {
+                  // Error event
+                  setState((prev) => ({
+                    ...prev,
+                    progress: { message: event.message, progress: 0, type: "error" },
+                  }));
+                } else {
+                  // Progress event
+                  setState((prev) => ({
+                    ...prev,
+                    progress: {
+                      message: event.message,
+                      progress: event.progress ?? 0,
+                      type: event.type,
+                    },
+                  }));
+                }
+              } catch {
+                // Ignore JSON parse errors
+              }
+            }
+          }
+        }
+
+        // Process final result
+        if (finalResult) {
+          if (!finalResult.success) {
+            setState((prev) => ({
+              ...prev,
+              invoices: [],
+              isLoading: false,
+              error: finalResult?.error || "Error al consultar facturas",
+              errorCode: finalResult?.errorCode || null,
+              company: null,
+              progress: null,
+            }));
+            return;
+          }
+
+          const invoices = finalResult.invoices || [];
+          let company: CompanyInfo | null = null;
+          
+          if (finalResult.company && finalResult.company.razonSocial) {
+            company = {
+              cuit: finalResult.company.cuit || cuit,
+              razonSocial: finalResult.company.razonSocial,
+            };
+          } else {
+            company = extractCompanyInfo(invoices, cuit);
+          }
+
+          setState({
+            invoices,
+            isLoading: false,
+            error: null,
+            errorCode: null,
+            company,
+            progress: null,
+          });
+
+          clearCompanies();
+        } else {
+          throw new Error("No se recibió resultado del servidor");
+        }
+      } else {
+        // Fallback to JSON response (for errors)
+        const data = await response.json();
+
+        if (!data.success) {
+          setState((prev) => ({
+            ...prev,
+            invoices: [],
+            isLoading: false,
+            error: data.error || "Error al consultar facturas",
+            errorCode: data.errorCode || null,
+            company: null,
+            progress: null,
+          }));
+          return;
+        }
+
+        const invoices = data.invoices || [];
+        let company: CompanyInfo | null = null;
+        
+        if (data.company && data.company.razonSocial) {
+          company = {
+            cuit: data.company.cuit || cuit,
+            razonSocial: data.company.razonSocial,
+          };
+        } else {
+          company = extractCompanyInfo(invoices, cuit);
+        }
+
+        setState({
+          invoices,
           isLoading: false,
-          error: data.error || "Error al consultar facturas",
-          errorCode: data.errorCode || null,
-          company: null,
-        }));
+          error: null,
+          errorCode: null,
+          company,
+          progress: null,
+        });
+
+        clearCompanies();
+      }
+    } catch (error) {
+      // Don't update state if request was aborted
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
 
-      const invoices = data.invoices || [];
-
-      let company: CompanyInfo | null = null;
-      if (data.company && data.company.razonSocial) {
-        company = {
-          cuit: data.company.cuit || cuit,
-          razonSocial: data.company.razonSocial,
-        };
-      } else {
-        company = extractCompanyInfo(invoices, cuit);
-      }
-
-      setState({
-        invoices,
-        isLoading: false,
-        error: null,
-        errorCode: null,
-        company,
-      });
-
-      // Clear companies state after successful fetch
-      clearCompanies();
-    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error desconocido al consultar facturas";
 
       setState({
@@ -272,9 +553,41 @@ export function useInvoices(): UseInvoicesReturn {
         error: errorMessage,
         errorCode: "UNKNOWN",
         company: null,
+        progress: null,
       });
     }
   };
+
+  /**
+   * Cancels any in-progress operation and resets loading states.
+   */
+  const cancelOperation = useCallback(() => {
+    // Abort any ongoing requests
+    companiesAbortRef.current?.abort();
+    invoicesAbortRef.current?.abort();
+
+    // Reset abort controllers
+    companiesAbortRef.current = null;
+    invoicesAbortRef.current = null;
+
+    // Reset loading states
+    setCompaniesState((prev) => ({
+      ...prev,
+      isLoading: false,
+      progress: null,
+    }));
+
+    setState((prev) => ({
+      ...prev,
+      isLoading: false,
+      progress: null,
+    }));
+  }, []);
+
+  /**
+   * Returns true if any operation is currently in progress.
+   */
+  const isOperationInProgress = state.isLoading || companiesState.isLoading;
 
   /**
    * Clears invoice data from state and localStorage.
@@ -293,28 +606,35 @@ export function useInvoices(): UseInvoicesReturn {
       error: null,
       errorCode: null,
       company: null,
+      progress: null,
     });
   };
 
   /**
    * Clears companies state (used after selecting a company).
+   * Note: Does NOT clear monotributoInfo as it should persist.
    */
   const clearCompanies = () => {
     setCompaniesState({
       companies: [],
       isLoading: false,
       error: null,
+      progress: null,
+      monotributoInfo: null,
     });
   };
 
   return {
     state,
     companiesState,
+    monotributoInfo,
     fetchCompanies,
     fetchInvoicesWithCompany,
     clearInvoices,
     clearCompanies,
     loadFromStorage,
+    cancelOperation,
+    isOperationInProgress,
   };
 }
 

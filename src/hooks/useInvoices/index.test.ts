@@ -39,6 +39,7 @@ describe("useInvoices", () => {
         error: null,
         errorCode: null,
         company: null,
+        progress: null,
       });
     });
 
@@ -49,6 +50,8 @@ describe("useInvoices", () => {
         companies: [],
         isLoading: false,
         error: null,
+        progress: null,
+        monotributoInfo: null,
       });
     });
 
@@ -213,11 +216,42 @@ describe("useInvoices", () => {
   });
 
   describe("fetchCompanies", () => {
-    it("should call fetch with encrypted credentials", async () => {
-      mockFetch.mockResolvedValueOnce({
+    // Helper to create a mock SSE response for companies
+    const createMockCompaniesSSEResponse = (events: Array<{ type: string; message: string; data?: unknown }>) => {
+      const encoder = new TextEncoder();
+      const eventStrings = events.map((e) => `data: ${JSON.stringify(e)}\n\n`);
+      const chunks = eventStrings.map((s) => encoder.encode(s));
+      let chunkIndex = 0;
+
+      return {
         ok: true,
-        json: () => Promise.resolve({ success: true, companies: [] }),
-      });
+        headers: {
+          get: (name: string) => (name === "content-type" ? "text/event-stream" : null),
+        },
+        body: {
+          getReader: () => ({
+            read: async () => {
+              if (chunkIndex < chunks.length) {
+                return { done: false, value: chunks[chunkIndex++] };
+              }
+              return { done: true, value: undefined };
+            },
+          }),
+        },
+      };
+    };
+
+    it("should call SSE stream endpoint", async () => {
+      const mockResponse = createMockCompaniesSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Empresas obtenidas",
+          data: { success: true, companies: [] },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -226,23 +260,24 @@ describe("useInvoices", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/arca/companies",
+        "/api/arca/companies/stream",
         expect.objectContaining({
           method: "POST",
-          headers: { "Content-Type": "application/json" },
         })
       );
     });
 
     it("should return true on success", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            companies: [{ cuit: "123", razonSocial: "Test", index: 0 }],
-          }),
-      });
+      const mockResponse = createMockCompaniesSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Empresas obtenidas",
+          data: { success: true, companies: [{ cuit: "123", razonSocial: "Test", index: 0 }] },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -255,15 +290,17 @@ describe("useInvoices", () => {
       expect(result.current.companiesState.companies).toHaveLength(1);
     });
 
-    it("should return false on API error", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: "Credenciales inválidas",
-          }),
-      });
+    it("should return false on API error from SSE", async () => {
+      const mockResponse = createMockCompaniesSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Error",
+          data: { success: false, error: "Credenciales inválidas" },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -289,19 +326,69 @@ describe("useInvoices", () => {
       expect(success).toBe(false);
       expect(result.current.companiesState.error).toBeTruthy();
     });
+
+    it("should fallback to JSON response for non-SSE errors", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: "Error de validación",
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      let success: boolean | undefined;
+      await act(async () => {
+        success = await result.current.fetchCompanies("20345678901", "password");
+      });
+
+      expect(success).toBe(false);
+      expect(result.current.companiesState.error).toBe("Error de validación");
+    });
   });
 
   describe("fetchInvoicesWithCompany", () => {
-    it("should call fetch with correct parameters", async () => {
-      mockFetch.mockResolvedValueOnce({
+    // Helper to create a mock SSE response
+    const createMockSSEResponse = (events: Array<{ type: string; message: string; data?: unknown }>) => {
+      const encoder = new TextEncoder();
+      const eventStrings = events.map((e) => `data: ${JSON.stringify(e)}\n\n`);
+      const chunks = eventStrings.map((s) => encoder.encode(s));
+      let chunkIndex = 0;
+
+      return {
         ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            invoices: [],
-            company: { cuit: "123", razonSocial: "Test" },
+        headers: {
+          get: (name: string) => (name === "content-type" ? "text/event-stream" : null),
+        },
+        body: {
+          getReader: () => ({
+            read: async () => {
+              if (chunkIndex < chunks.length) {
+                return { done: false, value: chunks[chunkIndex++] };
+              }
+              return { done: true, value: undefined };
+            },
           }),
-      });
+        },
+      };
+    };
+
+    it("should call SSE stream endpoint", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Proceso completado",
+          data: { success: true, invoices: [], company: { cuit: "123", razonSocial: "Test" } },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -313,7 +400,7 @@ describe("useInvoices", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/arca/invoices",
+        "/api/arca/invoices/stream",
         expect.objectContaining({
           method: "POST",
         })
@@ -341,15 +428,16 @@ describe("useInvoices", () => {
         },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            invoices: mockInvoices,
-            company: { cuit: "20345678901", razonSocial: "Mi Empresa SA" },
-          }),
-      });
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Proceso completado",
+          data: { success: true, invoices: mockInvoices, company: { cuit: "20345678901", razonSocial: "Mi Empresa SA" } },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -364,16 +452,17 @@ describe("useInvoices", () => {
       expect(localStorage.getItem("garca_company")).not.toBeNull();
     });
 
-    it("should handle error response", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: "Error al obtener facturas",
-            errorCode: "FETCH_ERROR",
-          }),
-      });
+    it("should handle error response from SSE", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Error en el proceso",
+          data: { success: false, error: "Error al obtener facturas", errorCode: "FETCH_ERROR" },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useInvoices());
 
@@ -386,6 +475,32 @@ describe("useInvoices", () => {
 
       expect(result.current.state.error).toBe("Error al obtener facturas");
       expect(result.current.state.errorCode).toBe("FETCH_ERROR");
+    });
+
+    it("should fallback to JSON response for non-SSE responses", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: "Error de validación",
+            errorCode: "VALIDATION_ERROR",
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.error).toBe("Error de validación");
     });
   });
 

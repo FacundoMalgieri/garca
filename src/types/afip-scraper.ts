@@ -155,3 +155,21 @@ export interface AFIPScraperResultWithCompany extends AFIPScraperResult {
   availableCompanies?: AFIPCompany[];
 }
 
+/**
+ * Monotributo information scraped from AFIP portal.
+ */
+export interface MonotributoAFIPInfo {
+  /** Current category (e.g., "H") */
+  categoria: string;
+  /** Activity type */
+  tipoActividad: "servicios" | "venta" | null;
+  /** Activity description from AFIP (e.g., "LOCACIONES DE SERVICIOS") */
+  actividadDescripcion: string;
+  /** Next recategorization period (e.g., "Enero 2026") */
+  proximaRecategorizacion: string;
+  /** Full name from Monotributo portal */
+  nombreCompleto: string;
+  /** CUIT from Monotributo portal */
+  cuit: string;
+}
+

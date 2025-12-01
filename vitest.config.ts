@@ -27,10 +27,13 @@ export default defineConfig({
         // Scrapers - require real AFIP connection, tested manually
         "src/lib/scrapers/afip/index.ts",
         "src/lib/scrapers/afip/steps/**",
+        "src/lib/scrapers/afip/events.ts",
         "src/lib/scrapers/monotributo/index.ts",
         // API routes that call scrapers
         "src/app/api/arca/**",
         "src/app/api/monotributo/**",
+        // External widget - depends on Cloudflare script
+        "src/components/TurnstileWidget/**",
       ],
     },
   },

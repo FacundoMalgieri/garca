@@ -3,9 +3,39 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import type { CompanyInfo } from "@/hooks/useInvoices";
-import type { AFIPInvoice } from "@/types/afip-scraper";
+import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
+import type { MonotributoData, TipoActividad } from "@/types/monotributo";
 
 import { formatInvoiceType } from "../formatters";
+
+/** Cache key for monotributo data in localStorage */
+const MONOTRIBUTO_CACHE_KEY = "monotributo-data-cache";
+const MONOTRIBUTO_ACTIVITY_KEY = "monotributo-tipo-actividad";
+
+/**
+ * Gets monotributo data from localStorage cache.
+ */
+function getMonotributoFromCache(): { data: MonotributoData | null; tipoActividad: TipoActividad } {
+  let data: MonotributoData | null = null;
+  let tipoActividad: TipoActividad = "servicios";
+
+  try {
+    const cached = localStorage.getItem(MONOTRIBUTO_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      data = parsed.data || null;
+    }
+
+    const savedActivity = localStorage.getItem(MONOTRIBUTO_ACTIVITY_KEY);
+    if (savedActivity === "servicios" || savedActivity === "venta") {
+      tipoActividad = savedActivity;
+    }
+  } catch {
+    // Silently fail
+  }
+
+  return { data, tipoActividad };
+}
 
 /**
  * Calculates total in pesos for an invoice (handles all foreign currencies).
@@ -254,7 +284,11 @@ function formatMonth(monthKey: string): string {
  * 3. Invoice Table (complete)
  * 4. Charts
  */
-export async function exportToPDF(invoices: AFIPInvoice[], company: CompanyInfo | null = null): Promise<void> {
+export async function exportToPDF(
+  invoices: AFIPInvoice[], 
+  company: CompanyInfo | null = null,
+  monotributoInfo?: MonotributoAFIPInfo | null
+): Promise<void> {
   const doc = new jsPDF();
 
   // Calculate totals first (needed for monotributo)
@@ -285,71 +319,156 @@ export async function exportToPDF(invoices: AFIPInvoice[], company: CompanyInfo 
   // Monotributo section (if current year data exists)
   let monotributoEndY = 45;
   
-  if (yearTotals && yearTotals.totalPesos > 0) {
+  // Get monotributo data from cache
+  const { data: monotributoData, tipoActividad } = getMonotributoFromCache();
+  
+  if (yearTotals && yearTotals.totalPesos > 0 && monotributoData && monotributoData.categorias.length > 0) {
+    const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
+    
+    // Find calculated category based on income
+    const categoriaCalculada = categorias.find((cat) => ingresosAnuales <= cat.ingresosBrutos) || categorias[categorias.length - 1];
+    const porcentajeUsado = Math.min((ingresosAnuales / categoriaCalculada.ingresosBrutos) * 100, 100);
+    const margenDisponible = categoriaCalculada.ingresosBrutos - ingresosAnuales;
+    
+    // Get payment for calculated category
+    const pagoMensualCalculado = tipoActividad === "servicios" 
+      ? categoriaCalculada.total.servicios 
+      : categoriaCalculada.total.venta;
+
+    // Find current category from ARCA (if available)
+    const categoriaActualARCA = monotributoInfo 
+      ? categorias.find((cat) => cat.categoria === monotributoInfo.categoria)
+      : null;
+    const pagoMensualActual = categoriaActualARCA 
+      ? (tipoActividad === "servicios" ? categoriaActualARCA.total.servicios : categoriaActualARCA.total.venta)
+      : null;
+
+    // Section header
     doc.setFontSize(14);
     doc.setTextColor(38, 47, 85);
     doc.text("Monotributo", 14, 45);
 
-    const categorias = [
-      { categoria: "A", ingresosBrutos: 6450000, cuotaMensual: 15000 },
-      { categoria: "B", ingresosBrutos: 9450000, cuotaMensual: 16800 },
-      { categoria: "C", ingresosBrutos: 13250000, cuotaMensual: 19200 },
-      { categoria: "D", ingresosBrutos: 16450000, cuotaMensual: 22900 },
-      { categoria: "E", ingresosBrutos: 19350000, cuotaMensual: 27400 },
-      { categoria: "F", ingresosBrutos: 24200000, cuotaMensual: 34200 },
-      { categoria: "G", ingresosBrutos: 29050000, cuotaMensual: 42700 },
-      { categoria: "H", ingresosBrutos: 44100000, cuotaMensual: 66500 },
-      { categoria: "I", ingresosBrutos: 49200000, cuotaMensual: 76800 },
-      { categoria: "J", ingresosBrutos: 55850000, cuotaMensual: 88900 },
-      { categoria: "K", ingresosBrutos: 68000000, cuotaMensual: 110000 },
-    ];
+    // Build activity text
+    const actividadText = monotributoInfo?.tipoActividad === "servicios" 
+      ? "Servicios" 
+      : monotributoInfo?.tipoActividad === "venta" 
+        ? "Venta de Bienes" 
+        : monotributoInfo?.actividadDescripcion || (tipoActividad === "servicios" ? "Servicios" : "Venta de Bienes");
 
-    const categoriaActual =
-      categorias.find((cat) => ingresosAnuales <= cat.ingresosBrutos) || categorias[categorias.length - 1];
-    const porcentajeUsado = Math.min((ingresosAnuales / categoriaActual.ingresosBrutos) * 100, 100);
-    const restanteSiguienteCategoria = categorias.find((cat) => cat.ingresosBrutos > categoriaActual.ingresosBrutos);
-    const montoRestante = restanteSiguienteCategoria ? restanteSiguienteCategoria.ingresosBrutos - ingresosAnuales : 0;
+    // Build 2-column table
+    // Col 1: Tu actividad, Categoría actual, Ingresos Acumulados, Límite de Categoría, Margen Disponible
+    // Col 2: Porcentaje utilizado, Próxima Recategorización, Categoría estimada, Pago mensual actual, Pago mensual estimado
+    const monotributoStats: string[][] = [];
 
-    const monotributoData: string[][] = [
-      ["Categoría Actual", `Categoría ${categoriaActual.categoria}`],
-      ["Ingresos Anuales", `$${ingresosAnuales.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`],
-      [
-        "Límite de Categoría",
-        `$${categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 0 })}`,
-      ],
-      ["Porcentaje Utilizado", `${porcentajeUsado.toFixed(1)}%`],
-      ["Cuota Mensual", `$${categoriaActual.cuotaMensual.toLocaleString("es-AR", { minimumFractionDigits: 0 })}`],
-    ];
-
-    if (restanteSiguienteCategoria && montoRestante > 0) {
-      monotributoData.push([
-        `Restante para Cat. ${restanteSiguienteCategoria.categoria}`,
-        `$${montoRestante.toLocaleString("es-AR", { minimumFractionDigits: 0 })}`,
-      ]);
-    } else if (ingresosAnuales > categoriaActual.ingresosBrutos) {
-      const excedente = ingresosAnuales - categoriaActual.ingresosBrutos;
-      monotributoData.push([
-        "Excedente sobre límite",
-        `$${excedente.toLocaleString("es-AR", { minimumFractionDigits: 0 })}`,
-      ]);
+    if (monotributoInfo && pagoMensualActual !== null) {
+      monotributoStats.push(
+        [
+          "Tu actividad:", 
+          actividadText, 
+          "Porcentaje Utilizado:", 
+          `${porcentajeUsado.toFixed(1)}%`
+        ],
+        [
+          "Categoría actual:", 
+          monotributoInfo.categoria, 
+          "Próxima recategorización:", 
+          monotributoInfo.proximaRecategorizacion || "-"
+        ],
+        [
+          "Ingresos Acumulados:", 
+          `$${ingresosAnuales.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          "Categoría estimada:", 
+          categoriaCalculada.categoria
+        ],
+        [
+          "Límite de Categoría:", 
+          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          `Pago mensual actual (${monotributoInfo.categoria}):`, 
+          `$${pagoMensualActual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
+        ],
+        [
+          "Margen Disponible:", 
+          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          `Pago mensual estimado (${categoriaCalculada.categoria}):`, 
+          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
+        ]
+      );
+    } else {
+      // Without ARCA info
+      monotributoStats.push(
+        [
+          "Tu actividad:", 
+          actividadText, 
+          "Porcentaje Utilizado:", 
+          `${porcentajeUsado.toFixed(1)}%`
+        ],
+        [
+          "Categoría calculada:", 
+          categoriaCalculada.categoria, 
+          "", 
+          ""
+        ],
+        [
+          "Ingresos Acumulados:", 
+          `$${ingresosAnuales.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          "Pago mensual:", 
+          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
+        ],
+        [
+          "Límite de Categoría:", 
+          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          "", 
+          ""
+        ],
+        [
+          "Margen Disponible:", 
+          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
+          "", 
+          ""
+        ]
+      );
     }
 
     autoTable(doc, {
       startY: 50,
-      body: monotributoData,
+      body: monotributoStats,
       theme: "plain",
       styles: {
-        fontSize: 9,
-        cellPadding: 3,
+        fontSize: 8,
+        cellPadding: 2,
       },
       columnStyles: {
-        0: { cellWidth: 60, fontStyle: "bold", textColor: [80, 80, 80] },
-        1: { cellWidth: 100, textColor: [38, 47, 85], fontStyle: "bold" },
+        0: { cellWidth: 45, fontStyle: "normal", textColor: [100, 100, 100] },
+        1: { cellWidth: 45, fontStyle: "bold", textColor: [38, 47, 85], halign: "right" as const },
+        2: { cellWidth: 45, fontStyle: "normal", textColor: [100, 100, 100] },
+        3: { cellWidth: 45, fontStyle: "bold", textColor: [38, 47, 85], halign: "right" as const },
       },
       margin: { left: 14, right: 14 },
     });
 
-    monotributoEndY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
+    // Progress bar visual
+    const progressBarY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
+    const progressBarWidth = 182;
+    const progressBarHeight = 6;
+    const filledWidth = (porcentajeUsado / 100) * progressBarWidth;
+
+    // Background
+    doc.setFillColor(230, 230, 230);
+    doc.roundedRect(14, progressBarY, progressBarWidth, progressBarHeight, 2, 2, "F");
+
+    // Filled portion with color based on usage
+    const progressColor = porcentajeUsado > 90 ? [239, 68, 68] : porcentajeUsado > 75 ? [234, 179, 8] : [34, 197, 94];
+    doc.setFillColor(progressColor[0], progressColor[1], progressColor[2]);
+    if (filledWidth > 0) {
+      doc.roundedRect(14, progressBarY, Math.max(filledWidth, 4), progressBarHeight, 2, 2, "F");
+    }
+
+    // Disclaimer
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text("* Los topes de cada categoría pueden actualizarse en cada período de recategorización.", 14, progressBarY + 12);
+
+    monotributoEndY = progressBarY + 20;
   }
 
   // ========== TOTALS (on same page if fits, otherwise new page) ==========
@@ -524,8 +643,17 @@ export async function exportToPDF(invoices: AFIPInvoice[], company: CompanyInfo 
   // Force light mode temporarily to avoid oklch errors in dark mode
   const htmlElement = document.documentElement;
   const wasDarkMode = htmlElement.classList.contains("dark");
+  
+  // Wait a tick for React to render the LoadingSplash before we look for it
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const pdfLoadingSplash = document.getElementById("pdf-loading-splash");
+  
   if (wasDarkMode) {
     htmlElement.classList.remove("dark");
+    // Keep LoadingSplash in dark mode so it doesn't flash white
+    if (pdfLoadingSplash) {
+      pdfLoadingSplash.classList.add("dark");
+    }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
@@ -544,7 +672,8 @@ export async function exportToPDF(invoices: AFIPInvoice[], company: CompanyInfo 
       if (tabButtons[i]) {
         (tabButtons[i] as HTMLElement).click();
 
-        await new Promise((resolve) => setTimeout(resolve, 2500));
+        // Wait for chart animations to complete (increased from 2500ms for reliability)
+        await new Promise((resolve) => setTimeout(resolve, 4000));
 
         const chartElement = document.getElementById(chartIds[i]);
         if (chartElement) {
@@ -588,6 +717,10 @@ export async function exportToPDF(invoices: AFIPInvoice[], company: CompanyInfo 
   // Restore dark mode if it was active
   if (wasDarkMode) {
     htmlElement.classList.add("dark");
+    // Remove dark from LoadingSplash since html has it again
+    if (pdfLoadingSplash) {
+      pdfLoadingSplash.classList.remove("dark");
+    }
   }
 
   // Footer on all pages
