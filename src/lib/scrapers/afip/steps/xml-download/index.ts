@@ -8,7 +8,7 @@ import type { Download, Page } from "playwright";
 
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
-import { SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 import { parseAfipXml } from "../../xml-parser";
 
 /**
@@ -47,7 +47,7 @@ async function downloadInvoiceXML(page: Page, invoice: AFIPInvoice, index: numbe
   }
 
   // Setup download listener before clicking
-  const downloadPromise = page.waitForEvent("download", { timeout: 15000 });
+  const downloadPromise = page.waitForEvent("download", { timeout: ELEMENT_TIMEOUT });
 
   // Click the XML download button
   await xmlButton.click();

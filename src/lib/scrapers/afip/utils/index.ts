@@ -65,18 +65,24 @@ export function handleError(error: unknown): AFIPScraperResult {
   const errorMessage = error instanceof Error ? error.message : "Error desconocido";
 
   let errorCode: AFIPErrorCode = AFIPErrorCode.UNKNOWN;
+  let userFriendlyMessage = errorMessage;
 
-  if (errorMessage.includes("timeout") || errorMessage.includes("Navigation timeout")) {
+  if (errorMessage.includes("timeout") || errorMessage.includes("Navigation timeout") || errorMessage.includes("Timeout")) {
     errorCode = AFIPErrorCode.TIMEOUT;
+    userFriendlyMessage = "El portal de ARCA está tardando demasiado en responder. Por favor, intentá de nuevo en unos minutos. Si el problema persiste, es posible que ARCA esté experimentando problemas técnicos.";
   } else if (errorMessage.includes("net::ERR") || errorMessage.includes("navigation")) {
     errorCode = AFIPErrorCode.SERVICE_UNAVAILABLE;
+    userFriendlyMessage = "No se pudo conectar con el portal de ARCA. Verificá tu conexión a internet o intentá de nuevo más tarde.";
+  } else if (errorMessage.includes("No se pudo encontrar la selección de empresa")) {
+    errorCode = AFIPErrorCode.SERVICE_UNAVAILABLE;
+    userFriendlyMessage = "El portal de ARCA no cargó correctamente. Esto puede deberse a problemas técnicos en el sitio de ARCA. Por favor, intentá de nuevo en unos minutos.";
   }
 
   return {
     success: false,
     invoices: [],
     total: 0,
-    error: errorMessage,
+    error: userFriendlyMessage,
     errorCode,
   };
 }

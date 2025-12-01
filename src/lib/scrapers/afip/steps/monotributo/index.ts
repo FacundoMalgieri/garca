@@ -7,7 +7,7 @@ import type { BrowserContext, Page } from "playwright";
 
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
-import { SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 
 /**
  * Result of Monotributo scraping.
@@ -79,7 +79,7 @@ async function navigateToMonotributo(
   try {
     // Use search box to find Monotributo
     const searchInput = page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).first();
-    await searchInput.waitFor({ state: "visible", timeout: 10000 });
+    await searchInput.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
     await searchInput.click();
     await searchInput.fill("monotributo");
     console.log("[AFIP Monotributo] Typed in search box, waiting for results...");
@@ -91,7 +91,7 @@ async function navigateToMonotributo(
     const monotributoResult = page.locator('li[role="option"]:has-text("Monotributo")').first();
     
     try {
-      await monotributoResult.waitFor({ state: "visible", timeout: 10000 });
+      await monotributoResult.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
       console.log("[AFIP Monotributo] Found Monotributo search result, clicking...");
     } catch {
       console.log("[AFIP Monotributo] No Monotributo result found in search");
@@ -99,7 +99,7 @@ async function navigateToMonotributo(
     }
 
     // Setup listener for new page/tab before clicking
-    const newPagePromise = context.waitForEvent("page", { timeout: 15000 }).catch(() => null);
+    const newPagePromise = context.waitForEvent("page", { timeout: NEW_TAB_TIMEOUT }).catch(() => null);
     
     await monotributoResult.click();
     console.log("[AFIP Monotributo] Waiting for Monotributo portal...");
@@ -148,7 +148,7 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
 
   try {
     // Wait for the jumbotron body to be visible
-    await page.waitForSelector(".jumbotron_body", { timeout: 10000 }).catch(() => {
+    await page.waitForSelector(".jumbotron_body", { timeout: ELEMENT_TIMEOUT }).catch(() => {
       console.log("[AFIP Monotributo] jumbotron_body not found, trying alternative selectors...");
     });
 

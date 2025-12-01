@@ -85,56 +85,105 @@ const organizationSchema = {
 };
 
 // FAQ Schema - Critical for Google AI Overviews
+// These should match the FAQ_ITEMS in src/app/page.tsx
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   mainEntity: [
     {
       "@type": "Question",
-      name: "¿Qué es GARCA?",
+      name: "¿Para qué sirve GARCA?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "GARCA es una herramienta gratuita y segura para recuperar comprobantes de ARCA (ex AFIP). Permite consultar facturas emitidas y recibidas, calcular tu categoría de Monotributo y exportar los datos a Excel.",
+        text: "GARCA te permite consultar y exportar los comprobantes que tenés en 'Comprobantes en línea' de ARCA de forma rápida y sencilla. También calcula automáticamente tu categoría de Monotributo según tus ingresos acumulados, ayudándote a saber si tenés que recategorizarte.",
       },
     },
     {
       "@type": "Question",
-      name: "¿Es seguro usar GARCA con mis datos de ARCA?",
+      name: "¿Es seguro ingresar mis credenciales de AFIP?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Sí, GARCA es 100% seguro. Tus credenciales nunca se almacenan en ningún servidor. Todo el procesamiento ocurre en tu navegador y los datos se guardan localmente en tu dispositivo. El código es open source y auditable en GitHub.",
+        text: "Sí. Tus credenciales nunca se guardan en ningún servidor. La conexión con AFIP se hace directamente desde tu navegador de forma encriptada, y los datos solo se almacenan temporalmente en tu dispositivo (localStorage). Podés verificar el código fuente en GitHub.",
       },
     },
     {
       "@type": "Question",
-      name: "¿GARCA guarda mis datos en algún servidor?",
+      name: "¿Guardan mis datos o contraseñas?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No. GARCA funciona completamente en tu navegador. Tus facturas y datos se almacenan únicamente en el almacenamiento local de tu navegador (localStorage). No enviamos ni guardamos tus datos en ningún servidor externo.",
+        text: "No. GARCA no tiene base de datos ni servidor que almacene información. Todo se procesa en tu navegador y se guarda localmente en tu dispositivo. Cuando cerrás la sesión, podés borrar todos los datos.",
       },
     },
     {
       "@type": "Question",
-      name: "¿Qué monedas soporta GARCA?",
+      name: "¿Por qué tarda en cargar mis comprobantes?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "GARCA soporta todas las monedas que maneja ARCA: Pesos Argentinos (ARS), Dólares Estadounidenses (USD), Euros (EUR) y Reales Brasileños (BRL).",
+        text: "ARCA no tiene una API pública, así que GARCA usa web scraping para navegar por el portal y extraer tus datos, similar a como lo harías manualmente. Dependiendo de la cantidad de comprobantes y la velocidad de ARCA, puede tomar entre 30 segundos y 2 minutos.",
       },
     },
     {
       "@type": "Question",
-      name: "¿Cómo calcula GARCA mi categoría de Monotributo?",
+      name: "¿Funciona con cualquier tipo de contribuyente?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "GARCA suma automáticamente tus ingresos del año actual y los compara con los límites de cada categoría de Monotributo vigentes. Te muestra tu categoría actual, el porcentaje utilizado y cuánto margen te queda antes de pasar a la siguiente categoría.",
+        text: "Actualmente GARCA está optimizado para Monotributistas. Lee únicamente los comprobantes disponibles en 'Comprobantes en línea' de ARCA. Si tenés otro tipo de situación fiscal, puede que algunas funciones no estén disponibles.",
       },
     },
     {
       "@type": "Question",
-      name: "¿GARCA está afiliado con ARCA o AFIP?",
+      name: "¿Puedo exportar los datos para mi contador?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No. GARCA es un proyecto independiente y open source. No tiene ninguna afiliación oficial con ARCA, AFIP ni ningún organismo gubernamental argentino.",
+        text: "¡Sí! Podés exportar tus comprobantes a Excel (CSV), JSON o PDF. El PDF incluye gráficos y un resumen de tu situación en Monotributo, ideal para compartir con tu contador.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Es gratis?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sí, GARCA es 100% gratis y open source. Si te resulta útil y querés apoyar el desarrollo, podés hacer una donación voluntaria o dejar una estrella en GitHub.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Qué pasa si AFIP cambia su página?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Como GARCA depende de la estructura del portal de AFIP, cambios en su sitio pueden afectar el funcionamiento. El proyecto se mantiene activamente, así que ante cualquier problema, revisá si hay actualizaciones o reportá el issue en GitHub.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Necesito instalar algo?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No, GARCA es 100% web. Funciona directamente desde el navegador sin necesidad de instalar ningún programa, extensión o aplicación. Solo necesitás una conexión a internet.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Funciona en celular?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sí, GARCA está optimizado para funcionar en dispositivos móviles. Podés consultar y exportar tus comprobantes desde tu celular o tablet sin problemas.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Puedo usar GARCA para varias empresas?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sí, podés ingresar con diferentes CUITs. Sin embargo, los datos se guardan por sesión, así que si querés cambiar de empresa tenés que volver a ingresar con las credenciales correspondientes.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Qué hago si me da error?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Primero verificá que tus credenciales de AFIP sean correctas. Si el error persiste, puede ser que AFIP esté experimentando problemas (suele pasar). Esperá unos minutos e intentá de nuevo. Si sigue fallando, podés reportar el problema en GitHub.",
       },
     },
   ],

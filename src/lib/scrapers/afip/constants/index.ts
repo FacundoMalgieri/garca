@@ -7,7 +7,9 @@
 // CONFIGURATION
 // ============================================================================
 
-export const DEFAULT_TIMEOUT = 120000; // 2 minutes
+export const DEFAULT_TIMEOUT = 120000; // 2 minutes - overall navigation timeout
+export const ELEMENT_TIMEOUT = 60000; // 1 minute - timeout for waiting for individual elements
+export const NEW_TAB_TIMEOUT = 60000; // 1 minute - timeout for waiting for new tabs to open
 export const DEFAULT_HEADLESS = true;
 export const MAX_RETRIES = 2;
 
@@ -40,7 +42,8 @@ export const SELECTORS = {
     COMPROBANTES_LINK: 'a[href*="fe.afip.gob.ar/rcel"], a[href*="/rcel/"], a:has-text("Comprobantes en línea")',
     SEARCH_INPUT: 'input#buscadorInput, input[placeholder*="Buscá trámites"]',
     SEARCH_RESULT: 'li[role="option"]:has-text("Sistema de emisión de comprobantes"), li[role="option"]:has-text("Comprobantes en línea")',
-    COMPANY_BUTTON: 'input[type="button"].btn_empresa, input.btn_empresa, button.btn_empresa, input[onclick*="seleccionaEmpresaForm"]',
+    // Multiple selectors for company button - ARCA uses different variants
+    COMPANY_BUTTON: 'input[type="button"].btn_empresa, input[type="submit"].btn_empresa, input.btn_empresa, button.btn_empresa, input[onclick*="seleccionaEmpresaForm"], input[onclick*="empresa"], input[value][class*="btn"]',
     CONSULTAS_BUTTON: 'a#btn_consultas, a:has-text("Consultas"), a[href*="filtrarComprobantesGenerados"]',
   },
 

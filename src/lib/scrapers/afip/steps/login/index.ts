@@ -6,7 +6,7 @@ import type { Page } from "playwright";
 
 import { type AFIPCredentials, AFIPErrorCode, type AFIPScraperResult } from "@/types/afip-scraper";
 
-import { SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 import { createErrorResult, createSuccessResult, isBlockedAccountError, isInvalidCredentialsError } from "../../utils";
 
 /**
@@ -70,7 +70,7 @@ async function fillCuit(page: Page, cuit: string): Promise<void> {
   console.log("[AFIP Scraper] Step 1: Filling CUIT...");
   const cuitInput = page.locator(SELECTORS.LOGIN.CUIT_INPUT).first();
 
-  await cuitInput.waitFor({ state: "visible", timeout: 10000 });
+  await cuitInput.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await cuitInput.click();
   await cuitInput.fill(cuit);
   console.log("[AFIP Scraper] CUIT filled:", cuit);
@@ -83,7 +83,7 @@ async function clickSiguiente(page: Page): Promise<void> {
   console.log("[AFIP Scraper] Clicking 'Siguiente' button...");
   const siguienteButton = page.locator(SELECTORS.LOGIN.SIGUIENTE_BUTTON).first();
 
-  await siguienteButton.waitFor({ state: "visible", timeout: 10000 });
+  await siguienteButton.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await siguienteButton.click();
   console.log("[AFIP Scraper] 'Siguiente' clicked, waiting for password field...");
 
@@ -98,7 +98,7 @@ async function fillPassword(page: Page, password: string): Promise<void> {
   console.log("[AFIP Scraper] Step 2: Filling password...");
   const passwordInput = page.locator(SELECTORS.LOGIN.PASSWORD_INPUT).first();
 
-  await passwordInput.waitFor({ state: "visible", timeout: 10000 });
+  await passwordInput.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await passwordInput.click();
   await passwordInput.fill(password);
   console.log("[AFIP Scraper] Password filled successfully");
@@ -112,7 +112,7 @@ async function clickIngresar(page: Page, timeout: number): Promise<void> {
   console.log("[AFIP Scraper] Clicking 'Ingresar' button...");
   const ingresarButton = page.locator(SELECTORS.LOGIN.INGRESAR_BUTTON).first();
 
-  await ingresarButton.waitFor({ state: "visible", timeout: 10000 });
+  await ingresarButton.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
 
   // Click the button
   await ingresarButton.click();

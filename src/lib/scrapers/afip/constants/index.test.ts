@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, MAX_RETRIES, SELECTORS, TIMING, URLS } from "./index";
+import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, ELEMENT_TIMEOUT, MAX_RETRIES, NEW_TAB_TIMEOUT, SELECTORS, TIMING, URLS } from "./index";
 
 describe("AFIP Scraper Constants", () => {
   describe("Configuration", () => {
     it("should have reasonable default timeout", () => {
       expect(DEFAULT_TIMEOUT).toBeGreaterThanOrEqual(60000); // At least 1 minute
       expect(DEFAULT_TIMEOUT).toBeLessThanOrEqual(300000); // At most 5 minutes
+    });
+
+    it("should have element timeout of at least 60 seconds", () => {
+      expect(ELEMENT_TIMEOUT).toBeGreaterThanOrEqual(60000); // At least 1 minute
+    });
+
+    it("should have new tab timeout of at least 60 seconds", () => {
+      expect(NEW_TAB_TIMEOUT).toBeGreaterThanOrEqual(60000); // At least 1 minute
     });
 
     it("should default to headless mode", () => {

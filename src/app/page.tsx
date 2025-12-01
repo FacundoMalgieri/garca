@@ -37,6 +37,58 @@ const DEMO_MONOTRIBUTO_INFO: MonotributoAFIPInfo = {
   cuit: "20345678901",
 };
 
+// FAQ data
+const FAQ_ITEMS = [
+  {
+    question: "¿Para qué sirve GARCA?",
+    answer: "GARCA te permite consultar y exportar los comprobantes que tenés en 'Comprobantes en línea' de ARCA de forma rápida y sencilla. También calcula automáticamente tu categoría de Monotributo según tus ingresos acumulados, ayudándote a saber si tenés que recategorizarte.",
+  },
+  {
+    question: "¿Es seguro ingresar mis credenciales de AFIP?",
+    answer: "Sí. Tus credenciales nunca se guardan en ningún servidor. La conexión con AFIP se hace directamente desde tu navegador de forma encriptada, y los datos solo se almacenan temporalmente en tu dispositivo (localStorage). Podés verificar el código fuente en GitHub.",
+  },
+  {
+    question: "¿Guardan mis datos o contraseñas?",
+    answer: "No. GARCA no tiene base de datos ni servidor que almacene información. Todo se procesa en tu navegador y se guarda localmente en tu dispositivo. Cuando cerrás la sesión, podés borrar todos los datos.",
+  },
+  {
+    question: "¿Por qué tarda en cargar mis comprobantes?",
+    answer: "ARCA no tiene una API pública, así que GARCA usa web scraping para navegar por el portal y extraer tus datos, similar a como lo harías manualmente. Dependiendo de la cantidad de comprobantes y la velocidad de ARCA, puede tomar entre 30 segundos y 2 minutos.",
+  },
+  {
+    question: "¿Funciona con cualquier tipo de contribuyente?",
+    answer: "Actualmente GARCA está optimizado para Monotributistas. Lee únicamente los comprobantes disponibles en 'Comprobantes en línea' de ARCA. Si tenés otro tipo de situación fiscal, puede que algunas funciones no estén disponibles.",
+  },
+  {
+    question: "¿Puedo exportar los datos para mi contador?",
+    answer: "¡Sí! Podés exportar tus comprobantes a Excel (CSV), JSON o PDF. El PDF incluye gráficos y un resumen de tu situación en Monotributo, ideal para compartir con tu contador.",
+  },
+  {
+    question: "¿Es gratis?",
+    answer: "Sí, GARCA es 100% gratis y open source. Si te resulta útil y querés apoyar el desarrollo, podés hacer una donación voluntaria o dejar una estrella en GitHub.",
+  },
+  {
+    question: "¿Qué pasa si AFIP cambia su página?",
+    answer: "Como GARCA depende de la estructura del portal de AFIP, cambios en su sitio pueden afectar el funcionamiento. El proyecto se mantiene activamente, así que ante cualquier problema, revisá si hay actualizaciones o reportá el issue en GitHub.",
+  },
+  {
+    question: "¿Necesito instalar algo?",
+    answer: "No, GARCA es 100% web. Funciona directamente desde el navegador sin necesidad de instalar ningún programa, extensión o aplicación. Solo necesitás una conexión a internet.",
+  },
+  {
+    question: "¿Funciona en celular?",
+    answer: "Sí, GARCA está optimizado para funcionar en dispositivos móviles. Podés consultar y exportar tus comprobantes desde tu celular o tablet sin problemas.",
+  },
+  {
+    question: "¿Puedo usar GARCA para varias empresas?",
+    answer: "Sí, podés ingresar con diferentes CUITs. Sin embargo, los datos se guardan por sesión, así que si querés cambiar de empresa tenés que volver a ingresar con las credenciales correspondientes.",
+  },
+  {
+    question: "¿Qué hago si me da error?",
+    answer: "Primero verificá que tus credenciales de AFIP sean correctas. Si el error persiste, puede ser que AFIP esté experimentando problemas (suele pasar). Esperá unos minutos e intentá de nuevo. Si sigue fallando, podés reportar el problema en GitHub.",
+  },
+];
+
 // Currency pill colors
 const currencyColors: Record<string, string> = {
   blue: "from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50",
@@ -118,19 +170,25 @@ export default function Home() {
   const currencySectionRef = useRef<HTMLElement>(null);
   const privacySectionRef = useRef<HTMLElement>(null);
   const supportSectionRef = useRef<HTMLElement>(null);
+  const faqSectionRef = useRef<HTMLElement>(null);
 
   // All sections use scroll progress for enter + exit effects
   const featuresProgress = useSectionProgress(featuresSectionRef);
   const currencyProgress = useSectionProgress(currencySectionRef);
   const privacyProgress = useSectionProgress(privacySectionRef);
   const supportProgress = useSectionProgress(supportSectionRef);
+  const faqProgress = useSectionProgress(faqSectionRef);
 
   // Visibility triggers for entry animations (badges, buttons)
   const currencyVisible = useSectionVisible(currencySectionRef, 0.4);
   const supportVisible = useSectionVisible(supportSectionRef, 0.4);
+  const faqVisible = useSectionVisible(faqSectionRef, 0.2);
 
   // Initial page load animation for Hero
   const [heroLoaded, setHeroLoaded] = useState(false);
+
+  // FAQ accordion state - null means all closed, number is the open index
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   // Detect if mobile for responsive parallax behavior
   const [isMobile, setIsMobile] = useState(false);
@@ -412,8 +470,9 @@ export default function Home() {
             ].map(({ currency, label, color, fromLeft, delay }) => (
               <div
                 key={currency}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r ${currencyColors[color]} border backdrop-blur-sm cursor-default hover:scale-110 hover:shadow-lg transition-all duration-700 ease-out`}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r ${currencyColors[color]} border backdrop-blur-sm cursor-default hover:scale-110 hover:shadow-lg transition-all duration-700 ease-out`}
                 style={{
+                  width: "114px",
                   opacity: currencyVisible ? 1 : 0,
                   transform: currencyVisible 
                     ? "translateX(0) translateY(0) rotate(0deg)" 
@@ -577,6 +636,101 @@ export default function Home() {
               GitHub
             </a>
           </p>
+        </div>
+      </section>
+
+      {/* ========== FAQ SECTION ========== */}
+      <section ref={faqSectionRef} id="faq" className="relative py-24 md:py-32 overflow-hidden">
+        <div 
+          className="max-w-3xl mx-auto px-6"
+          style={{
+            // Entry: emerge from below (progress 0->0.2)
+            // Exit: lift up (progress 0.7->1)
+            transform: `translateY(${
+              faqProgress < 0.2
+                ? (1 - faqProgress / 0.2) * 60 // Enter from 60px below
+                : faqProgress > 0.7
+                  ? -((faqProgress - 0.7) / 0.3) * 150 // Exit - lift up 150px
+                  : 0
+            }px)`,
+            opacity: 
+              faqProgress < 0.2
+                ? faqProgress / 0.2 // Fade in
+                : faqProgress > 0.7
+                  ? Math.max(0, 1 - (faqProgress - 0.7) / 0.4) // Fade out slower
+                  : 1,
+          }}
+        >
+          {/* Section header */}
+          <div className="text-center mb-12">
+            <span 
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium mb-4 transition-all duration-700"
+              style={{
+                opacity: faqVisible ? 1 : 0,
+                transform: faqVisible ? "translateY(0)" : "translateY(20px)",
+              }}
+            >
+              Preguntas frecuentes
+            </span>
+            <h2 
+              className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white transition-all duration-700"
+              style={{
+                opacity: faqVisible ? 1 : 0,
+                transform: faqVisible ? "translateY(0)" : "translateY(20px)",
+                transitionDelay: "100ms",
+              }}
+            >
+              ¿Tenés dudas?
+            </h2>
+          </div>
+
+          {/* FAQ Items - staggered entrance */}
+          <div className="space-y-4">
+            {FAQ_ITEMS.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/30 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-500"
+                  style={{
+                    opacity: faqVisible ? 1 : 0,
+                    transform: faqVisible 
+                      ? "translateY(0) scale(1)" 
+                      : `translateY(30px) scale(0.98)`,
+                    transitionDelay: `${200 + index * 75}ms`,
+                  }}
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                    className="w-full flex items-center justify-between gap-4 px-6 py-5 cursor-pointer font-semibold text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+                  >
+                    <span>{faq.question}</span>
+                    <span 
+                      className="shrink-0 text-slate-400 transition-transform duration-300"
+                      style={{ transform: isOpen ? "rotate(45deg)" : "rotate(0deg)" }}
+                    >
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </span>
+                  </button>
+                  <div 
+                    className="grid transition-all duration-300 ease-out"
+                    style={{ 
+                      gridTemplateRows: isOpen ? "1fr" : "0fr",
+                      opacity: isOpen ? 1 : 0,
+                    }}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-5 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                        {faq.answer}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
     </div>

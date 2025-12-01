@@ -6,7 +6,7 @@ import type { BrowserContext, Page } from "playwright";
 
 import type { AFIPCompany } from "@/types/afip-scraper";
 
-import { SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 
 /**
  * Navigation result with company information.
@@ -57,19 +57,19 @@ export async function navigateToInvoices(
 /**
  * Navigates to "Comprobantes en línea" service.
  * Always uses search box for reliability (direct links often fail).
- * May open in a new tab.
+ * May open in a new tab. Includes retry logic if navigation fails.
  */
 async function navigateToComprobantes(page: Page, context: BrowserContext): Promise<Page> {
   console.log("[AFIP Scraper] Navigating to 'Comprobantes en línea' via search...");
 
   // Setup listener for new page/tab before clicking
-  const newPagePromise = context.waitForEvent("page", { timeout: 15000 });
+  const newPagePromise = context.waitForEvent("page", { timeout: NEW_TAB_TIMEOUT });
 
   // Always use search - it's more reliable than direct links
   await searchAndClickComprobantes(page);
 
-  // Wait for new tab to open
-  return await handleNewTab(page, newPagePromise);
+  // Wait for new tab to open (with retry logic)
+  return await handleNewTab(page, newPagePromise, context, 0);
 }
 
 /**
@@ -81,7 +81,7 @@ async function searchAndClickComprobantes(page: Page): Promise<void> {
 
   const searchInput = page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).first();
 
-  await searchInput.waitFor({ state: "visible", timeout: 10000 });
+  await searchInput.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await searchInput.click();
   await searchInput.fill("comprobantes en línea");
   console.log("[AFIP Scraper] Typed in search box, waiting for results...");
@@ -92,15 +92,16 @@ async function searchAndClickComprobantes(page: Page): Promise<void> {
   // Click on the first result
   const firstResult = page.locator(SELECTORS.NAVIGATION.SEARCH_RESULT).first();
 
-  await firstResult.waitFor({ state: "visible", timeout: 10000 });
+  await firstResult.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   console.log("[AFIP Scraper] Found search result, clicking...");
   await firstResult.click();
 }
 
 /**
  * Handles the new tab that opens when clicking "Comprobantes en línea".
+ * If no new tab opens, retries the search and click.
  */
-async function handleNewTab(originalPage: Page, newPagePromise: Promise<Page>): Promise<Page> {
+async function handleNewTab(originalPage: Page, newPagePromise: Promise<Page>, context: BrowserContext, retryCount: number = 0): Promise<Page> {
   console.log("[AFIP Scraper] Waiting for new tab to open...");
 
   try {
@@ -123,10 +124,42 @@ async function handleNewTab(originalPage: Page, newPagePromise: Promise<Page>): 
 
     return newPage;
   } catch {
-    console.warn("[AFIP Scraper] No new tab opened, continuing with same page...");
+    console.warn("[AFIP Scraper] No new tab opened, checking current page...");
     await originalPage.waitForLoadState("networkidle");
     await originalPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
-    console.log("[AFIP Scraper] Current URL:", originalPage.url());
+    
+    const currentUrl = originalPage.url();
+    console.log("[AFIP Scraper] Current URL:", currentUrl);
+
+    // Check if we're on the correct page (RCEL)
+    if (currentUrl.includes("rcel") || currentUrl.includes("fe.afip.gob.ar")) {
+      console.log("[AFIP Scraper] ✅ Already on RCEL portal (same tab navigation)");
+      return originalPage;
+    }
+
+    // If still on portal and haven't retried too many times, try again
+    if (currentUrl.includes("portalcf.cloud.afip.gob.ar") && retryCount < 2) {
+      console.log(`[AFIP Scraper] ⚠️ Still on portal, retrying search (attempt ${retryCount + 2})...`);
+      
+      // Wait a bit before retrying
+      await originalPage.waitForTimeout(2000);
+      
+      // Setup new listener for new page
+      const retryNewPagePromise = context.waitForEvent("page", { timeout: NEW_TAB_TIMEOUT });
+      
+      // Try searching and clicking again
+      await searchAndClickComprobantes(originalPage);
+      
+      // Recursively handle the new tab
+      return await handleNewTab(originalPage, retryNewPagePromise, context, retryCount + 1);
+    }
+
+    // If we've exhausted retries and still on portal, this is an error
+    if (currentUrl.includes("portalcf.cloud.afip.gob.ar")) {
+      console.error("[AFIP Scraper] ❌ Failed to navigate to Comprobantes en línea after retries");
+      throw new Error("No se pudo navegar a 'Comprobantes en línea'. ARCA puede estar experimentando problemas.");
+    }
+
     return originalPage;
   }
 }
@@ -185,7 +218,7 @@ async function selectCompany(page: Page, companyIndex: number = 0): Promise<Comp
   }
 
   // Click the selected company button
-  await companyButton.nth(selectedIndex).waitFor({ state: "visible", timeout: 10000 });
+  await companyButton.nth(selectedIndex).waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   const selectedButtonValue = await companyButton.nth(selectedIndex).getAttribute("value");
   console.log("[AFIP Scraper] Clicking button with value:", selectedButtonValue);
 
@@ -274,7 +307,7 @@ async function clickConsultas(page: Page): Promise<void> {
   const consultasCount = await consultasButton.count();
   if (consultasCount > 0) {
     console.log("[AFIP Scraper] Found 'Consultas' button, clicking...");
-    await consultasButton.first().waitFor({ state: "visible", timeout: 10000 });
+    await consultasButton.first().waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
     await consultasButton.first().click();
     console.log("[AFIP Scraper] ✅ Clicked on 'Consultas'");
 
@@ -314,6 +347,10 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
   console.log("[AFIP Scraper] Extracting available companies...");
   console.log("[AFIP Scraper] Current URL:", page.url());
 
+  // Wait for page to fully load - ARCA can be slow
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
+
   // Extract user info from header
   const userInfo = await extractUserInfoFromHeader(page);
 
@@ -322,7 +359,23 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
   console.log("[AFIP Scraper] Found", companyButtonCount, "company button(s)");
 
   if (companyButtonCount === 0) {
+    // Log page content for debugging
+    const pageTitle = await page.title();
     console.error("[AFIP Scraper] ❌ Company selection button not found.");
+    console.error("[AFIP Scraper] Page title:", pageTitle);
+    
+    // Check if we're on an error page or unexpected page
+    const bodyText = await page.locator("body").textContent().catch(() => "");
+    if (bodyText && bodyText.length < 2000) {
+      console.error("[AFIP Scraper] Page content preview:", bodyText.substring(0, 500));
+    }
+    
+    // Check for common error indicators
+    const hasError = await page.locator("text=error, text=Error, .error, .alert-danger").count();
+    if (hasError > 0) {
+      console.error("[AFIP Scraper] Error indicators found on page");
+    }
+    
     throw new Error("No se pudo encontrar la selección de empresa. Verifique la navegación.");
   }
 
