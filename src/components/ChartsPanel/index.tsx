@@ -348,10 +348,10 @@ function ProgresoChart({
                 const { x, y } = viewBox as { x?: number; y?: number };
                 return (
                   <g>
-                    <text x={(x || 0) + 420} y={(y || 0) - 6} fill="#15803d" fontSize={12} fontWeight="bold" textAnchor="end">
+                    <text x={(x || 0) + 200} y={(y || 0) - 6} fill="#15803d" fontSize={12} fontWeight="bold" textAnchor="end">
                       Límite Cat. {currentCategory.categoria}
                     </text>
-                    <text x={(x || 0) + 420} y={(y || 0) + 14} fill="#15803d" fontSize={12} fontWeight="500" textAnchor="end">
+                    <text x={(x || 0) + 200} y={(y || 0) + 14} fill="#15803d" fontSize={12} fontWeight="500" textAnchor="end">
                       ${currentCategory.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
                     </text>
                   </g>

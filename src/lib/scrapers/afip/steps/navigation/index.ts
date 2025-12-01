@@ -354,7 +354,17 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
   // Extract user info from header
   const userInfo = await extractUserInfoFromHeader(page);
 
+  // Try to wait for company button to appear (ARCA can be slow to render)
   const companyButton = page.locator(SELECTORS.NAVIGATION.COMPANY_BUTTON);
+  
+  try {
+    console.log("[AFIP Scraper] Waiting for company button to appear...");
+    await companyButton.first().waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
+    console.log("[AFIP Scraper] ✅ Company button found!");
+  } catch {
+    console.warn("[AFIP Scraper] Company button not visible after waiting, checking count anyway...");
+  }
+  
   const companyButtonCount = await companyButton.count();
   console.log("[AFIP Scraper] Found", companyButtonCount, "company button(s)");
 
@@ -363,6 +373,12 @@ async function extractAvailableCompanies(page: Page): Promise<AFIPCompany[]> {
     const pageTitle = await page.title();
     console.error("[AFIP Scraper] ❌ Company selection button not found.");
     console.error("[AFIP Scraper] Page title:", pageTitle);
+    console.error("[AFIP Scraper] Current URL:", page.url());
+    
+    // Log all inputs on the page for debugging
+    const allInputs = await page.locator("input").count();
+    const allButtons = await page.locator("button").count();
+    console.error(`[AFIP Scraper] Page has ${allInputs} inputs and ${allButtons} buttons`);
     
     // Check if we're on an error page or unexpected page
     const bodyText = await page.locator("body").textContent().catch(() => "");
