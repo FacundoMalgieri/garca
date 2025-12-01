@@ -16,13 +16,25 @@ import {
 // Removed CurrencyPill import - now rendered inline with scroll-controlled animations
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { mockInvoices } from "@/test/mocks/invoices";
+import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
+const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 
 const DEMO_COMPANY = {
   cuit: "20345678901",
   razonSocial: "Tecnología Innovadora SRL (Demo)",
+};
+
+// Demo Monotributo info - simulates data scraped from AFIP
+const DEMO_MONOTRIBUTO_INFO: MonotributoAFIPInfo = {
+  categoria: "G",
+  tipoActividad: "servicios",
+  actividadDescripcion: "LOCACIONES DE SERVICIOS",
+  proximaRecategorizacion: "Enero 2026",
+  nombreCompleto: "TECNOLOGÍA INNOVADORA SRL",
+  cuit: "20345678901",
 };
 
 // Currency pill colors
@@ -153,6 +165,7 @@ export default function Home() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mockInvoices));
       localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(DEMO_COMPANY));
+      localStorage.setItem(MONOTRIBUTO_STORAGE_KEY, JSON.stringify(DEMO_MONOTRIBUTO_INFO));
       loadFromStorage();
       router.push("/panel");
     } catch (error) {

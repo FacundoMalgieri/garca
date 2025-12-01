@@ -130,7 +130,9 @@ describe("concurrency", () => {
 
       // Second task should have timed out
       expect(promise2Error).toBeDefined();
-      expect(promise2Error!.message).toMatch(/El servidor está ocupado/);
+      if (promise2Error) {
+        expect(promise2Error.message).toMatch(/El servidor está ocupado/);
+      }
 
       // Clean up - resolve blocking task
       resolveBlocking("blocking");
