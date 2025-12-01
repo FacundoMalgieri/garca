@@ -55,6 +55,16 @@ input[type="number"] {
   box-shadow: none;
 }
 
+/* Fix iOS Safari date input width */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+}
+
 /* Shimmer animation for loading bar */
 @keyframes shimmer {
   0% {
