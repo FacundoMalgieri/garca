@@ -92,7 +92,7 @@ export function Dropdown({
         type="button"
         onClick={handleToggle}
         className={cn(
-          "flex items-center justify-between gap-2 w-full px-3 py-2 text-sm rounded-lg border border-border bg-white dark:bg-background text-foreground cursor-pointer transition-colors",
+          "flex items-center justify-between gap-2 w-full px-3 py-2 text-base rounded-lg border border-border bg-white dark:bg-background text-foreground cursor-pointer transition-colors",
           "focus:outline-none focus:ring-2 focus:ring-primary",
           buttonClassName
         )}

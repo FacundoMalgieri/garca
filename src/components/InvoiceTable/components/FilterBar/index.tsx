@@ -39,7 +39,7 @@ export function FilterBar({
             placeholder="Número o receptor..."
             value={filters.searchText}
             onChange={(e) => onSearchTextChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-base rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         <div>
@@ -81,7 +81,7 @@ export function FilterBar({
             placeholder="0"
             value={filters.minMonto}
             onChange={(e) => onMinMontoChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-base rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         <div>
@@ -91,7 +91,7 @@ export function FilterBar({
             placeholder="∞"
             value={filters.maxMonto}
             onChange={(e) => onMaxMontoChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-base rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>

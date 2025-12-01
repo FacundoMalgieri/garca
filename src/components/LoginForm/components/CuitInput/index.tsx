@@ -24,7 +24,7 @@ export function CuitInput({ value, onChange, disabled }: CuitInputProps) {
         value={value}
         onChange={handleChange}
         disabled={disabled}
-        className="block w-full rounded border border-border bg-background px-3 py-2 text-sm focus-ring disabled:opacity-50"
+        className="block w-full rounded border border-border bg-background px-3 py-2 text-base focus-ring disabled:opacity-50"
         maxLength={11}
         autoComplete="username"
       />

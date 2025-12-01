@@ -11,7 +11,7 @@ import { InvoiceCard } from "./components/InvoiceCard";
 import { InvoiceRow } from "./components/InvoiceRow";
 import { TableHeader } from "./components/TableHeader";
 import { EmptyState, ErrorState, LoadingState } from "./components/TableStates";
-import { TableToolbar } from "./components/TableToolbar";
+import { MobileSortPanel, TableToolbar } from "./components/TableToolbar";
 import { useInvoiceFilters } from "./hooks/useInvoiceFilters";
 
 const PAGE_SIZE_OPTIONS = [
@@ -30,6 +30,7 @@ const PAGE_SIZE_OPTIONS = [
 export function InvoiceTable() {
   const { state } = useInvoiceContext();
   const [showFilters, setShowFilters] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const [pageSize, setPageSize] = useState<string>("20");
   const [visibleCount, setVisibleCount] = useState(20);
 
@@ -45,6 +46,7 @@ export function InvoiceTable() {
     sortField,
     sortDirection,
     handleSort,
+    setSortDirection,
     filteredAndSortedInvoices,
     uniqueTypes,
   } = useInvoiceFilters(state.invoices);
@@ -121,11 +123,23 @@ export function InvoiceTable() {
             showFilters={showFilters}
             onToggleFilters={() => setShowFilters(!showFilters)}
             hasInvoices={state.invoices.length > 0}
+            showSortMenu={showSortMenu}
+            onToggleSortMenu={() => setShowSortMenu(!showSortMenu)}
           />
         </div>
       </CardHeader>
 
       <CardContent>
+        {/* Mobile Sort Panel */}
+        {showSortMenu && state.invoices.length > 0 && (
+          <MobileSortPanel
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            onDirectionChange={setSortDirection}
+          />
+        )}
+
         {/* Filter Bar */}
         {showFilters && state.invoices.length > 0 && (
           <FilterBar

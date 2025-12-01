@@ -24,8 +24,8 @@ export function DateRangePicker({
         <label className="text-sm font-medium">Período de consulta</label>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="space-y-1.5 flex-1">
           <label htmlFor="fechaDesde" className="block text-xs text-muted-foreground">
             Desde
           </label>
@@ -36,11 +36,11 @@ export function DateRangePicker({
             onChange={(e) => onFechaDesdeChange(e.target.value)}
             disabled={disabled}
             max={fechaHasta}
-            className="block w-full rounded border border-border bg-background px-3 py-2 text-sm focus-ring disabled:opacity-50 dark:[color-scheme:dark]"
+            className="block w-full rounded border border-border bg-background px-3 py-2 text-base focus-ring disabled:opacity-50 dark:[color-scheme:dark]"
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 flex-1">
           <label htmlFor="fechaHasta" className="block text-xs text-muted-foreground">
             Hasta
           </label>
@@ -52,7 +52,7 @@ export function DateRangePicker({
             disabled={disabled}
             min={fechaDesde}
             max={maxDate}
-            className="block w-full rounded border border-border bg-background px-3 py-2 text-sm focus-ring disabled:opacity-50 dark:[color-scheme:dark]"
+            className="block w-full rounded border border-border bg-background px-3 py-2 text-base focus-ring disabled:opacity-50 dark:[color-scheme:dark]"
           />
         </div>
       </div>

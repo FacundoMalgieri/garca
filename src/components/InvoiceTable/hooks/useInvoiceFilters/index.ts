@@ -16,6 +16,7 @@ interface UseInvoiceFiltersReturn {
   sortField: SortField;
   sortDirection: SortDirection;
   handleSort: (field: SortField) => void;
+  setSortDirection: (direction: SortDirection) => void;
   filteredAndSortedInvoices: AFIPInvoice[];
   uniqueTypes: string[];
 }
@@ -164,6 +165,7 @@ export function useInvoiceFilters(invoices: AFIPInvoice[]): UseInvoiceFiltersRet
     sortField,
     sortDirection,
     handleSort,
+    setSortDirection,
     filteredAndSortedInvoices,
     uniqueTypes,
   };

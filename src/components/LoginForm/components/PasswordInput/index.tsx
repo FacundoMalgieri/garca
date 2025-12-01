@@ -24,7 +24,7 @@ export function PasswordInput({ value, onChange, disabled }: PasswordInputProps)
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="block w-full rounded border border-border bg-background px-3 py-2 text-sm pr-10 focus-ring disabled:opacity-50"
+          className="block w-full rounded border border-border bg-background px-3 py-2 text-base pr-10 focus-ring disabled:opacity-50"
           autoComplete="current-password"
         />
         <button

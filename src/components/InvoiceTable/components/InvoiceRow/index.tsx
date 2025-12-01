@@ -15,7 +15,7 @@ export function InvoiceRow({ invoice, index }: InvoiceRowProps) {
 
   return (
     <tr
-      className={`border-b border-border text-sm h-[61px] transition-colors ${
+      className={`border-b border-border text-sm h-[65px] transition-colors ${
         index % 2 === 0 ? "bg-muted/80" : ""
       } hover:bg-primary/15`}
     >
