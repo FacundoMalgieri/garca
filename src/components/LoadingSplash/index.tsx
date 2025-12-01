@@ -181,9 +181,11 @@ export function LoadingSplash({ isLoading, message = "Cargando" }: LoadingSplash
             <button
               key={index}
               onClick={() => goToTip(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer hover:bg-primary/70 ${
-                index === currentTipIndex ? "w-8 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:w-3"
-              }`}
+              className="h-1.5 rounded-full transition-all duration-300 cursor-pointer"
+              style={{
+                width: index === currentTipIndex ? "2rem" : "0.375rem",
+                backgroundColor: index === currentTipIndex ? "#64D3DE" : "rgba(100, 211, 222, 0.3)",
+              }}
               aria-label={`Ver tip ${index + 1}`}
             />
           ))}

@@ -84,8 +84,8 @@ describe("LoadingSplash", () => {
       vi.advanceTimersByTime(350);
     });
 
-    // The third dot should now be active (wider)
-    expect(dots[2]).toHaveClass("w-8");
+    // The third dot should now be active (wider) - checking inline style
+    expect(dots[2]).toHaveStyle({ width: "2rem" });
   });
 
   it("auto-advances tips after 5 seconds", () => {
@@ -93,8 +93,8 @@ describe("LoadingSplash", () => {
 
     const dots = screen.getAllByRole("button", { name: /Ver tip/i });
 
-    // First tip should be active
-    expect(dots[0]).toHaveClass("w-8");
+    // First tip should be active - checking inline style
+    expect(dots[0]).toHaveStyle({ width: "2rem" });
 
     // Advance time by 5 seconds
     act(() => {
@@ -106,8 +106,8 @@ describe("LoadingSplash", () => {
       vi.advanceTimersByTime(350);
     });
 
-    // Second tip should now be active
-    expect(dots[1]).toHaveClass("w-8");
+    // Second tip should now be active - checking inline style
+    expect(dots[1]).toHaveStyle({ width: "2rem" });
   });
 
   it("renders the logo image", () => {

@@ -192,7 +192,8 @@ describe("LoginForm", () => {
     it("shows loading state when fetching companies", () => {
       render(<LoginForm {...defaultProps} isLoadingCompanies={true} />);
 
-      expect(screen.getByText(/verificando credenciales/i)).toBeInTheDocument();
+      // First message in the progressive loading sequence
+      expect(screen.getByText(/verificando seguridad/i)).toBeInTheDocument();
     });
 
     it("disables inputs when loading", () => {

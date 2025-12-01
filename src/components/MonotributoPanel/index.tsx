@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -20,11 +20,23 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
   const { clearInvoices } = useInvoiceContext();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [hasAutoFetched, setHasAutoFetched] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const handleTurnstileSuccess = useCallback((token: string) => {
     setTurnstileToken(token);
   }, []);
+
+  // Auto-fetch when token is ready and no data exists
+  useEffect(() => {
+    if (turnstileToken && !data && !isLoading && !error && !hasAutoFetched && isCurrentYearData) {
+      setHasAutoFetched(true);
+      fetchMonotributoData(turnstileToken).then(() => {
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
+      });
+    }
+  }, [turnstileToken, data, isLoading, error, hasAutoFetched, isCurrentYearData, fetchMonotributoData]);
 
   const handleRefresh = async () => {
     if (!turnstileToken) return;
@@ -93,19 +105,13 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
               </div>
             )}
 
-            {/* No data state - needs to fetch */}
+            {/* No data state - auto-fetching or waiting for token */}
             {!isLoading && !error && !data && (
               <div className="py-8 text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Las categorías de monotributo no están cargadas.
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-2"></div>
+                <p className="text-xs text-muted-foreground">
+                  {turnstileToken ? "Cargando categorías..." : "Verificando seguridad..."}
                 </p>
-                <button
-                  onClick={handleRefresh}
-                  disabled={!turnstileToken || isLoading}
-                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {turnstileToken ? "Cargar categorías" : "Verificando..."}
-                </button>
                 <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
               </div>
             )}

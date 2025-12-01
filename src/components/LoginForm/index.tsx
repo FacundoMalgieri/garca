@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CompanySelector } from "@/components/CompanySelector";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
@@ -133,6 +133,30 @@ export function LoginForm({
   const isLoading = isLoadingCompanies || isLoadingInvoices;
   const isReady = cuit && password && !isLoading && !dateError;
 
+  // Progressive loading messages
+  const loadingMessages = [
+    "Verificando seguridad...",
+    "Conectando con ARCA...",
+    "Verificando credenciales...",
+    "Obteniendo empresas...",
+  ];
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isLoadingCompanies) {
+      setLoadingMessageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) => 
+        prev < loadingMessages.length - 1 ? prev + 1 : prev
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isLoadingCompanies, loadingMessages.length]);
+
   // Step 2: Company selection
   if (step === "company-select" && companies.length > 0) {
     return (
@@ -229,7 +253,7 @@ export function LoginForm({
             {isLoadingCompanies ? (
               <span className="flex items-center justify-center gap-2">
                 <LoadingSpinner />
-                Verificando credenciales...
+                {loadingMessages[loadingMessageIndex]}
               </span>
             ) : (
               "Continuar"
