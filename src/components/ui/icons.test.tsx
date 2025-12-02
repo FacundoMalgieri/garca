@@ -1,4 +1,3 @@
-import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -15,6 +14,8 @@ import {
   SparklesIcon,
   TrendingIcon,
 } from "./icons";
+
+import { render } from "@testing-library/react";
 
 describe("Icons", () => {
   it("renders ArrowRightIcon", () => {
