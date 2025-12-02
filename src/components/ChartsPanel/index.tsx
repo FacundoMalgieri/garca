@@ -304,9 +304,9 @@ function ProgresoChart({
   const yAxisMax = roundUpToNiceValue(maxDataValue * 1.05); // Add 5% padding then round up
 
   return (
-    <div id="chart-progreso">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Ingresos Acumulados vs Límites de Categorías</h3>
-      <ResponsiveContainer width="100%" height={400}>
+    <div id="chart-progreso" className="h-[400px] md:h-[500px] flex flex-col">
+      <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Ingresos Acumulados vs Límites de Categorías</h3>
+      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
         <AreaChart data={monthlyData}>
           <defs>
             <linearGradient id="colorAcumulado" x1="0" y1="0" x2="0" y2="1">
@@ -367,9 +367,9 @@ function ProgresoChart({
 
 function DistribucionChart({ distributionData }: { distributionData: DistributionDataPoint[] }) {
   return (
-    <div id="chart-distribucion" className="pb-4">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Distribución de Ingresos por Moneda</h3>
-      <ResponsiveContainer width="100%" height={320}>
+    <div id="chart-distribucion" className="h-[400px] md:h-[500px] pb-4 flex flex-col">
+      <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Distribución de Ingresos por Moneda</h3>
+      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
         <PieChart>
           <Pie
             data={distributionData}
@@ -415,9 +415,9 @@ function DistribucionChart({ distributionData }: { distributionData: Distributio
 
 function MensualChart({ monthlyData }: { monthlyData: MonthlyDataPoint[] }) {
   return (
-    <div id="chart-mensual">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Ingresos por Mes</h3>
-      <ResponsiveContainer width="100%" height={400}>
+    <div id="chart-mensual" className="h-[400px] md:h-[500px] flex flex-col">
+      <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Ingresos por Mes</h3>
+      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
         <BarChart data={monthlyData}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis dataKey="month" fontSize={12} />

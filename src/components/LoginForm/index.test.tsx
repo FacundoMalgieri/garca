@@ -106,6 +106,18 @@ vi.mock("@/components/CompanySelector", () => ({
   ),
 }));
 
+// Mock TurnstileWidget to auto-trigger onSuccess with a mock token
+vi.mock("@/components/TurnstileWidget", () => ({
+  TurnstileWidget: ({ onSuccess }: { onSuccess: (token: string) => void }) => {
+    // Use React's useEffect to call onSuccess after component mounts
+    const { useEffect } = require("react");
+    useEffect(() => {
+      onSuccess("mock-turnstile-token");
+    }, [onSuccess]);
+    return <div data-testid="turnstile-widget">Turnstile</div>;
+  },
+}));
+
 describe("LoginForm", () => {
   const mockOnFetchCompanies = vi.fn();
   const mockOnSelectCompany = vi.fn();
@@ -170,8 +182,8 @@ describe("LoginForm", () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        // Third argument is the turnstile token (undefined when widget hasn't initialized yet)
-        expect(mockOnFetchCompanies).toHaveBeenCalledWith("20345678901", "mypassword", undefined);
+        // Third argument is the turnstile token from the mocked TurnstileWidget
+        expect(mockOnFetchCompanies).toHaveBeenCalledWith("20345678901", "mypassword", "mock-turnstile-token");
       });
     });
 
@@ -318,7 +330,7 @@ describe("LoginForm", () => {
         "mypassword",
         0,
         expect.objectContaining({ from: expect.any(String), to: expect.any(String) }),
-        undefined // turnstile token (undefined when widget hasn't initialized yet)
+        "mock-turnstile-token" // turnstile token from the mocked TurnstileWidget
       );
     });
 

@@ -12,7 +12,7 @@ declare global {
           callback: (token: string) => void;
           "error-callback"?: (error?: unknown) => void;
           "expired-callback"?: () => void;
-          size?: "normal" | "compact" | "flexible" | "invisible";
+          size?: "normal" | "compact" | "flexible";
           execution?: "render" | "execute";
           appearance?: "always" | "execute" | "interaction-only";
           theme?: "light" | "dark" | "auto";
@@ -41,7 +41,7 @@ const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
 /**
  * Cloudflare Turnstile widget for bot protection.
- * Uses "managed" mode - Cloudflare decides when to show a challenge.
+ * Uses "invisible" mode - no user interaction required.
  */
 export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
   function TurnstileWidget({ onSuccess, onError, onExpired }, ref) {
@@ -54,15 +54,20 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
       if (!window.turnstile || !containerRef.current || widgetIdRef.current) return;
 
       try {
+        // For invisible widget: render with execution="execute", then call execute()
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: SITE_KEY,
           callback: onSuccess,
           "error-callback": () => onError?.(),
           "expired-callback": () => onExpired?.(),
-          size: "invisible",
-          appearance: "always",
-          theme: "auto",
+          appearance: "execute",
+          execution: "execute",
         });
+
+        // Immediately execute the invisible challenge
+        if (widgetIdRef.current) {
+          window.turnstile.execute(containerRef.current);
+        }
       } catch (error) {
         console.error("[Turnstile] Render error:", error);
         onError?.();
@@ -72,9 +77,11 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     // Expose reset method via ref
     useImperativeHandle(ref, () => ({
       reset: () => {
-        if (widgetIdRef.current && window.turnstile) {
+        if (widgetIdRef.current && window.turnstile && containerRef.current) {
           try {
             window.turnstile.reset(widgetIdRef.current);
+            // Re-execute after reset for invisible widget
+            window.turnstile.execute(containerRef.current);
           } catch (error) {
             console.error("[Turnstile] Reset error:", error);
           }
@@ -137,13 +144,12 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
       return null;
     }
 
-    // Container for Turnstile - invisible but present in DOM
-    // Position absolute to avoid affecting layout
+    // Container for Turnstile widget
+    // Widget visibility controlled by Cloudflare dashboard settings (Invisible type)
     return (
       <div 
         ref={containerRef} 
-        className="turnstile-container absolute"
-        style={{ width: 0, height: 0, overflow: "hidden" }}
+        className="turnstile-container"
       />
     );
   }

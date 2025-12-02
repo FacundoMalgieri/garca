@@ -81,52 +81,52 @@ export const SCRAPER_EVENTS = {
   start: () => 
     createEvent("start", "Iniciando proceso...", 5),
   
-  // Login steps (for companies fetch - progress 0-100)
+  // Login steps (5-25%)
   loginStart: () => 
     createEvent("login", "Conectando con ARCA...", 10),
   loginCuit: () => 
-    createEvent("login", "Ingresando CUIT...", 20),
+    createEvent("login", "Ingresando CUIT...", 15),
   loginPassword: () => 
-    createEvent("login", "Verificando credenciales...", 40),
+    createEvent("login", "Verificando credenciales...", 20),
   loginSuccess: () => 
-    createEvent("login", "Sesión iniciada correctamente", 60),
+    createEvent("login", "Sesión iniciada correctamente", 25),
   
-  // Monotributo info fetch (between login and companies)
+  // Monotributo info fetch (25-45%)
   monotributoStart: () =>
-    createEvent("monotributo", "Consultando información de Monotributo...", 65),
+    createEvent("monotributo", "Consultando información de Monotributo...", 30),
   monotributoFound: (categoria: string) =>
-    createEvent("monotributo", `Categoría actual: ${categoria}`, 75, { categoria }),
+    createEvent("monotributo", `Categoría actual: ${categoria}`, 45, { categoria }),
   monotributoNotFound: () =>
-    createEvent("monotributo", "No se encontró información de Monotributo", 75),
+    createEvent("monotributo", "No se encontró información de Monotributo", 45),
   
-  // Navigation to get companies
+  // Navigation to get companies (45-80%)
   navigatePortal: () => 
-    createEvent("navigate", "Navegando al portal de comprobantes...", 80),
+    createEvent("navigate", "Navegando al portal de comprobantes...", 55),
   navigateRcel: () => 
-    createEvent("navigate", "Accediendo a comprobantes en línea...", 90),
+    createEvent("navigate", "Accediendo a comprobantes en línea...", 70),
   
   // Companies fetch complete
   companiesFound: (count: number) =>
     createEvent("complete", `Se encontraron ${count} empresa(s)`, 100, { count }),
   
-  // Company selection (for invoices fetch)
+  // Company selection (for invoices fetch - continues from login at 25%)
   companySelect: (name: string) => 
-    createEvent("company", `Seleccionando empresa: ${name}`, 50),
+    createEvent("company", `Seleccionando empresa: ${name}`, 35),
   
-  // Filters
+  // Filters (35-50%)
   filtersApply: (from: string, to: string) => 
-    createEvent("filters", `Aplicando filtros: ${from} - ${to}`, 55),
+    createEvent("filters", `Aplicando filtros: ${from} - ${to}`, 45),
   filtersSearch: () => 
-    createEvent("filters", "Buscando comprobantes...", 60),
+    createEvent("filters", "Buscando comprobantes...", 55),
   
-  // Extraction
+  // Extraction (55-95%)
   extractStart: () => 
-    createEvent("extract", "Extrayendo comprobantes...", 65),
+    createEvent("extract", "Extrayendo comprobantes...", 60),
   extractProgress: (current: number, total: number) => 
     createEvent(
       "invoice", 
       `Procesando comprobante ${current} de ${total}...`,
-      65 + Math.round((current / total) * 30),
+      60 + Math.round((current / total) * 35),
       { current, total }
     ),
   extractComplete: (count: number) => 

@@ -78,6 +78,7 @@ describe("performSecurityChecks", () => {
 
     it("should check turnstile after bot detection", async () => {
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
+      process.env.TURNSTILE_SECRET_KEY = "test-secret-key";
       vi.mocked(rateLimit).mockReturnValue(true);
       vi.mocked(detectAutomation).mockReturnValue(false);
       vi.mocked(getTurnstileToken).mockReturnValue("test-token");
@@ -122,31 +123,51 @@ describe("performSecurityChecks", () => {
   });
 
   describe("turnstile validation", () => {
-    describe("when turnstile is NOT configured", () => {
-      beforeEach(() => {
+    describe("when turnstile keys are NOT configured (fail closed)", () => {
+      it("should return 503 when SITE_KEY is missing", async () => {
         delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-      });
-
-      it("should skip turnstile validation entirely", async () => {
-        vi.mocked(getTurnstileToken).mockReturnValue(null);
+        process.env.TURNSTILE_SECRET_KEY = "test-secret-key";
 
         const result = await performSecurityChecks(mockRequest);
 
-        expect(result.allowed).toBe(true);
-        expect(validateTurnstile).not.toHaveBeenCalled();
+        expect(result.allowed).toBe(false);
+        expect(result.response?.status).toBe(503);
+
+        const body = await result.response?.json();
+        expect(body.errorCode).toBe("TURNSTILE_NOT_CONFIGURED");
       });
 
-      it("should allow even without token", async () => {
+      it("should return 503 when SECRET_KEY is missing", async () => {
+        process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
+        delete process.env.TURNSTILE_SECRET_KEY;
+
         const result = await performSecurityChecks(mockRequest);
 
-        expect(result.allowed).toBe(true);
-        expect(result.response).toBeUndefined();
+        expect(result.allowed).toBe(false);
+        expect(result.response?.status).toBe(503);
+
+        const body = await result.response?.json();
+        expect(body.errorCode).toBe("TURNSTILE_NOT_CONFIGURED");
+      });
+
+      it("should return 503 when BOTH keys are missing", async () => {
+        delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+        delete process.env.TURNSTILE_SECRET_KEY;
+
+        const result = await performSecurityChecks(mockRequest);
+
+        expect(result.allowed).toBe(false);
+        expect(result.response?.status).toBe(503);
+
+        const body = await result.response?.json();
+        expect(body.errorCode).toBe("TURNSTILE_NOT_CONFIGURED");
       });
     });
 
-    describe("when turnstile IS configured", () => {
+    describe("when turnstile IS fully configured", () => {
       beforeEach(() => {
         process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
+        process.env.TURNSTILE_SECRET_KEY = "test-secret-key";
       });
 
       it("should return 403 TURNSTILE_MISSING when token is missing", async () => {
@@ -198,17 +219,9 @@ describe("performSecurityChecks", () => {
   });
 
   describe("successful validation", () => {
-    it("should return allowed when all checks pass (no turnstile configured)", async () => {
-      delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
-      const result = await performSecurityChecks(mockRequest);
-
-      expect(result.allowed).toBe(true);
-      expect(result.response).toBeUndefined();
-    });
-
     it("should return allowed when all checks pass with valid turnstile", async () => {
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
+      process.env.TURNSTILE_SECRET_KEY = "test-secret-key";
       vi.mocked(getTurnstileToken).mockReturnValue("valid-token");
       vi.mocked(validateTurnstile).mockResolvedValue(true);
 

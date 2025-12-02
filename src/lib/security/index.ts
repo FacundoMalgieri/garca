@@ -57,38 +57,56 @@ export async function performSecurityChecks(request: Request): Promise<SecurityC
   const token = getTurnstileToken(request);
   const ip = getClientIP(request);
   const siteKeyConfigured = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const secretKeyConfigured = !!process.env.TURNSTILE_SECRET_KEY;
 
-  // If Turnstile is configured, token is REQUIRED
-  if (siteKeyConfigured) {
-    if (!token) {
-      console.warn("[Security] Turnstile token missing but required");
-      return {
-        allowed: false,
-        response: NextResponse.json(
-          {
-            success: false,
-            error: "Verificación de seguridad requerida. Por favor, recargá la página e intentá nuevamente.",
-            errorCode: "TURNSTILE_MISSING",
-          },
-          { status: 403 }
-        ),
-      };
-    }
+  // SECURITY: Both keys MUST be configured - fail if either is missing
+  if (!siteKeyConfigured || !secretKeyConfigured) {
+    console.error(
+      "[Security] Turnstile not fully configured - " +
+        `SITE_KEY: ${siteKeyConfigured ? "✓" : "✗"}, SECRET_KEY: ${secretKeyConfigured ? "✓" : "✗"}`
+    );
+    return {
+      allowed: false,
+      response: NextResponse.json(
+        {
+          success: false,
+          error: "Servicio temporalmente no disponible. Contactá al administrador.",
+          errorCode: "TURNSTILE_NOT_CONFIGURED",
+        },
+        { status: 503 }
+      ),
+    };
+  }
 
-    const isValid = await validateTurnstile(token, ip);
-    if (!isValid) {
-      return {
-        allowed: false,
-        response: NextResponse.json(
-          {
-            success: false,
-            error: "Verificación de seguridad fallida. Por favor, recargá la página e intentá nuevamente.",
-            errorCode: "TURNSTILE_FAILED",
-          },
-          { status: 403 }
-        ),
-      };
-    }
+  // Token is REQUIRED
+  if (!token) {
+    console.warn("[Security] Turnstile token missing but required");
+    return {
+      allowed: false,
+      response: NextResponse.json(
+        {
+          success: false,
+          error: "Verificación de seguridad requerida. Por favor, recargá la página e intentá nuevamente.",
+          errorCode: "TURNSTILE_MISSING",
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  const isValid = await validateTurnstile(token, ip);
+  if (!isValid) {
+    return {
+      allowed: false,
+      response: NextResponse.json(
+        {
+          success: false,
+          error: "Verificación de seguridad fallida. Por favor, recargá la página e intentá nuevamente.",
+          errorCode: "TURNSTILE_FAILED",
+        },
+        { status: 403 }
+      ),
+    };
   }
 
   return { allowed: true };

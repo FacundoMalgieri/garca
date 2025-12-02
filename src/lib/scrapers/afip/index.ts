@@ -31,6 +31,7 @@ import { handleError } from "./utils";
  */
 export interface StreamingScraperOptions extends AFIPScraperOptions {
   onEvent?: EventEmitter;
+  isCancelled?: () => boolean;
 }
 
 /**
@@ -49,14 +50,15 @@ export interface GetCompaniesResult {
  * Emits progress events throughout the process.
  *
  * @param credentials - AFIP login credentials
- * @param options - Optional event emitter for progress updates
+ * @param options - Optional event emitter and cancellation check for progress updates
  * @returns Result with list of available companies
  */
 export async function getAFIPCompaniesWithEvents(
   credentials: AFIPCredentials,
-  options?: { onEvent?: EventEmitter }
+  options?: { onEvent?: EventEmitter; isCancelled?: () => boolean }
 ): Promise<GetCompaniesResult> {
   const emit = options?.onEvent ?? noopEmitter;
+  const isCancelled = options?.isCancelled ?? (() => false);
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -66,6 +68,12 @@ export async function getAFIPCompaniesWithEvents(
   try {
     emit(SCRAPER_EVENTS.start());
     console.log("[AFIP Companies] Starting company fetch...");
+
+    // Check for cancellation before heavy operations
+    if (isCancelled()) {
+      console.log("[AFIP Companies] Cancelled before browser launch");
+      return { success: false, companies: [], error: "Operación cancelada" };
+    }
 
     browser = await chromium.launch({
       headless: DEFAULT_HEADLESS,
@@ -78,6 +86,12 @@ export async function getAFIPCompaniesWithEvents(
 
     page = await context.newPage();
     page.setDefaultTimeout(DEFAULT_TIMEOUT);
+
+    // Check for cancellation after browser setup
+    if (isCancelled()) {
+      console.log("[AFIP Companies] Cancelled after browser setup");
+      return { success: false, companies: [], error: "Operación cancelada" };
+    }
 
     // Login events
     emit(SCRAPER_EVENTS.loginStart());
@@ -93,6 +107,12 @@ export async function getAFIPCompaniesWithEvents(
         error: loginResult.error,
         errorCode: loginResult.errorCode,
       };
+    }
+
+    // Check for cancellation after login
+    if (isCancelled()) {
+      console.log("[AFIP Companies] Cancelled after login");
+      return { success: false, companies: [], error: "Operación cancelada" };
     }
 
     emit(SCRAPER_EVENTS.loginSuccess());
@@ -125,6 +145,12 @@ export async function getAFIPCompaniesWithEvents(
       } catch {
         console.warn("[AFIP Companies] Could not navigate back to portal");
       }
+    }
+
+    // Check for cancellation before navigation
+    if (isCancelled()) {
+      console.log("[AFIP Companies] Cancelled before company navigation");
+      return { success: false, companies: [], monotributoInfo, error: "Operación cancelada" };
     }
 
     // Navigate to company selection
@@ -184,6 +210,7 @@ export async function scrapeAFIPInvoicesWithEvents(
   options?: StreamingScraperOptions
 ): Promise<AFIPScraperResultWithCompany> {
   const emit = options?.onEvent ?? noopEmitter;
+  const isCancelled = options?.isCancelled ?? (() => false);
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -196,10 +223,25 @@ export async function scrapeAFIPInvoicesWithEvents(
   const timeout = options?.timeout ?? DEFAULT_TIMEOUT;
   const downloadXML = options?.downloadXML ?? false;
 
+  // Helper to create cancelled result
+  const cancelledResult = (): AFIPScraperResultWithCompany => ({
+    success: false,
+    invoices: [],
+    total: 0,
+    error: "Operación cancelada",
+    company: company || undefined,
+  });
+
   try {
     // Start event
     emit(SCRAPER_EVENTS.start());
     console.log("[AFIP Scraper] Starting scrape...");
+
+    // Check for cancellation before heavy operations
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled before browser launch");
+      return cancelledResult();
+    }
 
     browser = await chromium.launch({
       headless,
@@ -213,6 +255,12 @@ export async function scrapeAFIPInvoicesWithEvents(
     page = await context.newPage();
     page.setDefaultTimeout(timeout);
 
+    // Check for cancellation after browser setup
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled after browser setup");
+      return cancelledResult();
+    }
+
     // Login events
     emit(SCRAPER_EVENTS.loginStart());
 
@@ -225,10 +273,13 @@ export async function scrapeAFIPInvoicesWithEvents(
       return loginResult;
     }
 
-    emit(SCRAPER_EVENTS.loginSuccess());
+    // Check for cancellation after login
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled after login");
+      return cancelledResult();
+    }
 
-    // Navigation events
-    emit(SCRAPER_EVENTS.navigatePortal());
+    emit(SCRAPER_EVENTS.loginSuccess());
 
     const navResult = await navigateToInvoices(page, context, companyIndex);
     page = navResult.page;
@@ -240,6 +291,12 @@ export async function scrapeAFIPInvoicesWithEvents(
       company.cuit = credentials.cuit;
     }
 
+    // Check for cancellation after navigation
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled after company navigation");
+      return cancelledResult();
+    }
+
     emit(SCRAPER_EVENTS.companySelect(company?.razonSocial || "Empresa"));
     console.log("[AFIP Scraper] Company selected");
 
@@ -248,14 +305,31 @@ export async function scrapeAFIPInvoicesWithEvents(
     await applyFilters(page, filters);
     emit(SCRAPER_EVENTS.filtersSearch());
 
+    // Check for cancellation after filters
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled after filters");
+      return cancelledResult();
+    }
+
     // Extraction events
     emit(SCRAPER_EVENTS.extractStart());
     const invoices = await extractInvoices(page);
     emit(SCRAPER_EVENTS.extractComplete(invoices.length));
 
+    // Check for cancellation before XML download
+    if (isCancelled()) {
+      console.log("[AFIP Scraper] Cancelled before XML download");
+      return cancelledResult();
+    }
+
     // Download XMLs if requested (with progress events)
     if (downloadXML && invoices.length > 0) {
       for (let i = 0; i < invoices.length; i++) {
+        // Check cancellation during XML download loop
+        if (isCancelled()) {
+          console.log("[AFIP Scraper] Cancelled during XML download");
+          return cancelledResult();
+        }
         emit(SCRAPER_EVENTS.extractProgress(i + 1, invoices.length));
       }
       await downloadXMLs(page, invoices);

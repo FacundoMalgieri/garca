@@ -1,11 +1,11 @@
-import { getConcurrencyStats } from "@/lib/concurrency";
-
+/**
+ * Health check endpoint.
+ * Returns minimal info - no internal stats exposed publicly.
+ */
 export function GET() {
-  console.log("All good!");
   return Response.json({
     ok: true,
     timestamp: new Date().toISOString(),
-    concurrency: getConcurrencyStats(),
   });
 }
 

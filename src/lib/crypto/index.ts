@@ -1,35 +1,51 @@
 /**
  * Cryptographic utilities for GARCA.
  *
- * Provides AES-256 encryption/decryption for sensitive data.
- * Note: Client-side encryption provides obfuscation, not true security.
- * Real security comes from HTTPS in production.
+ * IMPORTANT: This provides OBFUSCATION, not true security.
+ * The encryption key is public (NEXT_PUBLIC_*) and visible in the browser.
+ * Real security comes from HTTPS/TLS in production.
+ * 
+ * Purpose: Prevent credentials from appearing in plain text in:
+ * - Browser network tab
+ * - Server logs
+ * - Error reports
  */
 
 import CryptoJS from "crypto-js";
 
 /**
- * Encryption key for credentials.
- * In production, this should be an environment variable.
+ * Encryption key for credentials obfuscation.
+ * MUST be set via NEXT_PUBLIC_ENCRYPTION_KEY environment variable.
  */
-const ENCRYPTION_KEY = process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "garca-secure-key-2025";
+function getEncryptionKey(): string {
+  const key = process.env.NEXT_PUBLIC_ENCRYPTION_KEY;
+  if (!key) {
+    throw new Error(
+      "[Security] NEXT_PUBLIC_ENCRYPTION_KEY not configured. " +
+      "Generate one with: openssl rand -base64 32"
+    );
+  }
+  return key;
+}
 
 /**
  * Encrypts a string using AES-256 encryption.
  * @param text - The text to encrypt
  * @returns The encrypted text as a base64 string
+ * @throws Error if NEXT_PUBLIC_ENCRYPTION_KEY is not configured
  */
 export function encrypt(text: string): string {
-  return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  return CryptoJS.AES.encrypt(text, getEncryptionKey()).toString();
 }
 
 /**
  * Decrypts an AES-256 encrypted string.
  * @param encryptedText - The encrypted text (base64 string)
  * @returns The decrypted plain text
+ * @throws Error if NEXT_PUBLIC_ENCRYPTION_KEY is not configured
  */
 export function decrypt(encryptedText: string): string {
-  const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+  const bytes = CryptoJS.AES.decrypt(encryptedText, getEncryptionKey());
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 

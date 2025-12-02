@@ -17,16 +17,22 @@ describe("validateTurnstile", () => {
   });
 
   describe("validateTurnstile function", () => {
-    it("should skip validation when no secret key is configured", async () => {
+    it("should reject when no secret key is configured (fail closed)", async () => {
       process.env.TURNSTILE_SECRET_KEY = "";
       const result = await validateTurnstile("test-token");
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
-    it("should skip validation for empty token", async () => {
+    it("should reject when secret key is missing (fail closed)", async () => {
+      delete process.env.TURNSTILE_SECRET_KEY;
+      const result = await validateTurnstile("test-token");
+      expect(result).toBe(false);
+    });
+
+    it("should reject empty token (fail closed)", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
       const result = await validateTurnstile("");
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it("should return true for valid token", async () => {

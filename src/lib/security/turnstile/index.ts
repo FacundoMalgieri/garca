@@ -9,24 +9,26 @@ interface TurnstileVerifyResponse {
 
 /**
  * Validates a Turnstile token against Cloudflare's API.
+ * 
+ * SECURITY: This function fails closed - missing keys or tokens result in rejection.
  *
  * @param token - The token received from the frontend widget
  * @param ip - Optional IP address of the user for additional validation
  * @returns true if the token is valid, false otherwise
  */
 export async function validateTurnstile(token: string, ip?: string): Promise<boolean> {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY || "";
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
-  // Skip validation if no secret key configured (development mode)
+  // FAIL CLOSED: Reject if no secret key configured
   if (!secretKey) {
-    console.warn("[Turnstile] No secret key configured, skipping validation");
-    return true;
+    console.error("[Security] TURNSTILE_SECRET_KEY not configured - rejecting request");
+    return false;
   }
 
-  // Empty token means widget wasn't loaded (no site key in dev)
+  // FAIL CLOSED: Reject if no token provided
   if (!token) {
-    console.warn("[Turnstile] Empty token received, skipping validation");
-    return true;
+    console.error("[Security] Turnstile token missing but required");
+    return false;
   }
 
   try {

@@ -9,6 +9,20 @@ import type { TipoActividad } from "@/types/monotributo";
 
 import { formatInvoiceType } from "../formatters";
 
+/** Totals for a single currency */
+interface CurrencyTotal {
+  amount: number;
+  amountInPesos: number;
+  avgExchangeRate: number;
+  count: number;
+}
+
+/** Totals for a period (month or year) */
+interface PeriodTotals {
+  byCurrency: Record<string, CurrencyTotal>;
+  totalPesos: number;
+}
+
 /** Storage key for activity type preference */
 const MONOTRIBUTO_ACTIVITY_KEY = "monotributo-tipo-actividad";
 
@@ -133,20 +147,6 @@ export function exportToJSON(invoices: AFIPInvoice[], company: CompanyInfo | nul
   link.href = URL.createObjectURL(blob);
   link.download = generateFilename(company, "json");
   link.click();
-}
-
-/** Totals for a single currency */
-interface CurrencyTotal {
-  amount: number;
-  amountInPesos: number;
-  avgExchangeRate: number;
-  count: number;
-}
-
-/** Totals for a period (month or year) */
-interface PeriodTotals {
-  byCurrency: Record<string, CurrencyTotal>;
-  totalPesos: number;
 }
 
 /**
@@ -665,7 +665,7 @@ export async function exportToPDF(
       if (tabButtons[i]) {
         (tabButtons[i] as HTMLElement).click();
 
-        // Wait for chart animations to complete (increased from 2500ms for reliability)
+        // Wait for chart animations to complete
         await new Promise((resolve) => setTimeout(resolve, 4000));
 
         const chartElement = document.getElementById(chartIds[i]);

@@ -152,9 +152,9 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
 
         {/* Progress bar */}
         <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-          {progress && progress.progress > 0 ? (
+          {progress ? (
             <div
-              className="h-full transition-all duration-500 ease-out"
+              className="h-full transition-all duration-300 ease-out"
               style={{
                 width: `${progress.progress}%`,
                 backgroundColor: "#64D3DE",

@@ -70,8 +70,8 @@ export default function IngresoPage() {
     cancelNavigation();
   }, [cancelNavigation]);
 
-  // Show loading splash when fetching companies OR invoices
-  const showSplash = companiesState.isLoading || state.isLoading;
+  // Show loading splash when fetching companies OR invoices OR about to redirect
+  const showSplash = companiesState.isLoading || state.isLoading || state.invoices.length > 0;
   
   // Use progress from whichever is loading
   const currentProgress = companiesState.isLoading ? companiesState.progress : state.progress;

@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { LoadingSpinner } from "@/components/ui/icons";
 import type { AFIPCompany } from "@/types/afip-scraper";
 
 interface CompanySelectorProps {
@@ -37,6 +38,14 @@ export function CompanySelector({ companies, onSelect, disabled }: CompanySelect
         </p>
       </CardHeader>
       <CardContent className="space-y-2">
+        {/* Security verification message */}
+        {disabled && (
+          <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-muted/50 border border-border text-sm text-muted-foreground">
+            <LoadingSpinner />
+            <span>Verificando seguridad...</span>
+          </div>
+        )}
+
         {companies.map((company) => (
           <button
             key={company.index}
@@ -53,11 +62,10 @@ export function CompanySelector({ companies, onSelect, disabled }: CompanySelect
                   <p className="text-sm text-muted-foreground">CUIT: {formatCuit(company.cuit)}</p>
                 )}
               </div>
-              <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0 ml-2" />
+              <ChevronRightIcon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0 ml-2" />
             </div>
           </button>
         ))}
-
       </CardContent>
     </Card>
   );

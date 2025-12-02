@@ -49,14 +49,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create SSE stream
+    // Create SSE stream with cancellation support
     const encoder = new TextEncoder();
+    let isControllerClosed = false;
+    
+    // Use request.signal to detect client disconnection
+    const abortSignal = request.signal;
+    
     const stream = new ReadableStream({
       async start(controller) {
         const sendEvent = (event: ScraperEvent) => {
-          const data = `data: ${JSON.stringify(event)}\n\n`;
-          controller.enqueue(encoder.encode(data));
+          // Skip if controller is already closed (user cancelled)
+          if (isControllerClosed || abortSignal.aborted) return;
+          
+          try {
+            const data = `data: ${JSON.stringify(event)}\n\n`;
+            controller.enqueue(encoder.encode(data));
+          } catch {
+            // Controller was closed (user disconnected/cancelled)
+            isControllerClosed = true;
+          }
         };
+        
+        // Check cancellation function for scraper
+        const isCancelled = () => isControllerClosed || abortSignal.aborted;
 
         try {
           // Check queue status
@@ -67,7 +83,7 @@ export async function POST(request: NextRequest) {
 
           // Run with concurrency limit
           const result = await withConcurrencyLimit(async () => {
-            return getAFIPCompaniesWithEvents({ cuit, password }, { onEvent: sendEvent });
+            return getAFIPCompaniesWithEvents({ cuit, password }, { onEvent: sendEvent, isCancelled });
           });
 
           // Send final result
@@ -94,8 +110,16 @@ export async function POST(request: NextRequest) {
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorResult)}\n\n`));
         } finally {
-          controller.close();
+          if (!isControllerClosed) {
+            isControllerClosed = true;
+            controller.close();
+          }
         }
+      },
+      cancel() {
+        // Called when client disconnects
+        isControllerClosed = true;
+        console.log("[AFIP Companies Stream] Client disconnected, cancelling...");
       },
     });
 

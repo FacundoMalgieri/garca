@@ -199,6 +199,9 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
               <p className="text-muted-foreground/70">
                 * Los topes de cada categoría pueden actualizarse en cada período de recategorización.
               </p>
+              <p className="text-muted-foreground/70">
+              ** Los valores corresponden al Regimen General. En el Regimen Simplificado, pueden variar según tu jurisdicción.
+              </p>
             </div>
           </div>
         )}

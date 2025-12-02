@@ -1,8 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { decrypt, decryptCredentials, encrypt, encryptCredentials } from "./index";
 
 describe("Crypto Utils", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    // Set a test encryption key for all tests
+    process.env.NEXT_PUBLIC_ENCRYPTION_KEY = "test-encryption-key-32-chars-ok";
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  describe("security", () => {
+    it("should throw if NEXT_PUBLIC_ENCRYPTION_KEY is not set", () => {
+      delete process.env.NEXT_PUBLIC_ENCRYPTION_KEY;
+      expect(() => encrypt("test")).toThrow("[Security] NEXT_PUBLIC_ENCRYPTION_KEY not configured");
+    });
+  });
+
   describe("encrypt/decrypt", () => {
     it("should encrypt and decrypt a string", () => {
       const original = "test-string-123";

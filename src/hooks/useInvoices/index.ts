@@ -195,6 +195,9 @@ export function useInvoices(): UseInvoicesReturn {
     companiesAbortRef.current?.abort();
     companiesAbortRef.current = new AbortController();
 
+    // Reset state progress to prevent stale progress showing
+    setState((prev) => ({ ...prev, progress: null }));
+
     setCompaniesState({
       companies: [],
       isLoading: true,
@@ -368,6 +371,9 @@ export function useInvoices(): UseInvoicesReturn {
     // Abort any existing request
     invoicesAbortRef.current?.abort();
     invoicesAbortRef.current = new AbortController();
+
+    // Reset companiesState progress to prevent stale progress showing
+    setCompaniesState((prev) => ({ ...prev, progress: null }));
 
     setState((prev) => ({
       ...prev,
