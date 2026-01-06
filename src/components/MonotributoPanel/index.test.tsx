@@ -103,7 +103,7 @@ describe("MonotributoPanel", () => {
   it("shows no data message when isCurrentYearData is false", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={false} />);
     expect(screen.getByText("Datos de Monotributo no disponibles")).toBeInTheDocument();
-    expect(screen.getByText(/Los cálculos de Monotributo solo están disponibles/)).toBeInTheDocument();
+    expect(screen.getByText(/Los cálculos de Monotributo requieren datos de los últimos 12 meses/)).toBeInTheDocument();
   });
 
   it("renders activity type selector", () => {

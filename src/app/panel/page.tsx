@@ -15,53 +15,55 @@ export default function PanelPage() {
   const router = useRouter();
   const { state } = useInvoiceContext();
 
-  // Detectar si tenemos datos del año actual completo
-  const isCurrentYearComplete = () => {
+  // Helper para parsear fecha DD/MM/YYYY a Date
+  const parseInvoiceDate = (fecha: string): Date => {
+    const [day, month, year] = fecha.split("/");
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  };
+
+  // Detectar si tenemos datos de los últimos 12 meses (año móvil para Monotributo)
+  const hasLast12MonthsData = () => {
     if (state.invoices.length === 0) return false;
     
-    const currentYear = new Date().getFullYear().toString();
-    const currentYearInvoices = state.invoices.filter((inv) => {
-      const year = inv.fecha.split("/")[2];
-      return year === currentYear;
+    const today = new Date();
+    const twelveMonthsAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+
+    // Filtrar facturas de los últimos 12 meses
+    const last12MonthsInvoices = state.invoices.filter((inv) => {
+      const invoiceDate = parseInvoiceDate(inv.fecha);
+      return invoiceDate >= twelveMonthsAgo && invoiceDate <= today;
     });
 
-    // Si no hay facturas del año actual, no mostrar Monotributo
-    if (currentYearInvoices.length === 0) return false;
+    // Si no hay facturas en los últimos 12 meses, no mostrar Monotributo
+    if (last12MonthsInvoices.length === 0) return false;
 
-    // Obtener el rango de fechas de las facturas del año actual
-    const dates = currentYearInvoices.map((inv) => {
-      const [day, month, year] = inv.fecha.split("/");
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    });
-
+    // Obtener el rango de fechas de las facturas
+    const dates = last12MonthsInvoices.map((inv) => parseInvoiceDate(inv.fecha));
     const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
 
-    // Verificar que el rango empiece en enero (mes 0) y termine en el mes actual o posterior
-    const today = new Date();
-    const currentMonth = today.getMonth();
-
-    // Debe empezar en enero (permitir hasta 31 de enero como margen)
-    const startsInJanuary = minDate.getMonth() === 0 || minDate <= new Date(parseInt(currentYear), 0, 31);
+    // Verificar que el rango cubra al menos 10 meses de los últimos 12
+    // (damos margen porque puede no haber facturas todos los meses)
+    const monthsCovered = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
     
-    // Debe llegar al menos al mes actual o muy cerca
-    const reachesCurrentMonth = maxDate.getMonth() >= currentMonth - 1;
-
-    return startsInJanuary && reachesCurrentMonth;
+    return monthsCovered >= 10;
   };
 
-  const hasCurrentYearData = isCurrentYearComplete();
+  const hasCurrentYearData = hasLast12MonthsData();
 
-  // Calcular ingresos anuales para Monotributo (solo año actual)
+  // Calcular ingresos anuales para Monotributo (últimos 12 meses - año móvil)
   const calcularIngresosAnuales = () => {
-    const currentYear = new Date().getFullYear().toString();
+    const today = new Date();
+    const twelveMonthsAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+
     return state.invoices
       .filter((inv) => {
-        const year = inv.fecha.split("/")[2];
-        return year === currentYear;
+        const invoiceDate = parseInvoiceDate(inv.fecha);
+        return invoiceDate >= twelveMonthsAgo && invoiceDate <= today;
       })
       .reduce((sum, inv) => {
-        if (inv.moneda === "USD" && inv.xmlData?.exchangeRate) {
+        // Convertir a pesos si es moneda extranjera con tipo de cambio
+        if (inv.moneda !== "ARS" && inv.xmlData?.exchangeRate) {
           return sum + inv.importeTotal * inv.xmlData.exchangeRate;
         }
         return sum + inv.importeTotal;

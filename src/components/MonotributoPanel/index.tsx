@@ -39,7 +39,7 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
       </CardHeader>
 
       <CardContent className="flex-1">
-        {/* Message when no current year data */}
+        {/* Message when insufficient data for last 12 months */}
         {!isCurrentYearData && (
           <div className="rounded-lg border-2 border-muted bg-muted/30 p-6 text-center">
             <div className="flex justify-center mb-3">
@@ -47,7 +47,7 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
             </div>
             <h3 className="font-semibold text-foreground mb-2">Datos de Monotributo no disponibles</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Los cálculos de Monotributo solo están disponibles cuando consultás el año actual completo.
+              Los cálculos de Monotributo requieren datos de los últimos 12 meses.
             </p>
             <div className="rounded-lg bg-primary/10 border border-primary/30 p-3">
               <p className="text-xs text-muted-foreground">
@@ -58,7 +58,7 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
                 >
                   limpiá los datos
                 </button>{" "}
-                y consultá desde el 1 de enero del {new Date().getFullYear()} hasta hoy.
+                y consultá los últimos 12 meses desde hoy.
               </p>
             </div>
           </div>
@@ -175,7 +175,7 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
               </div>
               {monotributoInfo && (
                 <div className="text-xs text-muted-foreground text-center">
-                  Basado en tus ingresos acumulados del año
+                  Basado en tus ingresos acumulados de los últimos 12 meses
                 </div>
               )}
             </div>
