@@ -95,6 +95,6 @@ describe("DateRangePicker", () => {
   it("renders the help text", () => {
     render(<DateRangePicker {...defaultProps} />);
 
-    expect(screen.getByText("Máximo 1 año de consulta. Por defecto: año actual.")).toBeInTheDocument();
+    expect(screen.getByText("Máximo 1 año de consulta. Por defecto: últimos 12 meses.")).toBeInTheDocument();
   });
 });

@@ -128,46 +128,65 @@ function calculateTotalEnPesos(
 function prepareMonthlyData(
   invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[]
 ): MonthlyDataPoint[] {
-  const currentYear = new Date().getFullYear().toString();
-  const monthlyTotals: Record<string, { month: string; monthNum: number; acumulado: number; mensual: number }> = {};
+  const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  
+  // Group by year-month to handle periods spanning multiple years
+  const monthlyTotals: Record<string, { 
+    month: string; 
+    monthNum: number; 
+    year: number;
+    sortKey: number; // YYYYMM for sorting
+    mensual: number;
+  }> = {};
 
-  let acumulado = 0;
+  // Process all invoices (already filtered by date range)
+  invoices.forEach((invoice) => {
+    const [, month, year] = invoice.fecha.split("/");
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    const key = `${year}-${month}`; // Unique key per year-month
+    const sortKey = yearNum * 100 + monthNum; // YYYYMM for chronological sorting
 
-  invoices
-    .filter((invoice) => {
-      const [, , year] = invoice.fecha.split("/");
-      return year === currentYear;
-    })
-    .forEach((invoice) => {
-      const [, month] = invoice.fecha.split("/");
-      const monthNum = parseInt(month);
-      const monthName = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][monthNum - 1];
+    const multiplier = getInvoiceMultiplier(invoice.tipo);
+    const totalEnPesos = calculateTotalEnPesos(
+      invoice.importeTotal,
+      invoice.moneda,
+      invoice.xmlData?.exchangeRate
+    );
 
-      const multiplier = getInvoiceMultiplier(invoice.tipo);
-      const totalEnPesos = calculateTotalEnPesos(
-        invoice.importeTotal,
-        invoice.moneda,
-        invoice.xmlData?.exchangeRate
-      );
-
-      if (!monthlyTotals[month]) {
-        monthlyTotals[month] = { month: monthName, monthNum, acumulado: 0, mensual: 0 };
-      }
-
-      monthlyTotals[month].mensual += totalEnPesos * multiplier;
-    });
-
-  return Object.values(monthlyTotals)
-    .sort((a, b) => a.monthNum - b.monthNum)
-    .map((item) => {
-      acumulado += item.mensual;
-      return {
-        month: item.month,
-        monthNum: item.monthNum,
-        acumulado,
-        mensual: item.mensual,
+    if (!monthlyTotals[key]) {
+      // Show abbreviated year if period spans multiple years
+      const monthLabel = monthNames[monthNum - 1];
+      monthlyTotals[key] = { 
+        month: monthLabel, 
+        monthNum, 
+        year: yearNum,
+        sortKey,
+        mensual: 0 
       };
-    });
+    }
+
+    monthlyTotals[key].mensual += totalEnPesos * multiplier;
+  });
+
+  // Sort chronologically and calculate cumulative
+  let acumulado = 0;
+  const sortedData = Object.values(monthlyTotals).sort((a, b) => a.sortKey - b.sortKey);
+  
+  // Check if data spans multiple years
+  const years = [...new Set(sortedData.map(d => d.year))];
+  const spansMultipleYears = years.length > 1;
+
+  return sortedData.map((item) => {
+    acumulado += item.mensual;
+    return {
+      // Add year suffix if spanning multiple years (e.g., "Ene 25")
+      month: spansMultipleYears ? `${item.month} ${String(item.year).slice(-2)}` : item.month,
+      monthNum: item.sortKey, // Use sortKey for proper ordering
+      acumulado,
+      mensual: item.mensual,
+    };
+  });
 }
 
 interface DistributionDataPoint {

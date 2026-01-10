@@ -286,9 +286,9 @@ export async function exportToPDF(
 
   // Calculate totals first (needed for monotributo)
   const { byMonth, byYear } = calculateTotals(invoices);
-  const currentYear = new Date().getFullYear();
-  const yearTotals = byYear[currentYear.toString()];
-  const ingresosAnuales = yearTotals?.totalPesos || 0;
+  // Sum all years in the queried period (not just current year)
+  const ingresosAnuales = Object.values(byYear).reduce((sum, year) => sum + year.totalPesos, 0);
+  const hasYearData = Object.keys(byYear).length > 0;
 
   // ========== PAGE 1: COMPANY HEADER + MONOTRIBUTO ==========
   doc.setFontSize(18);
@@ -315,7 +315,7 @@ export async function exportToPDF(
   // Get monotributo data (static) and activity preference
   const { data: monotributoData, tipoActividad } = getMonotributoData();
   
-  if (yearTotals && yearTotals.totalPesos > 0 && monotributoData.categorias.length > 0) {
+  if (hasYearData && ingresosAnuales > 0 && monotributoData.categorias.length > 0) {
     const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
     
     // Find calculated category based on income

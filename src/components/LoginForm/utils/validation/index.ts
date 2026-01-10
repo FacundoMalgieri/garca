@@ -11,8 +11,8 @@ export function validateDateRange(from: string, to: string): string | null {
     return "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'";
   }
 
-  // Check if range is more than 1 year
-  const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+  // Check if range is more than 1 year (using 366 days to account for leap years)
+  const oneYearInMs = 366 * 24 * 60 * 60 * 1000;
   const diffInMs = toDate.getTime() - fromDate.getTime();
 
   if (diffInMs > oneYearInMs) {

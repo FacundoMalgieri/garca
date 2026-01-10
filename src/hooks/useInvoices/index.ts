@@ -684,14 +684,14 @@ function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string): Compan
 }
 
 /**
- * Gets the default date range (January 1st of current year to today).
+ * Gets the default date range (last 12 months from today).
  */
 function getDefaultDateRange(): DateRange {
   const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
 
   return {
-    from: formatDateToISO(startOfYear),
+    from: formatDateToISO(oneYearAgo),
     to: formatDateToISO(today),
   };
 }

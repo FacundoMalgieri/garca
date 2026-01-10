@@ -59,10 +59,10 @@ export function LoginForm({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
-  // Date range state - default to current year
+  // Date range state - default to last 12 months from today
   const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const [fechaDesde, setFechaDesde] = useState(startOfYear.toISOString().split("T")[0]);
+  const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+  const [fechaDesde, setFechaDesde] = useState(oneYearAgo.toISOString().split("T")[0]);
   const [fechaHasta, setFechaHasta] = useState(today.toISOString().split("T")[0]);
   const [dateError, setDateError] = useState<string | null>(null);
 

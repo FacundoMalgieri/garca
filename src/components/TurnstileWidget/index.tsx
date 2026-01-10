@@ -94,6 +94,8 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
       if (!SITE_KEY) {
         if (!hasCalledSuccessRef.current) {
           hasCalledSuccessRef.current = true;
+          // Pass empty string - button will stay disabled without Turnstile keys
+          // This is intentional: forces devs to configure Turnstile or use demo mode
           onSuccess("");
         }
         return;

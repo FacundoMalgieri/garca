@@ -65,7 +65,7 @@ export function DateRangePicker({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Máximo 1 año de consulta. Por defecto: año actual.
+        Máximo 1 año de consulta. Por defecto: últimos 12 meses.
       </p>
     </div>
   );
