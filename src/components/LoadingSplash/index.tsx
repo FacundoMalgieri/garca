@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { GitHubIcon, PayPalIcon } from "@/components/ui/icons";
 import type { ScraperProgress } from "@/hooks/useInvoices";
 
 interface LoadingSplashProps {
@@ -209,6 +210,43 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
               aria-label={`Ver tip ${index + 1}`}
             />
           ))}
+        </div>
+
+        {/* Support callout */}
+        <div className="pt-4 border-t border-border/50">
+          <p className="text-xs text-muted-foreground mb-3">
+            <span className="sm:hidden">Servidor gratuito = puede tardar. ¿Querés ayudar?</span>
+            <span className="hidden sm:block">GARCA corre en un servidor gratuito, por eso puede tardar un poco. Si querés ayudar a mejorar la velocidad, considerá apoyar el proyecto.</span>
+          </p>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <a
+              href="https://paypal.me/facundomalgieri"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-[#003087] text-white text-xs font-medium hover:bg-[#003087]/90 transition-colors"
+            >
+              <PayPalIcon className="h-4 w-4" />
+              PayPal
+            </a>
+            <a
+              href="https://buymeacoffee.com/facundo.malgieri"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-[#FFDD00] text-black text-xs font-medium hover:bg-[#FFDD00]/90 transition-colors"
+            >
+              <img src="/icons/bmc-logo.svg" alt="" className="h-4 w-4" />
+              Coffee
+            </a>
+            <a
+              href="https://github.com/FacundoMalgieri/garca"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
+            >
+              <GitHubIcon className="h-4 w-4" />
+              ⭐ Star
+            </a>
+          </div>
         </div>
       </div>
     </div>
