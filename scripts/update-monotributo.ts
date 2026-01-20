@@ -52,6 +52,22 @@ function extractFechaVigencia(captionText: string | null): string {
 }
 
 /**
+ * Parses a monetary string from AFIP format to number.
+ */
+function parseMonto(texto: string): number {
+  return (
+    parseFloat(
+      texto
+        .replace(/\$/g, "")
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(/,/g, ".")
+        .trim()
+    ) || 0
+  );
+}
+
+/**
  * Scrapes Monotributo categories from AFIP website.
  */
 async function scrapeMonotributoCategories(): Promise<MonotributoData> {
@@ -71,47 +87,35 @@ async function scrapeMonotributoCategories(): Promise<MonotributoData> {
     // Wait for table to load
     await page.waitForSelector("table", { timeout: 10000 });
 
-    // Extract categories
+    // Extract raw text from table cells (no functions inside evaluate to avoid esbuild __name issue)
     console.log("[Update Monotributo] Extracting categories...");
-    const categorias = await page.evaluate(() => {
+    const rawData = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll("table tbody tr"));
-
-      const parseMonto = (texto: string): number => {
-        return (
-          parseFloat(
-            texto
-              .replace(/\$/g, "")
-              .replace(/\s/g, "")
-              .replace(/\./g, "")
-              .replace(/,/g, ".")
-              .trim()
-          ) || 0
-        );
-      };
-
       return rows.map((row) => {
         const cells = row.querySelectorAll("td, th");
-
-        return {
-          categoria: cells[0]?.textContent?.trim() || "",
-          ingresosBrutos: parseMonto(cells[1]?.textContent || ""),
-          superficieAfectada: cells[2]?.textContent?.trim() || "",
-          energiaElectrica: cells[3]?.textContent?.trim() || "",
-          alquileres: parseMonto(cells[4]?.textContent || ""),
-          precioUnitarioMax: parseMonto(cells[5]?.textContent || ""),
-          impuestoIntegrado: {
-            servicios: parseMonto(cells[6]?.textContent || ""),
-            venta: parseMonto(cells[7]?.textContent || ""),
-          },
-          aportesSIPA: parseMonto(cells[8]?.textContent || ""),
-          aportesObraSocial: parseMonto(cells[9]?.textContent || ""),
-          total: {
-            servicios: parseMonto(cells[10]?.textContent || ""),
-            venta: parseMonto(cells[11]?.textContent || ""),
-          },
-        };
+        return Array.from(cells).map((cell) => cell.textContent?.trim() || "");
       });
     });
+
+    // Parse the raw data outside of page.evaluate
+    const categorias = rawData.map((cells) => ({
+      categoria: cells[0] || "",
+      ingresosBrutos: parseMonto(cells[1] || ""),
+      superficieAfectada: cells[2] || "",
+      energiaElectrica: cells[3] || "",
+      alquileres: parseMonto(cells[4] || ""),
+      precioUnitarioMax: parseMonto(cells[5] || ""),
+      impuestoIntegrado: {
+        servicios: parseMonto(cells[6] || ""),
+        venta: parseMonto(cells[7] || ""),
+      },
+      aportesSIPA: parseMonto(cells[8] || ""),
+      aportesObraSocial: parseMonto(cells[9] || ""),
+      total: {
+        servicios: parseMonto(cells[10] || ""),
+        venta: parseMonto(cells[11] || ""),
+      },
+    }));
 
     // Extract effective date
     const captionText = await page.evaluate(() => {
