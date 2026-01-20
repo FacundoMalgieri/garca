@@ -5,7 +5,7 @@
  * To update manually, run: npm run update-monotributo
  *
  * Source: https://www.arca.gob.ar/monotributo/categorias.asp
- * Last updated: 2025-12-01
+ * Last updated: 2026-01-20
  */
 
 import type { MonotributoData } from "@/types/monotributo";
@@ -14,203 +14,202 @@ export const MONOTRIBUTO_DATA: MonotributoData = {
   categorias: [
     {
       categoria: "A",
-      ingresosBrutos: 8992597.87,
+      ingresosBrutos: 10277988.13,
       superficieAfectada: "Hasta 30 m2",
       energiaElectrica: "Hasta 3330 Kw",
-      alquileres: 2091301.83,
-      precioUnitarioMax: 536767.47,
+      alquileres: 2390229.8,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 4182.6,
-        venta: 4182.6,
+        servicios: 4780.46,
+        venta: 4780.46
       },
-      aportesSIPA: 13663.17,
-      aportesObraSocial: 19239.97,
+      aportesSIPA: 15616.17,
+      aportesObraSocial: 21990.11,
       total: {
-        servicios: 37085.74,
-        venta: 37085.74,
-      },
+        servicios: 42386.74,
+        venta: 42386.74
+      }
     },
     {
       categoria: "B",
-      ingresosBrutos: 13175201.52,
+      ingresosBrutos: 15058447.71,
       superficieAfectada: "Hasta 45 m2",
       energiaElectrica: "Hasta 5000 Kw",
-      alquileres: 2091301.83,
-      precioUnitarioMax: 536767.47,
+      alquileres: 2390229.8,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 7946.95,
-        venta: 7946.95,
+        servicios: 9082.88,
+        venta: 9082.88
       },
-      aportesSIPA: 15029.49,
-      aportesObraSocial: 19239.97,
+      aportesSIPA: 17177.79,
+      aportesObraSocial: 21990.11,
       total: {
-        servicios: 42216.41,
-        venta: 42216.41,
-      },
+        servicios: 48250.78,
+        venta: 48250.78
+      }
     },
     {
       categoria: "C",
-      ingresosBrutos: 18473166.15,
+      ingresosBrutos: 21113696.52,
       superficieAfectada: "Hasta 60 m2",
       energiaElectrica: "Hasta 6700 Kw",
-      alquileres: 2858112.5,
-      precioUnitarioMax: 536767.47,
+      alquileres: 3266647.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 13663.17,
-        venta: 12547.81,
+        servicios: 15616.17,
+        venta: 14341.38
       },
-      aportesSIPA: 16532.44,
-      aportesObraSocial: 19239.97,
+      aportesSIPA: 18895.57,
+      aportesObraSocial: 21990.11,
       total: {
-        servicios: 49435.58,
-        venta: 48320.22,
-      },
+        servicios: 56501.85,
+        venta: 55227.06
+      }
     },
     {
       categoria: "D",
-      ingresosBrutos: 22934610.05,
+      ingresosBrutos: 26212853.42,
       superficieAfectada: "Hasta 85 m2",
       energiaElectrica: "Hasta 10000 Kw",
-      alquileres: 2858112.5,
-      precioUnitarioMax: 536767.47,
+      alquileres: 3266647.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 22307.22,
-        venta: 20773.6,
+        servicios: 25495.79,
+        venta: 23742.95
       },
-      aportesSIPA: 18185.68,
-      aportesObraSocial: 22864.9,
+      aportesSIPA: 20785.13,
+      aportesObraSocial: 26133.18,
       total: {
-        servicios: 63357.8,
-        venta: 61824.18,
-      },
+        servicios: 72414.1,
+        venta: 70661.26
+      }
     },
     {
       categoria: "E",
-      ingresosBrutos: 26977793.6,
+      ingresosBrutos: 30833964.37,
       superficieAfectada: "Hasta 110 m2",
       energiaElectrica: "Hasta 13000 Kw",
-      alquileres: 3624923.17,
-      precioUnitarioMax: 536767.47,
+      alquileres: 4143064.98,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 41826.04,
-        venta: 33181.99,
+        servicios: 47804.6,
+        venta: 37924.98
       },
-      aportesSIPA: 20004.25,
-      aportesObraSocial: 27884.02,
+      aportesSIPA: 22863.64,
+      aportesObraSocial: 31869.73,
       total: {
-        servicios: 89714.31,
-        venta: 81070.26,
-      },
+        servicios: 102537.97,
+        venta: 92658.35
+      }
     },
     {
       categoria: "F",
-      ingresosBrutos: 33809379.57,
+      ingresosBrutos: 38642048.36,
       superficieAfectada: "Hasta 150 m2",
       energiaElectrica: "Hasta 16500 Kw",
-      alquileres: 3624923.17,
-      precioUnitarioMax: 536767.47,
+      alquileres: 4143064.98,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 58835.29,
-        venta: 43220.24,
+        servicios: 67245.13,
+        venta: 49398.08
       },
-      aportesSIPA: 22004.67,
-      aportesObraSocial: 32066.63,
+      aportesSIPA: 25150,
+      aportesObraSocial: 36650.19,
       total: {
-        servicios: 112906.59,
-        venta: 97291.54,
-      },
+        servicios: 129045.32,
+        venta: 111198.27
+      }
     },
     {
       categoria: "G",
-      ingresosBrutos: 40431835.35,
+      ingresosBrutos: 46211109.37,
       superficieAfectada: "Hasta 200 m2",
       energiaElectrica: "Hasta 20000 Kw",
-      alquileres: 4322023.77,
-      precioUnitarioMax: 536767.47,
+      alquileres: 4939808.23,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 107074.65,
-        venta: 53537.32,
+        servicios: 122379.76,
+        venta: 61189.87
       },
-      aportesSIPA: 30806.54,
-      aportesObraSocial: 34576.19,
+      aportesSIPA: 35210,
+      aportesObraSocial: 39518.47,
       total: {
-        servicios: 172457.38,
-        venta: 118920.05,
-      },
+        servicios: 197108.23,
+        venta: 135918.34
+      }
     },
     {
       categoria: "H",
-      ingresosBrutos: 61344853.64,
+      ingresosBrutos: 70113407.33,
       superficieAfectada: "Hasta 200 m2",
       energiaElectrica: "Hasta 20000 Kw",
-      alquileres: 6273905.49,
-      precioUnitarioMax: 536767.47,
+      alquileres: 7170689.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 306724.27,
-        venta: 153362.13,
+        servicios: 350567.04,
+        venta: 175283.51
       },
-      aportesSIPA: 43129.16,
-      aportesObraSocial: 41547.19,
+      aportesSIPA: 49294,
+      aportesObraSocial: 47485.89,
       total: {
-        servicios: 391400.62,
-        venta: 238038.48,
-      },
+        servicios: 447346.93,
+        venta: 272063.4
+      }
     },
     {
       categoria: "I",
-      ingresosBrutos: 68664410.05,
+      ingresosBrutos: 78479211.62,
       superficieAfectada: "Hasta 200 m2",
       energiaElectrica: "Hasta 20000 Kw",
-      alquileres: 6273905.49,
-      precioUnitarioMax: 536767.47,
+      alquileres: 7170689.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 609963.03,
-        venta: 243985.21,
+        servicios: 697150.35,
+        venta: 278860.14
       },
-      aportesSIPA: 60380.82,
-      aportesObraSocial: 51306.61,
+      aportesSIPA: 69011.6,
+      aportesObraSocial: 58640.31,
       total: {
-        servicios: 721650.46,
-        venta: 355672.64,
-      },
+        servicios: 824802.26,
+        venta: 406512.05
+      }
     },
     {
       categoria: "J",
-      ingresosBrutos: 78632948.76,
+      ingresosBrutos: 89872640.3,
       superficieAfectada: "Hasta 200 m2",
       energiaElectrica: "Hasta 20000 Kw",
-      alquileres: 6273905.49,
-      precioUnitarioMax: 536767.47,
+      alquileres: 7170689.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 731955.63,
-        venta: 292782.26,
+        servicios: 836580.42,
+        venta: 334632.18
       },
-      aportesSIPA: 84533.15,
-      aportesObraSocial: 57580.51,
+      aportesSIPA: 96616.24,
+      aportesObraSocial: 65810.99,
       total: {
-        servicios: 874069.29,
-        venta: 434895.92,
-      },
+        servicios: 999007.65,
+        venta: 497059.41
+      }
     },
     {
       categoria: "K",
-      ingresosBrutos: 94805682.9,
+      ingresosBrutos: 108357084.05,
       superficieAfectada: "Hasta 200 m2",
       energiaElectrica: "Hasta 20000 Kw",
-      alquileres: 6273905.49,
-      precioUnitarioMax: 536767.47,
+      alquileres: 7170689.39,
+      precioUnitarioMax: 613492.31,
       impuestoIntegrado: {
-        servicios: 1024737.89,
-        venta: 341579.3,
+        servicios: 1171212.59,
+        venta: 390404.2
       },
-      aportesSIPA: 118346.41,
-      aportesObraSocial: 65806.3,
+      aportesSIPA: 135262.74,
+      aportesObraSocial: 75212.57,
       total: {
-        servicios: 1208890.6,
-        venta: 525732.01,
-      },
-    },
+        servicios: 1381687.9,
+        venta: 600879.51
+      }
+    }
   ],
-  fechaVigencia: "1/12/2025",
+  fechaVigencia: ""
 };
-
