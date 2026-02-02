@@ -115,8 +115,8 @@ describe("MonotributoPanel", () => {
 
   it("displays calculated category", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
-    // When no monotributoInfo is scraped, it shows "Tu categoría calculada:"
-    expect(screen.getByText("Tu categoría calculada:")).toBeInTheDocument();
+    // When no monotributoInfo is scraped, it shows "Categoría según tus ingresos"
+    expect(screen.getByText("Categoría según tus ingresos")).toBeInTheDocument();
     expect(screen.getByText("B")).toBeInTheDocument();
   });
 

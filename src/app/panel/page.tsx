@@ -7,6 +7,7 @@ import { ChartsPanel } from "@/components/ChartsPanel";
 import { CompanyHeader } from "@/components/CompanyHeader";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { MonotributoPanel } from "@/components/MonotributoPanel";
+import { ProjectionPanel } from "@/components/ProjectionPanel";
 import { SummaryPanel } from "@/components/SummaryPanel";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
@@ -28,25 +29,13 @@ export default function PanelPage() {
     const today = new Date();
     const twelveMonthsAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
 
-    // Filtrar facturas de los últimos 12 meses
-    const last12MonthsInvoices = state.invoices.filter((inv) => {
+    // Verificar si hay al menos una factura en los últimos 12 meses
+    const hasRecentInvoices = state.invoices.some((inv) => {
       const invoiceDate = parseInvoiceDate(inv.fecha);
       return invoiceDate >= twelveMonthsAgo && invoiceDate <= today;
     });
 
-    // Si no hay facturas en los últimos 12 meses, no mostrar Monotributo
-    if (last12MonthsInvoices.length === 0) return false;
-
-    // Obtener el rango de fechas de las facturas
-    const dates = last12MonthsInvoices.map((inv) => parseInvoiceDate(inv.fecha));
-    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-
-    // Verificar que el rango cubra al menos 10 meses de los últimos 12
-    // (damos margen porque puede no haber facturas todos los meses)
-    const monthsCovered = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    
-    return monthsCovered >= 10;
+    return hasRecentInvoices;
   };
 
   const hasCurrentYearData = hasLast12MonthsData();
@@ -71,7 +60,7 @@ export default function PanelPage() {
   };
 
   const ingresosAnuales = calcularIngresosAnuales();
-  const { data: monotributoData } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
+  const { data: monotributoData, tipoActividad } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
 
   // Si no hay facturas, redirigir a /ingresar
   useEffect(() => {
@@ -122,6 +111,11 @@ export default function PanelPage() {
       {/* Totales */}
       <section id="totales">
         <SummaryPanel />
+      </section>
+
+      {/* Proyectar */}
+      <section id="proyectar">
+        <ProjectionPanel tipoActividad={tipoActividad} />
       </section>
 
       {/* Facturas (al final para evitar scroll infinito en mobile) */}

@@ -26,8 +26,10 @@ const softwareApplicationSchema = {
   featureList: [
     "Consulta de comprobantes de ARCA/AFIP",
     "Cálculo automático de categoría de Monotributo",
-    "Exportación a Excel",
-    "Gráficos de facturación",
+    "Proyección inteligente de facturación",
+    "Simulador de recategorización",
+    "Exportación a Excel, PDF y JSON",
+    "Gráficos de facturación interactivos",
     "100% privado - datos en tu navegador",
     "Sin almacenamiento en servidores",
   ],
@@ -128,6 +130,14 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Actualmente GARCA está optimizado para Monotributistas. Lee únicamente los comprobantes disponibles en 'Comprobantes en línea' de ARCA. Si tenés otro tipo de situación fiscal, puede que algunas funciones no estén disponibles.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Cómo puedo planificar mi facturación para no cambiar de categoría?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "GARCA incluye una herramienta de Proyección Inteligente que te permite calcular cuánto podés facturar cada mes para mantenerte en tu categoría objetivo. Podés simular diferentes escenarios, configurar un margen de seguridad y ver en tiempo real cómo impactan en tu próxima recategorización.",
       },
     },
     {

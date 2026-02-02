@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  CalculatorIcon,
   ChartIcon,
   ClipboardIcon,
   DocumentIcon,
   DownloadIcon,
   LockIcon,
-  TrendingIcon,
 } from "@/components/ui/landing-icons";
 
 interface FeaturesGridProps {
@@ -37,8 +37,8 @@ export function FeaturesGrid({ scrollY }: FeaturesGridProps) {
     },
     {
       icon: <ChartIcon />,
-      title: "Análisis Inteligente",
-      description: "Visualizá ingresos por mes y año con conversión automática de divisas",
+      title: "Análisis Visual",
+      description: "Gráficos de ingresos, progreso de Monotributo y distribución por moneda",
       gradient: "from-violet-500 to-purple-500",
       shadow: "shadow-violet-500/30",
     },
@@ -50,18 +50,18 @@ export function FeaturesGrid({ scrollY }: FeaturesGridProps) {
       shadow: "shadow-amber-500/30",
     },
     {
+      icon: <CalculatorIcon />,
+      title: "Proyección Inteligente",
+      description: "Calculá cuánto podés facturar para mantenerte en tu categoría objetivo",
+      gradient: "from-teal-500 to-cyan-500",
+      shadow: "shadow-teal-500/30",
+    },
+    {
       icon: <LockIcon />,
       title: "100% Privado",
       description: "Todo funciona en tu navegador. Tus datos nunca salen de tu dispositivo",
       gradient: "from-emerald-500 to-green-500",
       shadow: "shadow-emerald-500/30",
-    },
-    {
-      icon: <TrendingIcon />,
-      title: "Gráficos Interactivos",
-      description: "Progreso de Monotributo, distribución por moneda y más",
-      gradient: "from-pink-500 to-rose-500",
-      shadow: "shadow-pink-500/30",
     },
     {
       icon: <DownloadIcon />,

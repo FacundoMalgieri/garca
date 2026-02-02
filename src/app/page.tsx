@@ -27,12 +27,28 @@ const DEMO_COMPANY = {
   razonSocial: "Tecnología Innovadora SRL (Demo)",
 };
 
+// Helper to get next recategorization date (January or July)
+const getNextRecategorizacion = (): string => {
+  const now = new Date();
+  const currentMonth = now.getMonth(); // 0-indexed
+  const currentYear = now.getFullYear();
+  
+  // Recategorization periods: January (0) and July (6)
+  if (currentMonth < 6) {
+    // Before July -> next is July of current year
+    return `Julio ${currentYear}`;
+  } else {
+    // July or later -> next is January of next year
+    return `Enero ${currentYear + 1}`;
+  }
+};
+
 // Demo Monotributo info - simulates data scraped from AFIP
 const DEMO_MONOTRIBUTO_INFO: MonotributoAFIPInfo = {
   categoria: "G",
   tipoActividad: "servicios",
   actividadDescripcion: "LOCACIONES DE SERVICIOS",
-  proximaRecategorizacion: "Enero 2026",
+  proximaRecategorizacion: getNextRecategorizacion(),
   nombreCompleto: "TECNOLOGÍA INNOVADORA SRL",
   cuit: "20345678901",
 };
@@ -58,6 +74,10 @@ const FAQ_ITEMS = [
   {
     question: "¿Funciona con cualquier tipo de contribuyente?",
     answer: "Actualmente GARCA está optimizado para Monotributistas. Lee únicamente los comprobantes disponibles en 'Comprobantes en línea' de ARCA. Si tenés otro tipo de situación fiscal, puede que algunas funciones no estén disponibles.",
+  },
+  {
+    question: "¿Cómo puedo planificar mi facturación para no cambiar de categoría?",
+    answer: "GARCA incluye una herramienta de Proyección Inteligente que te permite calcular cuánto podés facturar cada mes para mantenerte en tu categoría objetivo. Podés simular diferentes escenarios, configurar un margen de seguridad y ver en tiempo real cómo impactan en tu próxima recategorización.",
   },
   {
     question: "¿Puedo exportar los datos para mi contador?",
@@ -221,7 +241,34 @@ export default function Home() {
   const handleLoadDemo = () => {
     setIsLoadingDemo(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockInvoices));
+      // Adjust demo invoice dates to be relative to today
+      // The mock data covers Jan-Nov 2025, we shift it so the latest invoice is recent
+      const adjustedInvoices = mockInvoices.map((invoice) => {
+        // Parse DD/MM/YYYY format
+        const [day, month, year] = invoice.fecha.split("/");
+        const originalDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        // Calculate how many months to shift (from Nov 2025 to current month)
+        const today = new Date();
+        const lastMockDate = new Date(2025, 10, 28); // Nov 28, 2025
+        const monthDiff = (today.getFullYear() - lastMockDate.getFullYear()) * 12 + 
+                          (today.getMonth() - lastMockDate.getMonth());
+        
+        // Shift the date by the calculated months
+        const adjustedDate = new Date(originalDate);
+        adjustedDate.setMonth(adjustedDate.getMonth() + monthDiff);
+        
+        // Format back to DD/MM/YYYY
+        const newFecha = `${String(adjustedDate.getDate()).padStart(2, "0")}/${String(adjustedDate.getMonth() + 1).padStart(2, "0")}/${adjustedDate.getFullYear()}`;
+        
+        return {
+          ...invoice,
+          fecha: newFecha,
+          xmlData: invoice.xmlData ? { ...invoice.xmlData, fecha: newFecha } : undefined,
+        };
+      });
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(adjustedInvoices));
       localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(DEMO_COMPANY));
       localStorage.setItem(MONOTRIBUTO_STORAGE_KEY, JSON.stringify(DEMO_MONOTRIBUTO_INFO));
       loadFromStorage();
