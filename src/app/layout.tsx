@@ -109,6 +109,7 @@ export default function RootLayout({
     <html lang="es" className="dark" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         <JsonLd />
+        <script defer src="https://analytics.garca.app/script.js" data-website-id="e8daefba-6b2f-477c-9245-007c70563143" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider>
