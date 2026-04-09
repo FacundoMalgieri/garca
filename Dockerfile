@@ -49,7 +49,6 @@ ENV NEXT_SHARP_IGNORE_GLOBAL_LIBVIPS=1
 ENV NEXT_TELEMETRY_DISABLED=1
 # Tell Playwright where to find pre-installed browsers (avoid runtime download)
 ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
-# Next.js standalone binds to localhost by default, 0.0.0.0 exposes it to Docker's network
 ENV HOSTNAME=0.0.0.0
 
 # Install runtime dependencies for Playwright
