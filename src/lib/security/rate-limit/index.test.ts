@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { clearRateLimitStore, getRateLimitStatus, RATE_LIMIT_RESPONSE,rateLimit } from "./index";
+import {
+  clearRateLimitStore,
+  getRateLimitStatus,
+  RATE_LIMIT_RESPONSE,
+  rateLimit,
+  runRateLimitCleanupOnce,
+} from "./index";
 
 describe("rateLimit", () => {
   beforeEach(() => {
@@ -95,6 +101,17 @@ describe("rateLimit", () => {
       const request = new Request("http://localhost/api/test", { headers });
 
       expect(rateLimit(request)).toBe(true);
+    });
+
+    it("should remove expired IPs when cleanup runs", () => {
+      const request = createRequest("192.168.1.99");
+      expect(rateLimit(request)).toBe(true);
+
+      vi.advanceTimersByTime(60_000 + 1);
+      runRateLimitCleanupOnce();
+
+      const status = getRateLimitStatus(request);
+      expect(status.remaining).toBe(30);
     });
   });
 

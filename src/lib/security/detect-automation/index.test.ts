@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { BOT_DETECTED_RESPONSE, detectAutomation } from "./index";
 
@@ -155,6 +155,25 @@ describe("detectAutomation", () => {
 
       // This should NOT be detected as automation - it's a valid Chrome UA
       expect(detectAutomation(request)).toBe(false);
+    });
+
+    it("should detect Chrome/xxx.0.0.0 without Safari, Edge, or Opera token", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const headers = new Headers();
+      headers.set(
+        "user-agent",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0"
+      );
+      headers.set("accept", "text/html");
+      headers.set("accept-language", "en-US");
+      const request = new Request("http://localhost/api/test", { headers });
+
+      expect(detectAutomation(request)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(
+        "[Security] Suspicious Chrome version detected:",
+        expect.stringContaining("Chrome/120.0.0.0")
+      );
+      warnSpy.mockRestore();
     });
   });
 

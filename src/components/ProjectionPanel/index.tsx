@@ -112,8 +112,14 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   const isOverActualLimit = distanciaAlLimite < 0
   const isOverSafetyMargin = projectionResult.excedeObjetivo
 
-  // Progress percentage for visual bar
-  const progressPercent = Math.min((projectionResult.totalVentana / projectionResult.topeCategoria) * 100, 120)
+  // Progress percentages for segmented bar (historical vs projected)
+  const historicalPercent = projectionResult.topeCategoria > 0
+    ? Math.min((projectionResult.totalHistorico / projectionResult.topeCategoria) * 100, 100)
+    : 0
+  const projectedPercent = projectionResult.topeCategoria > 0
+    ? Math.min((projectionResult.totalProyectado / projectionResult.topeCategoria) * 100, 100 - historicalPercent)
+    : 0
+  const totalPercent = Math.min(historicalPercent + projectedPercent, 100)
   const safeZonePercent = projectionData.margenSeguridad > 0 
     ? ((projectionResult.topeCategoria - projectionData.margenSeguridad) / projectionResult.topeCategoria) * 100
     : 100
@@ -250,7 +256,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Progreso hacia límite de {projectionResult.categoriaResultante}</span>
-            <span>{Math.min(progressPercent, 100).toFixed(0)}%</span>
+            <span>{totalPercent.toFixed(0)}%</span>
           </div>
           <div className="relative h-3 rounded-full bg-muted overflow-hidden">
             {/* Safety margin zone indicator */}
@@ -260,18 +266,45 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                 style={{ width: `${100 - safeZonePercent}%` }}
               />
             )}
-            {/* Progress bar */}
+            {/* Historical segment */}
             <div 
               className={cn(
-                "h-full rounded-full transition-all duration-500",
-                isOverActualLimit 
-                  ? "bg-destructive" 
-                  : isOverSafetyMargin 
-                    ? "bg-yellow-500" 
-                    : "bg-success"
+                "absolute top-0 bottom-0 left-0 transition-all duration-500 rounded-l-full",
+                isOverActualLimit ? "bg-destructive" : "bg-success"
               )}
-              style={{ width: `${Math.min(progressPercent, 100)}%` }}
+              style={{ width: `${historicalPercent}%` }}
             />
+            {/* Projected segment */}
+            {projectedPercent > 0 && (
+              <div 
+                className={cn(
+                  "absolute top-0 bottom-0 transition-all duration-500",
+                  isOverActualLimit 
+                    ? "bg-destructive/40" 
+                    : isOverSafetyMargin 
+                      ? "bg-yellow-500/50" 
+                      : "bg-success/40",
+                  historicalPercent === 0 && "rounded-l-full",
+                )}
+                style={{ 
+                  left: `${historicalPercent}%`, 
+                  width: `${projectedPercent}%`,
+                }}
+              />
+            )}
+          </div>
+          {/* Legend */}
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive" : "bg-success")} />
+              Histórico ({historicalPercent.toFixed(0)}%)
+            </span>
+            {projectedPercent > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive/40" : "bg-success/40")} />
+                Proyectado ({projectedPercent.toFixed(0)}%)
+              </span>
+            )}
           </div>
         </div>
 

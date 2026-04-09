@@ -159,3 +159,11 @@ export function clearRateLimitStore(): void {
   rateLimitStore.clear();
 }
 
+/**
+ * Runs one cleanup pass over the rate limit store (removes expired IPs).
+ * Only for testing purposes.
+ */
+export function runRateLimitCleanupOnce(): void {
+  cleanupExpiredEntries();
+}
+

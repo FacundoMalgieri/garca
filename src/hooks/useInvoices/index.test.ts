@@ -502,6 +502,324 @@ describe("useInvoices", () => {
 
       expect(result.current.state.error).toBe("Error de validación");
     });
+
+    it("should handle JSON success with company from response", async () => {
+      const mockInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "Mi Empresa SA",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 80000,
+          importeIVA: 20000,
+          importeTotal: 100000,
+          moneda: "ARS",
+          cae: "12345678901234",
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: true,
+            invoices: mockInvoices,
+            company: { cuit: "20345678901", razonSocial: "From JSON Co" },
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.company).toEqual({
+        cuit: "20345678901",
+        razonSocial: "From JSON Co",
+      });
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.companiesState.companies).toEqual([]);
+    });
+
+    it("should use login CUIT when JSON invoices omit valid emisor CUIT", async () => {
+      const mockInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "not-a-cuit",
+          razonSocialEmisor: "Empresa",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 80000,
+          importeIVA: 20000,
+          importeTotal: 100000,
+          moneda: "ARS",
+          cae: "12345678901234",
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: true,
+            invoices: mockInvoices,
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20987654321", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.company).toEqual({
+        cuit: "20987654321",
+        razonSocial: "Empresa",
+      });
+    });
+
+    it("should pick razon social from a later invoice when first is too short", async () => {
+      const mockInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "A",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 80000,
+          importeIVA: 20000,
+          importeTotal: 100000,
+          moneda: "ARS",
+          cae: "111",
+        },
+        {
+          fecha: "16/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 151,
+          numeroCompleto: "0002-00000151",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "Nombre Largo SA",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 1000,
+          importeIVA: 210,
+          importeTotal: 1210,
+          moneda: "ARS",
+          cae: "222",
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: true,
+            invoices: mockInvoices,
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.company?.razonSocial).toBe("Nombre Largo SA");
+    });
+
+    it("should use default date range when dateRange is omitted", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 3, 8));
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: {
+          get: () => "application/json",
+        },
+        json: () =>
+          Promise.resolve({
+            success: true,
+            invoices: [],
+            company: { cuit: "20345678901", razonSocial: "Test Co" },
+          }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0);
+      });
+
+      const [, init] = mockFetch.mock.calls[0];
+      const body = JSON.parse(String((init as { body?: string }).body));
+      expect(body.fechaDesde).toBe("08/04/2025");
+      expect(body.fechaHasta).toBe("08/04/2026");
+
+      vi.useRealTimers();
+    });
+
+    it("should not set error state when fetch is aborted (AbortError)", async () => {
+      const abortError = new Error("Aborted");
+      abortError.name = "AbortError";
+      mockFetch.mockRejectedValueOnce(abortError);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.error).toBeNull();
+      expect(result.current.state.isLoading).toBe(true);
+    });
+
+    it("should set UNKNOWN error code on unexpected failure", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Unexpected failure"));
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.error).toBe("Unexpected failure");
+      expect(result.current.state.errorCode).toBe("UNKNOWN");
+      expect(result.current.state.invoices).toEqual([]);
+    });
+  });
+
+  describe("cancelOperation", () => {
+    it("should abort requests and clear loading and progress", async () => {
+      mockFetch.mockImplementationOnce((_url, init) => {
+        const signal = (
+          init as
+            | {
+                signal?: {
+                  addEventListener(
+                    type: string,
+                    listener: () => void,
+                    options?: { once?: boolean }
+                  ): void;
+                };
+              }
+            | undefined
+        )?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener(
+            "abort",
+            () => {
+              const err = new Error("Aborted");
+              err.name = "AbortError";
+              reject(err);
+            },
+            { once: true }
+          );
+        });
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        const p = result.current.fetchCompanies("20345678901", "password");
+        await Promise.resolve();
+        result.current.cancelOperation();
+        await p;
+      });
+
+      expect(result.current.companiesState.isLoading).toBe(false);
+      expect(result.current.companiesState.progress).toBeNull();
+      expect(result.current.state.isLoading).toBe(false);
+      expect(result.current.state.progress).toBeNull();
+    });
+  });
+
+  describe("loadFromStorage extractCompanyInfo edge cases", () => {
+    it("should fall back to scanning invoices for razon social when first is empty", () => {
+      const mockInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 80000,
+          importeIVA: 20000,
+          importeTotal: 100000,
+          moneda: "ARS",
+          cae: "12345678901234",
+        },
+        {
+          fecha: "16/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 151,
+          numeroCompleto: "0002-00000151",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "Recovered From Second",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 1000,
+          importeIVA: 210,
+          importeTotal: 1210,
+          moneda: "ARS",
+          cae: "222",
+        },
+      ];
+      localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.company?.razonSocial).toBe("Recovered From Second");
+    });
   });
 
 });

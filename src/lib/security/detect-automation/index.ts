@@ -59,8 +59,14 @@ export function detectAutomation(request: Request): boolean {
   const chromeMatch = SUSPICIOUS_CHROME_PATTERN.exec(userAgent);
   if (chromeMatch) {
     // Chrome versions with .0.0.0 suffix are suspicious
-    // Real Chrome has actual build numbers like Chrome/120.0.6099.109
-    const hasRealBuildNumber = /Chrome\/\d+\.\d+\.\d+\.\d+/.test(userAgent);
+    // Real Chrome has actual build numbers like Chrome/120.0.6099.109, and typical
+    // desktop UAs include Safari/ (Chromium) or Edg/ / OPR/.
+    const chromeFull = userAgent.match(/Chrome\/(\d+)\.(\d+)\.(\d+)\.(\d+)/);
+    const hasRealBuildNumber =
+      chromeFull != null &&
+      (chromeFull[3] !== "0" ||
+        chromeFull[4] !== "0" ||
+        /Safari\/|Edg\/|OPR\//.test(userAgent));
     if (!hasRealBuildNumber) {
       console.warn("[Security] Suspicious Chrome version detected:", userAgent.substring(0, 100));
       return true;

@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AFIPInvoice } from "@/types/afip-scraper";
+import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 // Import after mocks
 import { exportToCSV, exportToJSON, exportToPDF } from "./index";
@@ -29,9 +29,23 @@ vi.mock("jspdf", () => {
 });
 
 vi.mock("jspdf-autotable", () => ({
-  default: vi.fn().mockImplementation((doc: Record<string, unknown>) => {
-    // Set lastAutoTable on the doc instance
+  default: vi.fn().mockImplementation((doc: Record<string, unknown>, options?: Record<string, unknown>) => {
     doc.lastAutoTable = { finalY: 100 };
+    const didParseCell = options?.didParseCell as
+      | ((data: { row: { index: number }; cell: { styles: Record<string, unknown> } }) => void)
+      | undefined;
+    const body = options?.body as unknown[][] | undefined;
+    if (didParseCell && Array.isArray(body)) {
+      body.forEach((row, rowIndex) => {
+        const colCount = row?.length ?? 0;
+        for (let c = 0; c < colCount; c++) {
+          didParseCell({
+            row: { index: rowIndex },
+            cell: { styles: {} },
+          });
+        }
+      });
+    }
   }),
 }));
 
@@ -207,11 +221,24 @@ describe("exporters", () => {
       expect(linkElement.download).toMatch(/\.json$/);
     });
 
-    it("includes exchange rate for foreign currency invoices", () => {
-      // The JSON export should include tipoDeCambio for USD invoices
-      // We can't easily check the blob content, but we verify the function runs
+    it("includes tipoDeCambio when exchange rate is greater than zero", () => {
       exportToJSON(mockInvoices, mockCompany);
-      expect(mockClick).toHaveBeenCalled();
+
+      const blobArg = mockCreateObjectURL.mock.calls[0][0] as { content: string[] };
+      const parsed = JSON.parse(blobArg.content[0]) as {
+        facturas: Array<{ tipoDeCambio?: number; moneda: string }>;
+      };
+      const usd = parsed.facturas.find((f) => f.moneda === "USD");
+      expect(usd?.tipoDeCambio).toBe(1100);
+    });
+
+    it("omits tipoDeCambio when exchange rate is zero or missing", () => {
+      const arsOnly: AFIPInvoice[] = [{ ...mockInvoices[0], xmlData: { exchangeRate: 0 } }];
+      exportToJSON(arsOnly, mockCompany);
+
+      const blobArg = mockCreateObjectURL.mock.calls[0][0] as { content: string[] };
+      const parsed = JSON.parse(blobArg.content[0]) as { facturas: Array<{ tipoDeCambio?: number }> };
+      expect(parsed.facturas[0].tipoDeCambio).toBeUndefined();
     });
   });
 
@@ -236,6 +263,288 @@ describe("exporters", () => {
 
       const jsPDF = (await import("jspdf")).default;
       expect(jsPDF).toHaveBeenCalled();
+    });
+
+    it("uses venta monotributo totals when localStorage prefers venta", async () => {
+      const getItem = vi.fn().mockReturnValue("venta");
+      vi.stubGlobal("localStorage", { ...localStorage, getItem });
+
+      const monotributoInfo: MonotributoAFIPInfo = {
+        categoria: "C",
+        tipoActividad: "venta",
+        actividadDescripcion: "Venta",
+        proximaRecategorizacion: "Julio 2026",
+        nombreCompleto: "Test User",
+        cuit: "20345678901",
+      };
+
+      await exportToPDF(mockInvoices, mockCompany, monotributoInfo);
+
+      const autoTable = (await import("jspdf-autotable")).default;
+      const firstCallBody = (autoTable as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+        body: string[][];
+      };
+      expect(firstCallBody.body.some((row) => row.includes("Venta de Bienes"))).toBe(true);
+    });
+
+    it("includes monotributo ARCA table rows when monotributoInfo matches a category", async () => {
+      const monotributoInfo: MonotributoAFIPInfo = {
+        categoria: "A",
+        tipoActividad: "servicios",
+        actividadDescripcion: "LOCACIONES",
+        proximaRecategorizacion: "Enero 2026",
+        nombreCompleto: "Test User",
+        cuit: "20345678901",
+      };
+
+      await exportToPDF(mockInvoices, mockCompany, monotributoInfo);
+
+      const autoTable = (await import("jspdf-autotable")).default;
+      const firstCallBody = (autoTable as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
+        body: string[][];
+      };
+      expect(firstCallBody.body.some((row) => row.includes("Categoría actual:"))).toBe(true);
+      expect(firstCallBody.body.some((row) => row.includes("Pago mensual actual (A):"))).toBe(true);
+    });
+
+    it("sorts multiple foreign currencies alphabetically in totals table", async () => {
+      const eurUsd: AFIPInvoice[] = [
+        {
+          fecha: "01/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 1,
+          numero: 1,
+          numeroCompleto: "0001-00000001",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "X",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Y",
+          importeNeto: 100,
+          importeIVA: 0,
+          importeTotal: 100,
+          moneda: "EUR",
+          cae: "1",
+          xmlData: { exchangeRate: 1200 },
+        },
+        {
+          fecha: "02/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 1,
+          numero: 2,
+          numeroCompleto: "0001-00000002",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "X",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Y",
+          importeNeto: 50,
+          importeIVA: 0,
+          importeTotal: 50,
+          moneda: "USD",
+          cae: "2",
+          xmlData: { exchangeRate: 1100 },
+        },
+      ];
+
+      await exportToPDF(eurUsd, mockCompany);
+
+      const autoTable = (await import("jspdf-autotable")).default;
+      const totalsCall = (autoTable as unknown as { mock: { calls: unknown[][] } }).mock.calls.find(
+        (call) => (call[1] as { head?: string[][] })?.head?.[0]?.[0] === "Período"
+      );
+      const head = (totalsCall?.[1] as { head: string[][] }).head[0];
+      const eurIdx = head.indexOf("EUR");
+      const usdIdx = head.indexOf("USD");
+      expect(eurIdx).toBeGreaterThan(-1);
+      expect(usdIdx).toBeGreaterThan(-1);
+      expect(eurIdx).toBeLessThan(usdIdx);
+    });
+
+    it("styles yearly total rows in didParseCell when both month and year rows exist", async () => {
+      await exportToPDF(mockInvoices, mockCompany);
+
+      const autoTable = (await import("jspdf-autotable")).default;
+      const totalsCall = (autoTable as unknown as { mock: { calls: unknown[][] } }).mock.calls.find(
+        (call) => typeof (call[1] as { didParseCell?: unknown })?.didParseCell === "function"
+      );
+      expect(totalsCall).toBeDefined();
+      if (!totalsCall) return;
+      const options = totalsCall[1] as {
+        didParseCell: (data: { row: { index: number }; cell: { styles: Record<string, unknown> } }) => void;
+        body: unknown[][];
+      };
+      const monthsCount = options.body.length - 1;
+      const cell = { styles: {} as Record<string, unknown> };
+      options.didParseCell({ row: { index: monthsCount }, cell });
+      expect(cell.styles.fillColor).toEqual([38, 47, 85]);
+      expect(cell.styles.textColor).toEqual([255, 255, 255]);
+      expect(cell.styles.fontStyle).toBe("bold");
+    });
+  });
+
+  describe("exportToPDF dark mode and charts", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("toggles dark class on document and loading splash while exporting", async () => {
+      vi.useFakeTimers();
+
+      const splashClassList = { add: vi.fn(), remove: vi.fn() };
+      const splash = { classList: splashClassList };
+      const htmlClassList = {
+        contains: vi.fn((token: string) => token === "dark"),
+        add: vi.fn(),
+        remove: vi.fn(),
+      };
+
+      vi.stubGlobal("document", {
+        ...document,
+        createElement: mockCreateElement,
+        documentElement: { classList: htmlClassList },
+        getElementById: vi.fn((id: string) => (id === "pdf-loading-splash" ? splash : null)),
+      });
+
+      const exportPromise = exportToPDF(mockInvoices, mockCompany);
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(100);
+      await exportPromise;
+
+      expect(htmlClassList.remove).toHaveBeenCalledWith("dark");
+      expect(splashClassList.add).toHaveBeenCalledWith("dark");
+      expect(htmlClassList.add).toHaveBeenCalledWith("dark");
+      expect(splashClassList.remove).toHaveBeenCalledWith("dark");
+    });
+
+    it("captures charts when graficos section and chart nodes exist", async () => {
+      vi.useFakeTimers();
+
+      const buttons = [{ click: vi.fn() }, { click: vi.fn() }, { click: vi.fn() }];
+      const graficosEl = { querySelectorAll: vi.fn().mockReturnValue(buttons) };
+
+      vi.stubGlobal("document", {
+        ...document,
+        createElement: mockCreateElement,
+        documentElement: {
+          classList: {
+            contains: () => false,
+            add: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+        getElementById: vi.fn((id: string) => {
+          if (id === "graficos") return graficosEl;
+          if (id === "chart-progreso" || id === "chart-distribucion" || id === "chart-mensual") return {};
+          return null;
+        }),
+      });
+
+      const html2canvas = (await import("html2canvas")).default;
+      const exportPromise = exportToPDF(mockInvoices, mockCompany);
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(4000 * 3 + 1);
+      await exportPromise;
+
+      expect(buttons.every((b) => b.click.mock.calls.length > 0)).toBe(true);
+      expect(html2canvas).toHaveBeenCalled();
+    });
+
+    it("logs and skips chart when html2canvas rejects", async () => {
+      vi.useFakeTimers();
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const buttons = [{ click: vi.fn() }];
+      const graficosEl = { querySelectorAll: vi.fn().mockReturnValue(buttons) };
+
+      const html2canvas = (await import("html2canvas")).default;
+      vi.mocked(html2canvas).mockRejectedValueOnce(new Error("capture failed"));
+
+      vi.stubGlobal("document", {
+        ...document,
+        createElement: mockCreateElement,
+        documentElement: {
+          classList: {
+            contains: () => false,
+            add: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+        getElementById: vi.fn((id: string) => {
+          if (id === "graficos") return graficosEl;
+          if (id === "chart-progreso") return {};
+          return null;
+        }),
+      });
+
+      const exportPromise = exportToPDF(mockInvoices, mockCompany);
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(4000 + 1);
+      await exportPromise;
+
+      expect(consoleError).toHaveBeenCalledWith("Error capturing chart chart-progreso:", expect.any(Error));
+      consoleError.mockRestore();
+    });
+
+    it("shows fallback text when graficos exists but no chart was captured", async () => {
+      vi.useFakeTimers();
+
+      const buttons = [{ click: vi.fn() }];
+      const graficosEl = { querySelectorAll: vi.fn().mockReturnValue(buttons) };
+
+      vi.stubGlobal("document", {
+        ...document,
+        createElement: mockCreateElement,
+        documentElement: {
+          classList: {
+            contains: () => false,
+            add: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+        getElementById: vi.fn((id: string) => {
+          if (id === "graficos") return graficosEl;
+          return null;
+        }),
+      });
+
+      const jsPDF = (await import("jspdf")).default;
+      const exportPromise = exportToPDF(mockInvoices, mockCompany);
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(4000 + 1);
+      await exportPromise;
+
+      const docInstance = vi.mocked(jsPDF).mock.results[0].value as { text: ReturnType<typeof vi.fn> };
+      expect(docInstance.text).toHaveBeenCalledWith(
+        "Los gráficos están disponibles en la versión web.",
+        14,
+        40
+      );
+    });
+
+    it("shows message when graficos section is missing", async () => {
+      vi.useFakeTimers();
+
+      vi.stubGlobal("document", {
+        ...document,
+        createElement: mockCreateElement,
+        documentElement: {
+          classList: {
+            contains: () => false,
+            add: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+        getElementById: vi.fn().mockReturnValue(null),
+      });
+
+      const jsPDF = (await import("jspdf")).default;
+      const exportPromise = exportToPDF(mockInvoices, mockCompany);
+      await vi.advanceTimersByTimeAsync(50);
+      await exportPromise;
+
+      const docInstance = vi.mocked(jsPDF).mock.results[0].value as { text: ReturnType<typeof vi.fn> };
+      expect(docInstance.text).toHaveBeenCalledWith("No hay gráficos disponibles", 14, 40);
     });
   });
 

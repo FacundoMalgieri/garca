@@ -15,13 +15,32 @@ vi.mock("recharts", () => ({
   BarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
   Bar: () => <div data-testid="bar" />,
   PieChart: ({ children }: { children: React.ReactNode }) => <div data-testid="pie-chart">{children}</div>,
-  Pie: () => <div data-testid="pie" />,
+  Pie: ({
+    children,
+    label,
+  }: {
+    children?: React.ReactNode;
+    label?: (props: { percent?: number }) => React.ReactNode;
+  }) => (
+    <div data-testid="pie">
+      {typeof label === "function" ? label({ percent: 0.25 }) : null}
+      {children}
+    </div>
+  ),
   Cell: () => <div data-testid="cell" />,
   XAxis: () => <div data-testid="x-axis" />,
   YAxis: () => <div data-testid="y-axis" />,
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
   Tooltip: () => <div data-testid="tooltip" />,
-  ReferenceLine: () => <div data-testid="reference-line" />,
+  ReferenceLine: ({
+    label,
+  }: {
+    label?: (props: { viewBox?: { x?: number; y?: number } }) => React.ReactNode;
+  }) => (
+    <div data-testid="reference-line">
+      {typeof label === "function" ? label({ viewBox: { x: 10, y: 20 } }) : null}
+    </div>
+  ),
 }));
 
 // Mock invoice context
@@ -88,6 +107,23 @@ const mockInvoices: AFIPInvoice[] = [
     importeTotal: -121000,
     moneda: "ARS",
     cae: "75000000000002",
+  },
+  {
+    fecha: "01/08/2025",
+    tipo: "Factura C",
+    tipoComprobante: 11,
+    puntoVenta: 1,
+    numero: 99,
+    numeroCompleto: "0001-00000099",
+    cuitEmisor: "20345678901",
+    razonSocialEmisor: "Test Company",
+    cuitReceptor: "30712345678",
+    razonSocialReceptor: "Client Company",
+    importeNeto: 50000,
+    importeIVA: 10500,
+    importeTotal: 60500,
+    moneda: "CLP",
+    cae: "75000000000003",
   },
 ];
 
@@ -280,5 +316,30 @@ describe("ChartsPanel", () => {
     );
 
     expect(screen.getByText("Análisis Visual")).toBeInTheDocument();
+  });
+
+  it("renders reference line labels when category is available", () => {
+    render(
+      <ChartsPanel
+        monotributoData={mockMonotributoData}
+        ingresosAnuales={5000000}
+        isCurrentYearData={true}
+      />
+    );
+
+    expect(screen.getByText(/Límite Cat\./)).toBeInTheDocument();
+  });
+
+  it("uses fallback colors for unknown currencies in distribución", () => {
+    render(
+      <ChartsPanel
+        monotributoData={mockMonotributoData}
+        ingresosAnuales={5000000}
+        isCurrentYearData={true}
+      />
+    );
+
+    fireEvent.click(screen.getByText("Distribución"));
+    expect(screen.getByText("Facturas en CLP")).toBeInTheDocument();
   });
 });

@@ -16,8 +16,8 @@ describe("concurrency", () => {
       const stats = getConcurrencyStats();
       expect(stats.active).toBe(0);
       expect(stats.waiting).toBe(0);
-      expect(stats.max).toBe(1);
-      expect(stats.available).toBe(1);
+      expect(stats.max).toBe(2);
+      expect(stats.available).toBe(2);
     });
   });
 
@@ -100,43 +100,47 @@ describe("concurrency", () => {
     });
 
     it("should timeout if waiting too long in queue", async () => {
-      // Block the slot with a very long task
-      let resolveBlocking: (value: string) => void = () => {};
-      const blockingTask = new Promise<string>((resolve) => {
-        resolveBlocking = resolve;
+      // Block both slots with long tasks
+      let resolveBlocking1: (value: string) => void = () => {};
+      let resolveBlocking2: (value: string) => void = () => {};
+      const blockingTask1 = new Promise<string>((resolve) => {
+        resolveBlocking1 = resolve;
+      });
+      const blockingTask2 = new Promise<string>((resolve) => {
+        resolveBlocking2 = resolve;
       });
 
-      // Start blocking task
-      const promise1 = withConcurrencyLimit(() => blockingTask);
+      // Fill both slots
+      const promise1 = withConcurrencyLimit(() => blockingTask1);
+      const promise2 = withConcurrencyLimit(() => blockingTask2);
 
-      // Wait a bit for slot to be acquired
+      // Wait a bit for slots to be acquired
       await vi.advanceTimersByTimeAsync(10);
 
-      // Try to start second task - this should wait and eventually timeout
-      let promise2Error: Error | undefined;
-      const promise2 = withConcurrencyLimit(async () => "second").catch((err: Error) => {
-        promise2Error = err;
+      // Third task should wait and eventually timeout
+      let promise3Error: Error | undefined;
+      const promise3 = withConcurrencyLimit(async () => "third").catch((err: Error) => {
+        promise3Error = err;
         return "error";
       });
 
       // Advance past the MAX_QUEUE_WAIT (60 seconds)
-      // Need to advance in chunks to trigger the polling
       for (let i = 0; i < 130; i++) {
         await vi.advanceTimersByTimeAsync(500);
       }
 
-      // Wait for promise2 to complete (with error)
-      await promise2;
+      await promise3;
 
-      // Second task should have timed out
-      expect(promise2Error).toBeDefined();
-      if (promise2Error) {
-        expect(promise2Error.message).toMatch(/El servidor está ocupado/);
+      expect(promise3Error).toBeDefined();
+      if (promise3Error) {
+        expect(promise3Error.message).toMatch(/El servidor está ocupado/);
       }
 
-      // Clean up - resolve blocking task
-      resolveBlocking("blocking");
+      // Clean up
+      resolveBlocking1("blocking1");
+      resolveBlocking2("blocking2");
       await promise1;
+      await promise2;
     });
 
     it("should track waiting count while in queue", async () => {

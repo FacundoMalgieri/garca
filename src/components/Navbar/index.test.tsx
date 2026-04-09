@@ -503,4 +503,120 @@ describe("Navbar", () => {
     // Dialog should open
     expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
   });
+
+  it("invokes scrollTo for each desktop navigation target", async () => {
+    mockInvoices = [
+      {
+        fecha: "15/11/2025",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 2,
+        numero: 150,
+        numeroCompleto: "0002-00000150",
+        cuitEmisor: "20345678901",
+        razonSocialEmisor: "Test Company",
+        cuitReceptor: "30712345678",
+        razonSocialReceptor: "Client Company",
+        importeNeto: 1000000,
+        importeIVA: 210000,
+        importeTotal: 1210000,
+        moneda: "ARS",
+        cae: "75000000000000",
+      },
+    ];
+
+    const sectionIds = ["monotributo", "graficos", "totales", "proyectar", "facturas"] as const;
+    const elements: HTMLElement[] = [];
+    for (const id of sectionIds) {
+      const el = document.createElement("div");
+      el.id = id;
+      el.getBoundingClientRect = vi.fn().mockReturnValue({ top: 100 });
+      document.body.appendChild(el);
+      elements.push(el);
+    }
+
+    const scrollToMock = vi.fn();
+    vi.stubGlobal("scrollTo", scrollToMock);
+    vi.stubGlobal("pageYOffset", 0);
+
+    render(<Navbar />);
+
+    const desktopLabels = ["Monotributo", "Gráficos", "Totales", "Proyectar", "Facturas"] as const;
+    for (const label of desktopLabels) {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${label}$`, "i") }));
+      await vi.waitFor(
+        () => {
+          expect(scrollToMock).toHaveBeenCalled();
+        },
+        { timeout: 300 }
+      );
+      scrollToMock.mockClear();
+    }
+
+    for (const el of elements) {
+      document.body.removeChild(el);
+    }
+    vi.unstubAllGlobals();
+  });
+
+  it("invokes scrollTo for each mobile navigation target", async () => {
+    mockInvoices = [
+      {
+        fecha: "15/11/2025",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 2,
+        numero: 150,
+        numeroCompleto: "0002-00000150",
+        cuitEmisor: "20345678901",
+        razonSocialEmisor: "Test Company",
+        cuitReceptor: "30712345678",
+        razonSocialReceptor: "Client Company",
+        importeNeto: 1000000,
+        importeIVA: 210000,
+        importeTotal: 1210000,
+        moneda: "ARS",
+        cae: "75000000000000",
+      },
+    ];
+
+    const sectionIds = ["monotributo", "graficos", "totales", "proyectar", "facturas"] as const;
+    const elements: HTMLElement[] = [];
+    for (const id of sectionIds) {
+      const el = document.createElement("div");
+      el.id = id;
+      el.getBoundingClientRect = vi.fn().mockReturnValue({ top: 100 });
+      document.body.appendChild(el);
+      elements.push(el);
+    }
+
+    const scrollToMock = vi.fn();
+    vi.stubGlobal("scrollTo", scrollToMock);
+    vi.stubGlobal("pageYOffset", 0);
+
+    render(<Navbar />);
+
+    fireEvent.click(screen.getByRole("button", { name: /menú/i }));
+
+    const mobileLabels = ["Monotributo", "Gráficos", "Totales", "Proyectar", "Facturas"] as const;
+    for (const label of mobileLabels) {
+      const matches = screen.getAllByText(label);
+      const mobileButton = matches[matches.length - 1].closest("button");
+      expect(mobileButton).not.toBeNull();
+      fireEvent.click(mobileButton as HTMLElement);
+      await vi.waitFor(
+        () => {
+          expect(scrollToMock).toHaveBeenCalled();
+        },
+        { timeout: 300 }
+      );
+      scrollToMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: /menú/i }));
+    }
+
+    for (const el of elements) {
+      document.body.removeChild(el);
+    }
+    vi.unstubAllGlobals();
+  });
 });

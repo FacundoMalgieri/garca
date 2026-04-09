@@ -330,4 +330,3 @@ function ProjectIcon() {
     </svg>
   );
 }
-

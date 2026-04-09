@@ -355,3 +355,4 @@ export function exportProjectionToPDF(data: ExportData): void {
   doc.save(generateFilename(companyInfo, "proyeccion", "pdf"));
 }
 
+

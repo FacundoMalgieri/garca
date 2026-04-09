@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
+
 import { MonotributoPanel } from "./index";
 
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -7,6 +9,24 @@ import { fireEvent, render, screen } from "@testing-library/react";
 // Mock the hooks
 const mockClearInvoices = vi.fn();
 const mockUpdateTipoActividad = vi.fn();
+
+/** Mutable panel context for tests that need scraped AFIP info or hook activity mismatch */
+const monotributoPanelMocks = vi.hoisted(() => ({
+  monotributoInfo: null as MonotributoAFIPInfo | null,
+  hookTipoActividad: "servicios" as "servicios" | "venta",
+}));
+
+function baseMonotributoInfo(overrides: Partial<MonotributoAFIPInfo> = {}): MonotributoAFIPInfo {
+  return {
+    categoria: "B",
+    tipoActividad: "servicios",
+    actividadDescripcion: "",
+    proximaRecategorizacion: "",
+    nombreCompleto: "Test User",
+    cuit: "20123456789",
+    ...overrides,
+  };
+}
 
 const mockMonotributoStatus = {
   categoriaActual: {
@@ -73,14 +93,14 @@ const mockMonotributoData = {
 vi.mock("@/contexts/InvoiceContext", () => ({
   useInvoiceContext: () => ({
     clearInvoices: mockClearInvoices,
-    monotributoInfo: null, // No scraped info by default
+    monotributoInfo: monotributoPanelMocks.monotributoInfo,
   }),
 }));
 
 vi.mock("@/hooks/useMonotributo", () => ({
   useMonotributo: () => ({
     data: mockMonotributoData,
-    tipoActividad: "servicios" as const,
+    tipoActividad: monotributoPanelMocks.hookTipoActividad,
     updateTipoActividad: mockUpdateTipoActividad,
     status: mockMonotributoStatus,
   }),
@@ -89,6 +109,8 @@ vi.mock("@/hooks/useMonotributo", () => ({
 describe("MonotributoPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    monotributoPanelMocks.monotributoInfo = null;
+    monotributoPanelMocks.hookTipoActividad = "servicios";
   });
 
   it("should be defined", () => {
@@ -201,5 +223,85 @@ describe("MonotributoPanel", () => {
   it("displays next category info when available", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
     expect(screen.getByText(/Para categoría C:/)).toBeInTheDocument();
+  });
+
+  it("syncs tipoActividad from scraped monotributoInfo when hook disagrees", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ tipoActividad: "venta" });
+    monotributoPanelMocks.hookTipoActividad = "servicios";
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(mockUpdateTipoActividad).toHaveBeenCalledWith("venta");
+  });
+
+  it("does not call updateTipoActividad when scraped activity matches hook", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ tipoActividad: "servicios" });
+    monotributoPanelMocks.hookTipoActividad = "servicios";
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(mockUpdateTipoActividad).not.toHaveBeenCalled();
+  });
+
+  it("renders MonotributoInfoCard with Servicios label when scraped tipo is servicios", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ tipoActividad: "servicios" });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("Tu actividad:")).toBeInTheDocument();
+    expect(screen.getByText("Servicios")).toBeInTheDocument();
+    expect(screen.getByText("Pago mensual actual:")).toBeInTheDocument();
+  });
+
+  it("renders MonotributoInfoCard with Venta de Bienes and venta monthly payment when hook uses venta", () => {
+    monotributoPanelMocks.hookTipoActividad = "venta";
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ tipoActividad: "venta" });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("Venta de Bienes")).toBeInTheDocument();
+    expect(screen.getByText(/\$34\.244,10/)).toBeInTheDocument();
+  });
+
+  it("shows actividadDescripcion in MonotributoInfoCard when tipoActividad is null", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({
+      tipoActividad: null,
+      actividadDescripcion: "LOCACIONES DE SERVICIOS",
+    });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("LOCACIONES DE SERVICIOS")).toBeInTheDocument();
+  });
+
+  it("shows No especificada when scraped activity type and description are empty", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({
+      tipoActividad: null,
+      actividadDescripcion: "",
+    });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("No especificada")).toBeInTheDocument();
+  });
+
+  it("shows próxima recategorización when present on scraped info", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({
+      proximaRecategorizacion: "Enero 2026",
+    });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("Próxima recategorización:")).toBeInTheDocument();
+    expect(screen.getByText("Enero 2026")).toBeInTheDocument();
+  });
+
+  it("omits pago mensual actual row when category is not in categorias list", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ categoria: "Z" });
+
+    render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
+
+    expect(screen.getByText("Categoría actual:")).toBeInTheDocument();
+    expect(screen.queryByText("Pago mensual actual:")).not.toBeInTheDocument();
   });
 });

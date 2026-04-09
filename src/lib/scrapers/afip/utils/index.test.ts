@@ -54,6 +54,10 @@ describe("AFIP Scraper Utils", () => {
       expect(parseTipoComprobante("Unknown")).toBe(0);
       expect(parseTipoComprobante("")).toBe(0);
     });
+
+    it("should match invoice type by partial key when not an exact map key", () => {
+      expect(parseTipoComprobante("Copia Factura A")).toBe(1);
+    });
   });
 
   describe("parseNumeroComprobante", () => {
@@ -172,6 +176,13 @@ describe("AFIP Scraper Utils", () => {
       const result = handleError(new Error("net::ERR_CONNECTION_REFUSED"));
       expect(result.success).toBe(false);
       expect(result.errorCode).toBe(AFIPErrorCode.SERVICE_UNAVAILABLE);
+    });
+
+    it("should handle empresa selection missing errors", () => {
+      const result = handleError(new Error("No se pudo encontrar la selección de empresa"));
+      expect(result.success).toBe(false);
+      expect(result.errorCode).toBe(AFIPErrorCode.SERVICE_UNAVAILABLE);
+      expect(result.error).toContain("ARCA no cargó correctamente");
     });
 
     it("should handle unknown errors", () => {

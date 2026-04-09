@@ -2,13 +2,10 @@
  * Simple in-memory concurrency limiter for Playwright scrapers.
  * 
  * Limits the number of concurrent browser instances to prevent
- * memory exhaustion on limited resources (e.g., Render free tier with 512MB).
+ * memory exhaustion. Each Chromium instance uses ~150-200MB RAM.
  */
 
-// Maximum concurrent scrapers (Playwright instances)
-// With 512MB RAM: ~150-200MB per Chromium instance + Node overhead
-// Safe limit for Render free tier: 1 concurrent scraper
-const MAX_CONCURRENT_SCRAPERS = 1;
+const MAX_CONCURRENT_SCRAPERS = 2;
 
 // How long to wait before checking again (ms)
 const POLL_INTERVAL = 500;

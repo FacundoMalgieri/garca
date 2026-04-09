@@ -60,3 +60,4 @@ export interface RecategorizacionInfo {
   ventana: MonthKey[]
 }
 
+
