@@ -215,8 +215,8 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
         {/* Support callout */}
         <div className="pt-4 border-t border-border/50">
           <p className="text-xs text-muted-foreground mb-3">
-            <span className="sm:hidden">Servidor gratuito = puede tardar. ¿Querés ayudar?</span>
-            <span className="hidden sm:block">GARCA corre en un servidor gratuito, por eso puede tardar un poco. Si querés ayudar a mejorar la velocidad, considerá apoyar el proyecto.</span>
+            <span className="sm:hidden">El scraping puede tardar. ¿Querés apoyar?</span>
+            <span className="hidden sm:block">El scraping puede tardar unos segundos. Si GARCA te ahorra tiempo, considerá apoyar el proyecto.</span>
           </p>
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <a

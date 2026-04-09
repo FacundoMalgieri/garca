@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import {
   ArrowRightIcon,
+  GitHubSponsorsIcon,
   LoadingSpinner,
   PayPalIcon,
   PlayIcon,
@@ -632,8 +633,25 @@ export default function Home() {
             GARCA es gratis y open source. Si te ahorra tiempo, considerá apoyar el desarrollo.
           </p>
 
-          {/* Buttons - animate in from sides when visible */}
+          {/* Buttons - animate in when visible */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="https://github.com/sponsors/FacundoMalgieri"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative w-full sm:w-52 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#ea4aaa] px-6 py-4 text-sm font-semibold text-white shadow-xl shadow-[#ea4aaa]/20 hover:shadow-2xl hover:shadow-[#ea4aaa]/40 transition-all duration-700 ease-out cursor-pointer overflow-hidden hover:scale-105"
+              style={{
+                opacity: supportVisible ? 1 : 0,
+                transform: supportVisible 
+                  ? "translateX(0) rotate(0deg)" 
+                  : "translateX(-100px) rotate(-10deg)",
+              }}
+            >
+              <div className="absolute inset-0 bg-[#d63f99] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_-20%,white,transparent_70%)]" />
+              <GitHubSponsorsIcon className="relative h-5 w-5" />
+              <span className="relative">Sponsor</span>
+            </a>
             <a
               href="https://paypal.me/facundomalgieri"
               target="_blank"
@@ -643,13 +661,14 @@ export default function Home() {
                 opacity: supportVisible ? 1 : 0,
                 transform: supportVisible 
                   ? "translateX(0) rotate(0deg)" 
-                  : "translateX(-100px) rotate(-10deg)",
+                  : "translateX(0px)",
+                transitionDelay: "100ms",
               }}
             >
               <div className="absolute inset-0 bg-[#005ea6] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_-20%,white,transparent_70%)]" />
               <PayPalIcon className="relative h-5 w-5" />
-              <span className="relative">Donar con PayPal</span>
+              <span className="relative">PayPal</span>
             </a>
             <a
               href="https://buymeacoffee.com/facundo.malgieri"
@@ -661,7 +680,7 @@ export default function Home() {
                 transform: supportVisible 
                   ? "translateX(0) rotate(0deg)" 
                   : "translateX(100px) rotate(10deg)",
-                transitionDelay: "100ms",
+                transitionDelay: "200ms",
               }}
             >
               <div className="absolute inset-0 bg-[#e5c700] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

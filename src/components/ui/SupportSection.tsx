@@ -1,4 +1,4 @@
-import { PayPalIcon } from "./icons";
+import { GitHubSponsorsIcon, PayPalIcon } from "./icons";
 
 interface SupportSectionProps {
   variant?: "default" | "dark";
@@ -37,7 +37,22 @@ export function SupportSection({ variant = "default" }: SupportSectionProps) {
         </div>
 
         {/* Support Options */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* GitHub Sponsors */}
+          <a
+            href="https://github.com/sponsors/FacundoMalgieri"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center justify-center gap-3 rounded-xl p-4 font-semibold transition-all hover:scale-[1.02] cursor-pointer ${
+              isDark
+                ? "bg-[#ea4aaa] text-white hover:bg-[#ea4aaa]/90"
+                : "bg-[#ea4aaa] text-white hover:bg-[#ea4aaa]/90"
+            }`}
+          >
+            <GitHubSponsorsIcon className="h-6 w-6" />
+            Sponsor en GitHub
+          </a>
+
           {/* PayPal */}
           <a
             href="https://paypal.me/facundomalgieri"
