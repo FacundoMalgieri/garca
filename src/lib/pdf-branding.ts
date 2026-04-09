@@ -5,20 +5,25 @@ let logoImageCache: string | null = null
 /**
  * Loads the favicon PNG as a base64 data URL for embedding in PDFs.
  */
-async function getLogoBase64(): Promise<string> {
+async function getLogoBase64(): Promise<string | null> {
   if (logoImageCache) return logoImageCache
 
-  const response = await fetch("/favicon-192x192.png")
-  const blob = await response.blob()
+  try {
+    const base = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"
+    const response = await fetch(new URL("/favicon-192x192.png", base).href)
+    const blob = await response.blob()
 
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      logoImageCache = reader.result as string
-      resolve(logoImageCache)
-    }
-    reader.readAsDataURL(blob)
-  })
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        logoImageCache = reader.result as string
+        resolve(logoImageCache)
+      }
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
 }
 
 const LOGO_SIZE = 12
@@ -27,7 +32,8 @@ const LOGO_MARGIN = 10
 /**
  * Draws the GARCA logo PNG in the top-right corner.
  */
-function drawHeaderLogo(doc: jsPDF, logoData: string): void {
+function drawHeaderLogo(doc: jsPDF, logoData: string | null): void {
+  if (!logoData) return
   const pageWidth = doc.internal.pageSize.width
   const x = pageWidth - LOGO_MARGIN - LOGO_SIZE
   const y = LOGO_MARGIN

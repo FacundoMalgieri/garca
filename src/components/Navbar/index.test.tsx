@@ -13,6 +13,13 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+// Mock next/navigation
+let mockPathname = "/";
+vi.mock("next/navigation", () => ({
+  usePathname: () => mockPathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
 // Mock invoice context
 const mockClearInvoices = vi.fn();
 let mockInvoices: AFIPInvoice[] = [];
@@ -47,6 +54,7 @@ describe("Navbar", () => {
     vi.clearAllMocks();
     mockInvoices = [];
     mockTheme = "light";
+    mockPathname = "/panel";
   });
 
   it("should be defined", () => {
@@ -369,7 +377,8 @@ describe("Navbar", () => {
     expect(mobileLinks.length).toBe(1);
   });
 
-  it("scrolls to top when logo is clicked with invoices loaded", () => {
+  it("scrolls to top when logo is clicked on /panel with invoices loaded", () => {
+    mockPathname = "/panel";
     mockInvoices = [
       {
         fecha: "15/11/2025",
@@ -406,7 +415,8 @@ describe("Navbar", () => {
     vi.unstubAllGlobals();
   });
 
-  it("navigates normally when logo is clicked without invoices", () => {
+  it("navigates normally when logo is clicked from non-panel page", () => {
+    mockPathname = "/";
     mockInvoices = [];
 
     const scrollToMock = vi.fn();
