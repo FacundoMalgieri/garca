@@ -97,40 +97,43 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
             {/* Category comparison: Current vs Suggested */}
             {monotributoInfo && monotributoInfo.categoria !== status.categoriaActual.categoria ? (
               // Show comparison when recategorization is needed
-              <div className="rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10 p-4">
-                <div className="flex items-center justify-center gap-6 mb-3">
-                  {/* Current category */}
-                  <div className="text-center flex flex-col items-center">
-                    <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">CATEGORÍA ACTUAL</span>
-                    <span className="text-2xl font-bold text-success leading-none">
-                      {monotributoInfo.categoria}
-                    </span>
+              (() => {
+                const catRegistrada = data.categorias.find(c => c.categoria === monotributoInfo.categoria)
+                const excedente = catRegistrada ? status.ingresosAcumulados - catRegistrada.ingresosBrutos : 0
+                return (
+                  <div className="rounded-lg border-2 border-amber-500/50 bg-amber-500/10 p-4 space-y-3">
+                    <div className="flex items-center justify-center gap-6">
+                      <div className="text-center flex flex-col items-center">
+                        <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">CATEGORÍA ACTUAL</span>
+                        <span className="text-2xl font-bold text-foreground leading-none">
+                          {monotributoInfo.categoria}
+                        </span>
+                      </div>
+                      
+                      <svg className="w-5 h-5 text-amber-500 mt-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                      
+                      <div className="text-center flex flex-col items-center">
+                        <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">PRÓXIMA RECATEGORIZACIÓN</span>
+                        <span className="text-2xl font-bold text-amber-500 leading-none">
+                          {status.categoriaActual.categoria}
+                        </span>
+                      </div>
+                    </div>
+
+                    {catRegistrada && excedente > 0 && (
+                      <div className="text-center text-xs text-amber-600 dark:text-amber-400">
+                        Superaste el límite de {monotributoInfo.categoria} (${catRegistrada.ingresosBrutos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}) por ${excedente.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                      </div>
+                    )}
+
+                    <div className="text-xs text-muted-foreground text-center">
+                      Deberás recategorizarte a {status.categoriaActual.categoria} en tu próxima recategorización
+                    </div>
                   </div>
-                  
-                  {/* Arrow - aligned with the letters */}
-                  <svg className="w-5 h-5 text-yellow-500 mt-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                  
-                  {/* Suggested category */}
-                  <div className="text-center flex flex-col items-center">
-                    <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">PRÓXIMA RECATEGORIZACIÓN</span>
-                    <span className="text-2xl font-bold text-yellow-500 leading-none">
-                      {status.categoriaActual.categoria}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <span className="text-xs text-yellow-600 dark:text-yellow-400">
-                    Según tus ingresos de los últimos 12 meses
-                  </span>
-                </div>
-                
-                <div className="text-xs text-muted-foreground text-center mt-2">
-                  Límite categoría {status.categoriaActual.categoria}: ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                </div>
-              </div>
+                )
+              })()
             ) : (
               // Show simple view when no recategorization needed or no AFIP info
               <div className="rounded-lg bg-success/10 p-4 border-2 border-success/30">
@@ -154,16 +157,16 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
             {/* Progress */}
             <div>
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>Ingresos acumulados</span>
+                <span>Progreso en categoría {status.categoriaActual.categoria}</span>
                 <span>{status.porcentajeUtilizado.toFixed(1)}%</span>
               </div>
               <div className="h-3 bg-muted rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all ${
-                    status.porcentajeUtilizado > 90
+                    status.porcentajeUtilizado > 100
                       ? "bg-destructive"
-                      : status.porcentajeUtilizado > 75
-                        ? "bg-yellow-500"
+                      : status.porcentajeUtilizado > 85
+                        ? "bg-amber-500"
                         : "bg-success"
                   }`}
                   style={{ width: `${Math.min(status.porcentajeUtilizado, 100)}%` }}
@@ -171,34 +174,28 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
               </div>
               <div className="flex justify-between text-xs mt-1">
                 <span className="font-mono text-muted-foreground">
-                  ${status.ingresosAcumulados.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  ${status.ingresosAcumulados.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                 </span>
                 <span className="font-mono text-muted-foreground">
-                  ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                 </span>
               </div>
             </div>
 
             {/* Available margin */}
-            <div className="space-y-2 text-sm">
+            <div className="text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Margen disponible:</span>
-                <span className="font-mono font-medium">
-                  ${status.margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                <span className="text-muted-foreground">
+                  {status.margenDisponible > 0
+                    ? `Podés facturar hasta sin pasar de ${status.categoriaActual.categoria}:`
+                    : `Excediste el límite de ${status.categoriaActual.categoria}`}
                 </span>
-              </div>
-
-              {status.categoriaSiguiente && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Para categoría {status.categoriaSiguiente.categoria}:</span>
-                  <span className="font-mono text-xs">
-                    $
-                    {(status.categoriaSiguiente.ingresosBrutos - status.ingresosAcumulados).toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                    })}
+                {status.margenDisponible > 0 && (
+                  <span className="font-mono font-medium">
+                    ${status.margenDisponible.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="border-t border-border my-3"></div>

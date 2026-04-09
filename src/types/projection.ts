@@ -36,6 +36,8 @@ export interface ProjectionResult {
   totalProyectado: number
   /** Resulting category based on total */
   categoriaResultante: string
+  /** Target category used for calculations (explicit or auto-detected) */
+  categoriaObjetivo: string
   /** Category threshold (tope) */
   topeCategoria: number
   /** Remaining margin before hitting the threshold */

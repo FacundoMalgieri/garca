@@ -9,6 +9,7 @@ import { InvoiceTable } from "@/components/InvoiceTable";
 import { MonotributoPanel } from "@/components/MonotributoPanel";
 import { ProjectionPanel } from "@/components/ProjectionPanel";
 import { SummaryPanel } from "@/components/SummaryPanel";
+import { SupportBanner } from "@/components/ui/SupportBanner";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 
@@ -111,6 +112,11 @@ export default function PanelPage() {
       {/* Totales */}
       <section id="totales">
         <SummaryPanel />
+      </section>
+
+      {/* Support */}
+      <section className="px-4 md:px-0">
+        <SupportBanner />
       </section>
 
       {/* Proyectar */}

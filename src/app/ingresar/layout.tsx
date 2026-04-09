@@ -1,0 +1,48 @@
+import type { Metadata } from "next"
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app"
+const pageUrl = `${siteUrl}/ingresar`
+
+export const metadata: Metadata = {
+  title: "Ingresar - Conectá con ARCA",
+  description:
+    "Ingresá con tu CUIT y clave fiscal para recuperar tus comprobantes de ARCA de forma segura. Sin almacenamiento de datos, 100% privado.",
+  alternates: {
+    canonical: pageUrl,
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    url: pageUrl,
+    siteName: "GARCA",
+    title: "Ingresar a GARCA - Conectá con ARCA",
+    description:
+      "Recuperá tus comprobantes de ARCA. Ingresá tu CUIT y clave fiscal de forma segura y privada.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GARCA - Ingresar con Clave Fiscal",
+      },
+    ],
+  },
+}
+
+export default function IngresarLayout({ children }: { children: React.ReactNode }) {
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "GARCA", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Ingresar", item: pageUrl },
+    ],
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {children}
+    </>
+  )
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,8 +13,10 @@ export function Navbar() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { state, clearInvoices } = useInvoiceContext();
   const { theme, toggleTheme, mounted } = useTheme();
+  const pathname = usePathname();
 
   const invoices = state.invoices;
+  const isOnPanel = pathname === "/panel";
 
   const handleClearData = () => {
     clearInvoices();
@@ -21,14 +24,12 @@ export function Navbar() {
   };
 
   const scrollToSection = (id: string) => {
-    // Cerrar menú mobile primero
     setIsOpen(false);
 
-    // Esperar a que el menú se cierre antes de hacer scroll
     setTimeout(() => {
       const element = document.getElementById(id);
       if (element) {
-        const offset = 80; // Altura del navbar + margen
+        const offset = 80;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - offset;
 
@@ -48,12 +49,10 @@ export function Navbar() {
   };
 
   const handleLogoClick = (e: React.MouseEvent) => {
-    // Si hay datos, hacer scroll al top en lugar de navegar
-    if (invoices.length > 0) {
+    if (isOnPanel) {
       e.preventDefault();
       scrollToTop();
     }
-    // Si no hay datos, dejar que navegue normalmente a "/"
   };
 
   return (
@@ -75,8 +74,8 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          {invoices.length > 0 && (
+          {/* Desktop Navigation — only on /panel */}
+          {isOnPanel && invoices.length > 0 && (
             <div className="hidden lg:flex items-center gap-4 xl:gap-6">
               <NavButton onClick={() => scrollToSection("monotributo")} icon={<ClipboardIcon />}>
                 Monotributo
@@ -109,8 +108,19 @@ export function Navbar() {
               </button>
             )}
 
+            {/* Calculator icon — only on landing/non-panel pages */}
+            {!isOnPanel && (
+              <Link
+                href="/calculadora-monotributo"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
+                title="Calculadora Monotributo"
+              >
+                <CalculatorIcon />
+              </Link>
+            )}
+
             {/* Clear Data Button */}
-            {invoices.length > 0 && (
+            {isOnPanel && invoices.length > 0 && (
               <button
                 onClick={() => setShowClearConfirm(true)}
                 className="hidden rounded-lg px-3 py-2 text-sm font-medium text-destructive border border-destructive transition-colors hover:bg-destructive/10 sm:inline-flex items-center gap-2 cursor-pointer"
@@ -121,7 +131,7 @@ export function Navbar() {
               </button>
             )}
 
-            {/* Ingresar Button - cuando no hay datos */}
+            {/* Ingresar CTA when no invoices */}
             {invoices.length === 0 && (
               <Link
                 href="/ingresar"
@@ -131,8 +141,8 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Hamburger Menu (Mobile) */}
-            {invoices.length > 0 && (
+            {/* Hamburger Menu (Mobile) — only on /panel */}
+            {isOnPanel && invoices.length > 0 && (
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden cursor-pointer"
@@ -144,8 +154,8 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isOpen && invoices.length > 0 && (
+        {/* Mobile Menu — only on /panel */}
+        {isOpen && isOnPanel && invoices.length > 0 && (
           <div className="border-t border-border bg-background py-4 lg:hidden">
             <div className="flex flex-col gap-3">
               <MobileNavButton onClick={() => scrollToSection("monotributo")} icon={<ClipboardIcon />}>
@@ -327,6 +337,21 @@ function ProjectIcon() {
         strokeWidth={2}
         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
       />
+    </svg>
+  );
+}
+
+function CalculatorIcon() {
+  return (
+    <svg className="h-5 w-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <rect x="4" y="2" width="16" height="20" rx="2" strokeWidth={2} />
+      <rect x="7" y="5" width="10" height="4" rx="1" strokeWidth={1.5} />
+      <circle cx="8.5" cy="13" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="13" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="13" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="8.5" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
     </svg>
   );
 }

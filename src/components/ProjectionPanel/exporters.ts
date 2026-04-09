@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import type { CompanyInfo } from "@/hooks/useInvoices";
+import { applyBrandedFooter } from "@/lib/pdf-branding";
 import type { MonthlyTotal,ProjectionData, ProjectionResult } from "@/types/projection";
 
 interface ExportData {
@@ -71,6 +72,7 @@ export function exportProjectionToCSV(data: ExportData): void {
     ["Margen de seguridad", `$${projectionData.margenSeguridad.toLocaleString("es-AR")}`],
     [""],
     ["Resultados"],
+    ["Categoría objetivo", projectionResult.categoriaObjetivo],
     ["Categoría resultante", projectionResult.categoriaResultante],
     ["Tope categoría", `$${projectionResult.topeCategoria.toLocaleString("es-AR")}`],
     ["Total ventana 12 meses", `$${projectionResult.totalVentana.toLocaleString("es-AR")}`],
@@ -132,6 +134,7 @@ export function exportProjectionToJSON(data: ExportData): void {
       margenSeguridad: projectionData.margenSeguridad,
     },
     resultado: {
+      categoriaObjetivo: projectionResult.categoriaObjetivo,
       categoriaResultante: projectionResult.categoriaResultante,
       topeCategoria: projectionResult.topeCategoria,
       totalVentana: projectionResult.totalVentana,
@@ -166,7 +169,7 @@ export function exportProjectionToJSON(data: ExportData): void {
 /**
  * Exports projection to PDF format.
  */
-export function exportProjectionToPDF(data: ExportData): void {
+export async function exportProjectionToPDF(data: ExportData): Promise<void> {
   const { companyInfo, projectionData, projectionResult, monthlyTotals, futureMonths, tipoActividad } = data;
 
   const doc = new jsPDF();
@@ -235,7 +238,7 @@ export function exportProjectionToPDF(data: ExportData): void {
   doc.setFontSize(18);
   doc.setTextColor(16, 185, 129);
   doc.setFont("helvetica", "bold");
-  doc.text(projectionResult.categoriaResultante, 125, resultsStartY + 25);
+  doc.text(projectionResult.categoriaObjetivo, 125, resultsStartY + 25);
   doc.setFont("helvetica", "normal");
 
   // Summary stats
@@ -244,7 +247,7 @@ export function exportProjectionToPDF(data: ExportData): void {
     ["Total ventana 12 meses:", `$${projectionResult.totalVentana.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
     ["  └ Histórico:", `$${projectionResult.totalHistorico.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
     ["  └ Proyectado:", `$${projectionResult.totalProyectado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
-    [`Límite categoría ${  projectionResult.categoriaResultante  }:`, `$${projectionResult.topeCategoria.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
+    [`Límite categoría ${  projectionResult.categoriaObjetivo  }:`, `$${projectionResult.topeCategoria.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
     ["Distancia al límite:", `$${(projectionResult.topeCategoria - projectionResult.totalVentana).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`],
   ];
 
@@ -339,18 +342,15 @@ export function exportProjectionToPDF(data: ExportData): void {
     margin: { left: 14, right: 14 },
   });
 
-  // ========== FOOTER ==========
+  // ========== DISCLAIMERS ==========
   const footerY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
   doc.setFontSize(7);
   doc.setTextColor(150);
   doc.text("* Proyección estimativa. Puede variar según cotización del dólar al momento de facturar.", 14, footerY);
   doc.text("* Los topes de cada categoría pueden actualizarse en cada período de recategorización.", 14, footerY + 4);
 
-  // Page number
-  doc.setFontSize(8);
-  doc.text("Página 1 de 1", doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, {
-    align: "center",
-  });
+  // Logo + branded footer on all pages
+  await applyBrandedFooter(doc);
 
   doc.save(generateFilename(companyInfo, "proyeccion", "pdf"));
 }

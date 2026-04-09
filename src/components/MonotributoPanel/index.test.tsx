@@ -149,7 +149,7 @@ describe("MonotributoPanel", () => {
 
   it("displays available margin", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
-    expect(screen.getByText("Margen disponible:")).toBeInTheDocument();
+    expect(screen.getByText(/Podés facturar hasta sin pasar de/)).toBeInTheDocument();
   });
 
   it("displays monthly payment", () => {
@@ -220,9 +220,9 @@ describe("MonotributoPanel", () => {
     expect(mockUpdateTipoActividad).toHaveBeenCalledWith("servicios");
   });
 
-  it("displays next category info when available", () => {
+  it("displays available margin text", () => {
     render(<MonotributoPanel ingresosAnuales={7500000} isCurrentYearData={true} />);
-    expect(screen.getByText(/Para categoría C:/)).toBeInTheDocument();
+    expect(screen.getByText(/Podés facturar hasta sin pasar de/)).toBeInTheDocument();
   });
 
   it("syncs tipoActividad from scraped monotributoInfo when hook disagrees", () => {

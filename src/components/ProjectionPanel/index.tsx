@@ -12,6 +12,14 @@ import type { TipoActividad } from "@/types/monotributo"
 
 import { exportProjectionToCSV, exportProjectionToJSON, exportProjectionToPDF } from "./exporters"
 
+function formatMargin(value: number): string {
+  if (value >= 1000000) {
+    const m = value / 1000000
+    return `$${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`
+  }
+  return `$${(value / 1000).toFixed(0)}k`
+}
+
 /**
  * Format number as currency string (e.g., 3.500.000,50)
  * Uses Argentine format: . for thousands, , for decimals
@@ -120,9 +128,10 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     ? Math.min((projectionResult.totalProyectado / projectionResult.topeCategoria) * 100, 100 - historicalPercent)
     : 0
   const totalPercent = Math.min(historicalPercent + projectedPercent, 100)
-  const safeZonePercent = projectionData.margenSeguridad > 0 
-    ? ((projectionResult.topeCategoria - projectionData.margenSeguridad) / projectionResult.topeCategoria) * 100
-    : 100
+  const marginPercent = projectionData.margenSeguridad > 0 && projectionResult.topeCategoria > 0
+    ? (projectionData.margenSeguridad / projectionResult.topeCategoria) * 100
+    : 0
+  const disponiblePercent = Math.max(100 - totalPercent - marginPercent, 0)
 
   // Export handlers
   const getExportData = () => ({
@@ -241,8 +250,8 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               </div>
               <div className="flex items-center gap-3 sm:flex-col sm:items-end">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <span className="text-xs text-muted-foreground">Categoría</span>
-                  <span className="text-lg font-bold text-emerald-500 dark:text-emerald-400">{projectionResult.categoriaResultante}</span>
+                  <span className="text-xs text-muted-foreground">Categoría objetivo</span>
+                  <span className="text-lg font-bold text-emerald-500 dark:text-emerald-400">{projectionResult.categoriaObjetivo}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   × {futureMonths.length} meses restantes
@@ -255,54 +264,75 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
         {/* Visual Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Progreso hacia límite de {projectionResult.categoriaResultante}</span>
+            <span>Progreso hacia límite de {projectionResult.categoriaObjetivo}</span>
             <span>{totalPercent.toFixed(0)}%</span>
           </div>
-          <div className="relative h-3 rounded-full bg-muted overflow-hidden">
-            {/* Safety margin zone indicator */}
-            {projectionData.margenSeguridad > 0 && (
+          <div className="flex h-4 rounded-full bg-muted overflow-hidden">
+            {/* Historical segment */}
+            {historicalPercent > 0 && (
               <div 
-                className="absolute top-0 bottom-0 right-0 bg-yellow-500/20 border-l-2 border-yellow-500/50 border-dashed"
-                style={{ width: `${100 - safeZonePercent}%` }}
+                className={cn(
+                  "transition-all duration-500",
+                  isOverActualLimit ? "bg-destructive" : "bg-emerald-500"
+                )}
+                style={{ flexGrow: historicalPercent, flexShrink: 1, flexBasis: 0 }}
               />
             )}
-            {/* Historical segment */}
-            <div 
-              className={cn(
-                "absolute top-0 bottom-0 left-0 transition-all duration-500 rounded-l-full",
-                isOverActualLimit ? "bg-destructive" : "bg-success"
-              )}
-              style={{ width: `${historicalPercent}%` }}
-            />
             {/* Projected segment */}
             {projectedPercent > 0 && (
               <div 
                 className={cn(
-                  "absolute top-0 bottom-0 transition-all duration-500",
+                  "transition-all duration-500 border-l-2 border-background",
                   isOverActualLimit 
-                    ? "bg-destructive/40" 
+                    ? "bg-red-400" 
                     : isOverSafetyMargin 
-                      ? "bg-yellow-500/50" 
-                      : "bg-success/40",
-                  historicalPercent === 0 && "rounded-l-full",
+                      ? "bg-amber-400" 
+                      : "bg-sky-400",
+                  historicalPercent === 0 && "border-l-0",
                 )}
-                style={{ 
-                  left: `${historicalPercent}%`, 
-                  width: `${projectedPercent}%`,
-                }}
+                style={{ flexGrow: projectedPercent, flexShrink: 1, flexBasis: 0 }}
+              />
+            )}
+            {/* Disponible (space between projected and margin) */}
+            {disponiblePercent > 0 && (
+              <div style={{ flexGrow: disponiblePercent, flexShrink: 1, flexBasis: 0 }} />
+            )}
+            {/* Safety margin segment — guaranteed min-width via flex-shrink: 0 */}
+            {projectionData.margenSeguridad > 0 && !isOverActualLimit && (
+              <div 
+                className="bg-amber-500/60 border-l-2 border-background transition-all duration-500"
+                style={{ flexGrow: marginPercent, flexShrink: 0, flexBasis: 0, minWidth: 24 }}
               />
             )}
           </div>
           {/* Legend */}
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive" : "bg-success")} />
+              <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive" : "bg-emerald-500")} />
               Histórico ({historicalPercent.toFixed(0)}%)
             </span>
             {projectedPercent > 0 && (
               <span className="flex items-center gap-1.5">
-                <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive/40" : "bg-success/40")} />
+                <span className={cn(
+                  "inline-block w-2.5 h-2.5 rounded-sm",
+                  isOverActualLimit ? "bg-red-400" : isOverSafetyMargin ? "bg-amber-400" : "bg-sky-400"
+                )} />
                 Proyectado ({projectedPercent.toFixed(0)}%)
+              </span>
+            )}
+            {disponiblePercent > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-muted border border-border" />
+                Disponible ({disponiblePercent.toFixed(0)}%)
+              </span>
+            )}
+            {projectionData.margenSeguridad > 0 && (
+              <span className={cn(
+                "flex items-center gap-1.5 font-medium",
+                isOverSafetyMargin ? "text-amber-500" : "text-muted-foreground"
+              )}>
+                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-500/40" />
+                Margen: {formatMargin(projectionData.margenSeguridad)}
               </span>
             )}
           </div>
@@ -397,16 +427,21 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               </p>
             </div>
             <div className="space-y-1 text-right">
-              <p className="text-xs text-muted-foreground">Categoría resultante</p>
+              <p className="text-xs text-muted-foreground">Categoría objetivo</p>
               <p className={cn(
                 "text-3xl font-bold",
                 isOverActualLimit ? "text-destructive" : "text-success"
               )}>
-                {projectionResult.categoriaResultante}
+                {projectionResult.categoriaObjetivo}
               </p>
               <p className="text-xs text-muted-foreground">
                 Límite: ${projectionResult.topeCategoria.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
               </p>
+              {projectionResult.categoriaResultante !== projectionResult.categoriaObjetivo && (
+                <p className="text-xs text-muted-foreground">
+                  Resultante: <strong className="text-foreground">{projectionResult.categoriaResultante}</strong>
+                </p>
+              )}
             </div>
           </div>
 
@@ -431,7 +466,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                 isOverSafetyMargin ? "bg-yellow-500/10" : "bg-success/10"
               )}>
                 <p className="text-xs text-muted-foreground mb-0.5">
-                  Margen ${(projectionData.margenSeguridad/1000).toFixed(0)}k
+                  Margen {formatMargin(projectionData.margenSeguridad)}
                 </p>
                 <p className={cn(
                   "font-bold",
@@ -456,7 +491,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
           {isOverActualLimit && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 mt-2">
               <p className="text-xs text-destructive">
-                ❌ Excedés el límite de la categoría {projectionResult.categoriaResultante}. Deberás subir de categoría.
+                ❌ Excedés el límite de la categoría {projectionResult.categoriaObjetivo}. Deberás subir de categoría.
               </p>
             </div>
           )}

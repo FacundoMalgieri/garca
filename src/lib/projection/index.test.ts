@@ -7,6 +7,7 @@ import {
   calculateProjection,
   distributeEvenly,
   formatMonthKey,
+  getAutoTargetCategory,
   getCategoriaByLetter,
   getCategoriaForTotal,
   getCurrentMonth,
@@ -197,6 +198,48 @@ describe("projection utilities", () => {
       expect(result.historico).toBe(4500000) // Jan + Feb + Mar
       expect(result.proyectado).toBe(5500000) // Jun + Jul
       expect(result.total).toBe(10000000)
+    })
+  })
+
+  describe("getAutoTargetCategory", () => {
+    it("returns the category that fits the historical income", () => {
+      const categorias = MONOTRIBUTO_DATA.categorias
+      
+      // Income fits in A → target should be A (stay in current)
+      const target = getAutoTargetCategory(5000000, categorias)
+      expect(target?.categoria).toBe("A")
+    })
+
+    it("returns highest category when exceeding all limits", () => {
+      const categorias = MONOTRIBUTO_DATA.categorias
+      
+      const target = getAutoTargetCategory(999999999999, categorias)
+      expect(target?.categoria).toBe("K")
+    })
+
+    it("returns A when income is exactly at A limit", () => {
+      const categorias = MONOTRIBUTO_DATA.categorias
+      const catA = getCategoriaByLetter("A", categorias)
+      if (!catA) return
+      
+      const target = getAutoTargetCategory(catA.ingresosBrutos, categorias)
+      expect(target?.categoria).toBe("A")
+    })
+
+    it("returns the minimum category that accommodates the income", () => {
+      const categorias = MONOTRIBUTO_DATA.categorias
+      
+      // 40M exceeds F (38.6M) but fits in G (46.2M) → target is G
+      const target = getAutoTargetCategory(40000000, categorias)
+      expect(target?.categoria).toBe("G")
+    })
+
+    it("targets H when historical income is in H range", () => {
+      const categorias = MONOTRIBUTO_DATA.categorias
+      
+      // 55M exceeds G (46.2M) but fits in H (70.1M) → stay in H
+      const target = getAutoTargetCategory(55000000, categorias)
+      expect(target?.categoria).toBe("H")
     })
   })
 

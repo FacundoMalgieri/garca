@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { homeBreadcrumbSchema, homeFaqSchema } from "@/components/JsonLd";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import {
   ArrowRightIcon,
@@ -14,7 +15,6 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
 } from "@/components/ui/icons";
-// Removed CurrencyPill import - now rendered inline with scroll-controlled animations
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { mockInvoices } from "@/test/mocks/invoices";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
@@ -188,6 +188,7 @@ export default function Home() {
 
   // Section refs for dynamic parallax
   const featuresSectionRef = useRef<HTMLElement>(null);
+  const calcSectionRef = useRef<HTMLElement>(null);
   const currencySectionRef = useRef<HTMLElement>(null);
   const privacySectionRef = useRef<HTMLElement>(null);
   const supportSectionRef = useRef<HTMLElement>(null);
@@ -195,12 +196,14 @@ export default function Home() {
 
   // All sections use scroll progress for enter + exit effects
   const featuresProgress = useSectionProgress(featuresSectionRef);
+  const calcProgress = useSectionProgress(calcSectionRef);
   const currencyProgress = useSectionProgress(currencySectionRef);
   const privacyProgress = useSectionProgress(privacySectionRef);
   const supportProgress = useSectionProgress(supportSectionRef);
   const faqProgress = useSectionProgress(faqSectionRef);
 
   // Visibility triggers for entry animations (badges, buttons)
+  const calcVisible = useSectionVisible(calcSectionRef, 0.3);
   const currencyVisible = useSectionVisible(currencySectionRef, 0.4);
   const supportVisible = useSectionVisible(supportSectionRef, 0.4);
   const faqVisible = useSectionVisible(faqSectionRef, 0.2);
@@ -286,19 +289,14 @@ export default function Home() {
 
   return (
     <div className="relative overflow-x-hidden bg-background">
-      {/* SEO: Hidden H1 for search engines */}
-      <h1 className="sr-only">
-        GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA. 
-        Herramienta segura y privada para consultar facturas de AFIP/ARCA, 
-        calcular categorías de monotributo y exportar comprobantes a Excel.
-      </h1>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeBreadcrumbSchema) }} />
 
       {/* ========== HERO SECTION ========== */}
       <section
         className="relative flex items-center justify-center overflow-hidden"
         style={{ minHeight: "calc(100vh - 64px)" }}
       >
-      
 
         <div 
           className="relative w-full max-w-4xl mx-auto px-6 py-12 md:py-16"
@@ -318,12 +316,12 @@ export default function Home() {
             >
               <img
                 src="/logo-full.svg"
-                alt="GARCA Logo"
+                alt="GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA"
                 className="relative h-28 w-28 md:h-36 md:w-36"
               />
             </div>
 
-            {/* Title - second to appear */}
+            {/* Title */}
             <h1 
               className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-slate-800 dark:text-white transition-all duration-700 ease-out"
               style={{
@@ -473,6 +471,86 @@ export default function Home() {
 
           {/* Features grid */}
           <FeaturesGrid scrollY={scrollY} />
+        </div>
+      </section>
+
+      {/* ========== CALCULATOR CTA SECTION ========== */}
+      <section ref={calcSectionRef} className="relative py-24 md:py-32 overflow-hidden">
+        <div
+          className="relative max-w-3xl mx-auto px-6"
+          style={{
+            transform: `translateY(${
+              calcProgress < 0.25
+                ? (1 - calcProgress / 0.25) * 80
+                : calcProgress > 0.6
+                  ? -((calcProgress - 0.6) / 0.4) * 200
+                  : 0
+            }px)`,
+            opacity:
+              calcProgress < 0.25
+                ? calcProgress / 0.25
+                : calcProgress > 0.6
+                  ? Math.max(0, 1 - (calcProgress - 0.6) / 0.5)
+                  : 1,
+          }}
+        >
+          <div className="relative rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-8 md:p-10 overflow-hidden shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none hover:shadow-[0_12px_50px_-8px_rgba(59,130,246,0.35)] transition-shadow duration-500">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-cyan-400/20 to-blue-400/20 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
+
+            <div className="relative text-center">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-blue-500/25 transition-all duration-700"
+                style={{
+                  opacity: calcVisible ? 1 : 0,
+                  transform: calcVisible ? "translateY(0)" : "translateY(20px)",
+                }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                  <path d="M8 6h8M8 10h8M8 14h3M8 18h3M14 14h2M14 18h2" />
+                </svg>
+                Herramienta gratuita
+              </span>
+
+              <h2 className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white mb-4">
+                Calculadora de Monotributo 2026
+              </h2>
+              <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
+                Ingresá tu facturación mes a mes y descubrí en qué categoría vas a quedar en tu próxima recategorización.
+                Planificá cuánto podés facturar para no pasarte de categoría. <strong className="text-slate-800 dark:text-slate-200">Sin login, sin registrarte.</strong>
+              </p>
+
+              <div
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700"
+                style={{
+                  opacity: calcVisible ? 1 : 0,
+                  transform: calcVisible ? "translateY(0)" : "translateY(20px)",
+                  transitionDelay: "200ms",
+                }}
+              >
+                <Link
+                  href="/calculadora-monotributo"
+                  className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <span className="relative">Abrir calculadora</span>
+                  <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                {["Tabla de categorías actualizada", "Cuota mensual por actividad", "Proyección inteligente"].map(text => (
+                  <span key={text} className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {text}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { GitHubIcon, PayPalIcon } from "@/components/ui/icons";
+import { GitHubIcon, GitHubSponsorsIcon, PayPalIcon } from "@/components/ui/icons";
 import type { ScraperProgress } from "@/hooks/useInvoices";
 
 interface LoadingSplashProps {
@@ -218,12 +218,21 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
             <span className="sm:hidden">El scraping puede tardar. ¿Querés apoyar?</span>
             <span className="hidden sm:block">El scraping puede tardar unos segundos. Si GARCA te ahorra tiempo, considerá apoyar el proyecto.</span>
           </p>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 gap-2 max-w-[240px] mx-auto">
+            <a
+              href="https://github.com/sponsors/FacundoMalgieri"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#ea4aaa] text-white text-xs font-medium hover:bg-[#ea4aaa]/90 transition-colors"
+            >
+              <GitHubSponsorsIcon className="h-4 w-4" />
+              Sponsor
+            </a>
             <a
               href="https://paypal.me/facundomalgieri"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-[#003087] text-white text-xs font-medium hover:bg-[#003087]/90 transition-colors"
+              className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#003087] text-white text-xs font-medium hover:bg-[#003087]/90 transition-colors"
             >
               <PayPalIcon className="h-4 w-4" />
               PayPal
@@ -232,7 +241,7 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
               href="https://buymeacoffee.com/facundo.malgieri"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-[#FFDD00] text-black text-xs font-medium hover:bg-[#FFDD00]/90 transition-colors"
+              className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#FFDD00] text-black text-xs font-medium hover:bg-[#FFDD00]/90 transition-colors"
             >
               <img src="/icons/bmc-logo.svg" alt="" className="h-4 w-4" />
               Coffee
@@ -241,7 +250,7 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
               href="https://github.com/FacundoMalgieri/garca"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-24 sm:w-28 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
+              className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
             >
               <GitHubIcon className="h-4 w-4" />
               ⭐ Star

@@ -77,7 +77,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: "GARCA",
   url: siteUrl,
-  logo: `${siteUrl}/og-image.png`,
+  logo: `${siteUrl}/favicon-512x512.png`,
   sameAs: ["https://github.com/FacundoMalgieri/garca"],
   contactPoint: {
     "@type": "ContactPoint",
@@ -86,9 +86,24 @@ const organizationSchema = {
   },
 };
 
-// FAQ Schema - Critical for Google AI Overviews
-// These should match the FAQ_ITEMS in src/app/page.tsx
-const faqSchema = {
+export function JsonLd() {
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+    </>
+  );
+}
+
+/**
+ * FAQ JSON-LD for the homepage.
+ * Must match the FAQ_ITEMS in src/app/page.tsx.
+ */
+export const homeFaqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   mainEntity: [
@@ -145,7 +160,7 @@ const faqSchema = {
       name: "¿Puedo exportar los datos para mi contador?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "¡Sí! Podés exportar tus comprobantes a Excel (CSV), JSON o PDF. El PDF incluye gráficos y un resumen de tu situación en Monotributo, ideal para compartir con tu contador.",
+        text: "Podés exportar tus comprobantes a Excel (CSV), JSON o PDF. El PDF incluye gráficos y un resumen de tu situación en Monotributo, ideal para compartir con tu contador.",
       },
     },
     {
@@ -199,8 +214,7 @@ const faqSchema = {
   ],
 };
 
-// Breadcrumb Schema
-const breadcrumbSchema = {
+export const homeBreadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
@@ -210,27 +224,6 @@ const breadcrumbSchema = {
       name: "Inicio",
       item: siteUrl,
     },
-    {
-      "@type": "ListItem",
-      position: 2,
-      name: "Ingresar",
-      item: `${siteUrl}/ingresar`,
-    },
   ],
 };
-
-export function JsonLd() {
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
-      />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-    </>
-  );
-}
 

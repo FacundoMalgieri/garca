@@ -214,6 +214,18 @@ export function sumWindow(
 }
 
 /**
+ * Get the target category for auto mode based on historical income.
+ * Returns the minimum category that accommodates the historical total,
+ * so the recommendation helps the user stay within that category.
+ */
+export function getAutoTargetCategory(
+  totalHistorico: number,
+  categorias: CategoriaMonotributo[]
+): CategoriaMonotributo | null {
+  return getCategoriaForTotal(totalHistorico, categorias)
+}
+
+/**
  * Calculate recommended monthly amount to stay within a target category
  */
 export function getRecommendedMonthlyAmount(
@@ -225,8 +237,7 @@ export function getRecommendedMonthlyAmount(
 ): number {
   if (mesesFuturos <= 0) return 0
   
-  // If no target, use the highest category
-  const target = targetCategoria || categorias[categorias.length - 1]
+  const target = targetCategoria || getAutoTargetCategory(totalHistoricoEnVentana, categorias)
   if (!target) return 0
   
   const topeConMargen = target.ingresosBrutos - margenSeguridad
@@ -265,8 +276,8 @@ export function calculateProjection(
     0
   )
   
-  // Determine effective target for calculations
-  const effectiveTarget = targetCategoria || categoriaResultante
+  // Determine effective target: explicit selection or next category up from historical
+  const effectiveTarget = targetCategoria || getAutoTargetCategory(totalHistoricoEnVentana, categorias)
   const topeCategoria = effectiveTarget?.ingresosBrutos || 0
   
   // Calculate margin
@@ -287,6 +298,7 @@ export function calculateProjection(
     totalHistorico: historico,
     totalProyectado: proyectado,
     categoriaResultante: categoriaResultante?.categoria || "K",
+    categoriaObjetivo: effectiveTarget?.categoria || "K",
     topeCategoria,
     margenRestante,
     excedeObjetivo,

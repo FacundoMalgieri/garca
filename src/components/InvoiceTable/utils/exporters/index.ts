@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
+import { applyBrandedFooter } from "@/lib/pdf-branding";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 import type { TipoActividad } from "@/types/monotributo";
 
@@ -716,16 +717,8 @@ export async function exportToPDF(
     }
   }
 
-  // Footer on all pages
-  const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, {
-      align: "center",
-    });
-  }
+  // Logo + branded footer on all pages
+  await applyBrandedFooter(doc);
 
   doc.save(generateFilename(company, "pdf"));
 }

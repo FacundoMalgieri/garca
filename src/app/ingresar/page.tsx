@@ -97,6 +97,7 @@ export default function IngresoPage() {
 
       <div className="w-full px-0 py-8 max-w-[1920px] mx-auto md:px-6">
         <section className="w-full max-w-xl mx-auto">
+          <h1 className="sr-only">Ingresar a GARCA con Clave Fiscal de ARCA</h1>
           <LoginForm
             onFetchCompanies={handleFetchCompanies}
             onSelectCompany={handleSelectCompany}
