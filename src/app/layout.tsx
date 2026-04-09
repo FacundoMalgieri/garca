@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeProvider";
 
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.onrender.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

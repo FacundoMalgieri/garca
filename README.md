@@ -45,7 +45,7 @@ Una herramienta gratuita, segura y open source para recuperar, visualizar y anal
 
 ## 🚀 Demo en Vivo
 
-Probá GARCA sin necesidad de loguearte: **[Ver Demo →](https://garca.onrender.com)**
+Probá GARCA sin necesidad de loguearte: **[Ver Demo →](https://garca.app)**
 
 La demo usa datos ficticios para que explores todas las funcionalidades.
 

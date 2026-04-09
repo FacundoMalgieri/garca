@@ -87,12 +87,10 @@ export default function PrivacidadPage() {
           </a>
         </p>
 
-        <h3>Render (Hosting)</h3>
+        <h3>Infraestructura</h3>
         <p>
-          La aplicación está alojada en Render.{" "}
-          <a href="https://render.com/privacy" target="_blank" rel="noopener noreferrer">
-            Política de Privacidad de Render
-          </a>
+          El sitio público se sirve por <strong>HTTPS</strong>. El proveedor de alojamiento puede tratar
+          datos técnicos del acceso (por ejemplo, IP y logs del servidor) según su propia política de privacidad.
         </p>
 
         <h2>Tus Derechos</h2>

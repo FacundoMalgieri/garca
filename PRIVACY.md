@@ -69,9 +69,9 @@ GARCA es una herramienta que funciona **100% en tu navegador**. No recopilamos, 
 - Utilizamos Turnstile para verificación anti-bot.
 - [Política de Privacidad de Cloudflare](https://www.cloudflare.com/privacypolicy/)
 
-### Render (Hosting)
-- La aplicación está alojada en Render.
-- [Política de Privacidad de Render](https://render.com/privacy)
+### Infraestructura
+- El sitio público se sirve por **HTTPS**.
+- El proveedor de alojamiento puede tratar datos técnicos del acceso (por ejemplo, IP y logs del servidor) según su propia política de privacidad.
 
 ---
 
