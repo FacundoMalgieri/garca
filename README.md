@@ -1,4 +1,4 @@
-# GARCA 🧾
+# GARCA
 
 [![CI & Deploy](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml/badge.svg)](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml)
 [![codecov](https://codecov.io/gh/FacundoMalgieri/garca/branch/main/graph/badge.svg)](https://codecov.io/gh/FacundoMalgieri/garca)

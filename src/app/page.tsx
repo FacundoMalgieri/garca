@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { homeBreadcrumbSchema, homeFaqSchema } from "@/components/JsonLd";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   ArrowRightIcon,
   GitHubSponsorsIcon,
@@ -236,11 +237,16 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (state.invoices.length > 0) {
-      router.push("/panel");
+  const hasInvoices = state.invoices.length > 0;
+  const [showDemoConfirm, setShowDemoConfirm] = useState(false);
+
+  const handleDemoClick = () => {
+    if (hasInvoices) {
+      setShowDemoConfirm(true);
+    } else {
+      handleLoadDemo();
     }
-  }, [state.invoices.length, router]);
+  };
 
   const handleLoadDemo = () => {
     setIsLoadingDemo(true);
@@ -283,14 +289,37 @@ export default function Home() {
     }
   };
 
-  if (state.invoices.length > 0) {
-    return null;
-  }
-
   return (
     <div className="relative overflow-x-hidden bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeBreadcrumbSchema) }} />
+
+      <ConfirmDialog
+        isOpen={showDemoConfirm}
+        onClose={() => setShowDemoConfirm(false)}
+        onConfirm={() => { setShowDemoConfirm(false); handleLoadDemo(); }}
+        title="¿Cargar datos de demo?"
+        description="Se reemplazarán los datos de tu reporte actual con datos ficticios. Para recuperar tus datos reales tendrás que volver a ingresar con tu clave fiscal."
+        confirmText="Sí, cargar demo"
+        cancelText="Cancelar"
+        variant="destructive"
+      />
+
+      {/* Floating "Go to report" banner when invoices are loaded */}
+      {hasInvoices && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Link
+            href="/panel"
+            className="group inline-flex items-center gap-3 rounded-full bg-primary/95 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-primary-foreground shadow-2xl shadow-primary/30 hover:bg-primary hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Ir al reporte
+            <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
+          </Link>
+        </div>
+      )}
 
       {/* ========== HERO SECTION ========== */}
       <section
@@ -379,7 +408,7 @@ export default function Home() {
               </Link>
 
               <button
-                onClick={handleLoadDemo}
+                onClick={handleDemoClick}
                 disabled={isLoadingDemo}
                 className="group w-full sm:w-52 inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-6 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
               >
