@@ -1,3 +1,4 @@
+import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { getCurrencyBadgeClasses, getTypeBadgeClasses } from "../../utils/badges";
@@ -9,9 +10,14 @@ interface InvoiceRowProps {
 }
 
 export function InvoiceRow({ invoice, index }: InvoiceRowProps) {
+  const { manualExchangeRates } = useInvoiceContext();
   const isForeign = isForeignCurrency(invoice.moneda);
-  const exchangeRate = invoice.xmlData?.exchangeRate;
-  const totalPesos = calculateTotalPesos(invoice.importeTotal, invoice.moneda, exchangeRate);
+  const xmlRate = invoice.xmlData?.exchangeRate;
+  const manualRate = isForeign ? manualExchangeRates[invoice.moneda] : undefined;
+  const effectiveRate = xmlRate || manualRate;
+  const totalPesos = calculateTotalPesos(invoice.importeTotal, invoice.moneda, effectiveRate);
+  const isManualRate = isForeign && !xmlRate && !!manualRate;
+  const isMissingRate = isForeign && !xmlRate && !manualRate;
 
   return (
     <tr
@@ -34,11 +40,24 @@ export function InvoiceRow({ invoice, index }: InvoiceRowProps) {
       <td className="py-3 px-4 text-right font-medium">
         {isForeign ? `${invoice.moneda} ` : "$"}
         {formatCurrency(invoice.importeTotal)}
-        {isForeign && exchangeRate && (
-          <div className="text-xs text-muted-foreground font-normal">TC: ${formatCurrency(exchangeRate)}</div>
+        {isForeign && effectiveRate && (
+          <div className={`text-xs font-normal ${isManualRate ? "text-amber-500" : "text-muted-foreground"}`}>
+            TC: ${formatCurrency(effectiveRate)}{isManualRate && " (manual)"}
+          </div>
+        )}
+        {isMissingRate && (
+          <div className="text-xs text-amber-500 font-normal flex items-center justify-end gap-1">
+            <FxWarningIcon /> Sin TC
+          </div>
         )}
       </td>
-      <td className="py-3 px-4 text-right font-medium">${formatCurrency(totalPesos)}</td>
+      <td className="py-3 px-4 text-right font-medium">
+        {isMissingRate ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          `$${formatCurrency(totalPesos)}`
+        )}
+      </td>
     </tr>
   );
 }
@@ -52,3 +71,16 @@ function CurrencyBadge({ moneda }: { moneda: string }) {
     </span>
   );
 }
+
+function FxWarningIcon() {
+  return (
+    <span title="Sin tipo de cambio">
+      <svg className="h-3.5 w-3.5 text-amber-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </span>
+  );
+}
+

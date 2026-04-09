@@ -1,6 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
 import type { MonthlyTotal,ProjectionData, ProjectionResult } from "@/types/projection";
@@ -171,6 +168,11 @@ export function exportProjectionToJSON(data: ExportData): void {
  */
 export async function exportProjectionToPDF(data: ExportData): Promise<void> {
   const { companyInfo, projectionData, projectionResult, monthlyTotals, futureMonths, tipoActividad } = data;
+
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
 
   const doc = new jsPDF();
 

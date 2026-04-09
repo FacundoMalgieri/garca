@@ -82,6 +82,35 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Home */}
+            <Link
+              href="/"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
+              title="Inicio"
+            >
+              <HomeIcon />
+            </Link>
+
+            {/* Report — visible when report data exists and not on /panel */}
+            {!isOnPanel && invoices.length > 0 && (
+              <Link
+                href="/panel"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
+                title="Ir al reporte"
+              >
+                <ReportIcon />
+              </Link>
+            )}
+
+            {/* Calculator */}
+            <Link
+              href="/calculadora-monotributo"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
+              title="Calculadora Monotributo"
+            >
+              <CalculatorIcon />
+            </Link>
+
             {/* Theme Toggle */}
             {mounted && (
               <button
@@ -93,14 +122,13 @@ export function Navbar() {
               </button>
             )}
 
-            {/* Calculator icon — only on landing/non-panel pages */}
-            {!isOnPanel && (
+            {/* Ingresar CTA when no invoices */}
+            {invoices.length === 0 && (
               <Link
-                href="/calculadora-monotributo"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
-                title="Calculadora Monotributo"
+                href="/ingresar"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                <CalculatorIcon />
+                Ingresar
               </Link>
             )}
 
@@ -114,16 +142,6 @@ export function Navbar() {
                 <TrashIcon />
                 Limpiar Datos
               </button>
-            )}
-
-            {/* Ingresar CTA when no invoices */}
-            {invoices.length === 0 && (
-              <Link
-                href="/ingresar"
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Ingresar
-              </Link>
             )}
 
             {/* Hamburger Menu (Mobile) — only on /panel */}
@@ -321,6 +339,32 @@ function ProjectIcon() {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+function ReportIcon() {
+  return (
+    <svg className="h-5 w-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg className="h-5 w-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"
       />
     </svg>
   );

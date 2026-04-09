@@ -44,6 +44,16 @@ export async function POST(request: NextRequest) {
       companyIndex = 0,
     } = body;
 
+    if (!encrypted) {
+      return new Response(
+        JSON.stringify({ error: "Credentials must be encrypted" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const headlessOverride =
+      process.env.NODE_ENV === "production" ? true : (headless ?? true);
+
     // Decrypt credentials if needed
     let cuit = encryptedCuit;
     let password = encryptedPassword;
@@ -97,7 +107,9 @@ export async function POST(request: NextRequest) {
     
     const stream = new ReadableStream({
       async start(controller) {
-        const sendEvent = (event: ScraperEvent) => {
+        const sendEvent = (
+          event: ScraperEvent | { type: "result"; message: string; data: unknown }
+        ) => {
           // Skip if controller is already closed (user cancelled)
           if (isControllerClosed || abortSignal.aborted) return;
           
@@ -123,7 +135,7 @@ export async function POST(request: NextRequest) {
           // Run scraper with concurrency limit
           const result = await withConcurrencyLimit(async () => {
             return scrapeAFIPInvoicesWithEvents(credentials, filters, {
-              headless,
+              headless: headlessOverride,
               downloadXML,
               timeout: 60000,
               companyIndex,
@@ -138,8 +150,8 @@ export async function POST(request: NextRequest) {
             message: result.success ? "Proceso completado" : "Error en el proceso",
             data: result,
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalEvent)}\n\n`));
-          
+          sendEvent(finalEvent);
+
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : "Error desconocido";
           sendEvent(SCRAPER_EVENTS.error(errorMessage));
@@ -156,7 +168,7 @@ export async function POST(request: NextRequest) {
               total: 0,
             },
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorResult)}\n\n`));
+          sendEvent(errorResult);
         } finally {
           if (!isControllerClosed) {
             isControllerClosed = true;
@@ -174,7 +186,8 @@ export async function POST(request: NextRequest) {
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-store",
+        "X-Accel-Buffering": "no",
         "Connection": "keep-alive",
       },
     });

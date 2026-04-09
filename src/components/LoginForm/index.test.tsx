@@ -88,6 +88,10 @@ vi.mock("./components/PrivacyBanner", () => ({
   PrivacyBanner: () => <div data-testid="privacy-banner">Privacy Banner</div>,
 }));
 
+vi.mock("./components/TermsModal", () => ({
+  TermsModal: () => null,
+}));
+
 vi.mock("@/components/CompanySelector", () => ({
   CompanySelector: ({
     companies,
@@ -155,7 +159,22 @@ describe("LoginForm", () => {
       expect(submitButton).toBeDisabled();
     });
 
-    it("enables submit button when CUIT and password are filled", () => {
+    it("enables submit button when CUIT, password are filled and terms accepted", () => {
+      render(<LoginForm {...defaultProps} />);
+
+      const cuitInput = screen.getByTestId("cuit-input");
+      const passwordInput = screen.getByTestId("password-input");
+      const termsCheckbox = screen.getByRole("checkbox", { name: /acepto los/i });
+
+      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
+      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+      fireEvent.click(termsCheckbox);
+
+      const submitButton = screen.getByRole("button", { name: /continuar/i });
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    it("keeps submit button disabled without terms acceptance", () => {
       render(<LoginForm {...defaultProps} />);
 
       const cuitInput = screen.getByTestId("cuit-input");
@@ -165,7 +184,7 @@ describe("LoginForm", () => {
       fireEvent.change(passwordInput, { target: { value: "mypassword" } });
 
       const submitButton = screen.getByRole("button", { name: /continuar/i });
-      expect(submitButton).not.toBeDisabled();
+      expect(submitButton).toBeDisabled();
     });
 
     it("calls onFetchCompanies when form is submitted", async () => {
@@ -177,12 +196,12 @@ describe("LoginForm", () => {
 
       fireEvent.change(cuitInput, { target: { value: "20345678901" } });
       fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+      fireEvent.click(screen.getByRole("checkbox", { name: /acepto los/i }));
 
       const submitButton = screen.getByRole("button", { name: /continuar/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        // Third argument is the turnstile token from the mocked TurnstileWidget
         expect(mockOnFetchCompanies).toHaveBeenCalledWith("20345678901", "mypassword", "mock-turnstile-token");
       });
     });
@@ -232,6 +251,7 @@ describe("LoginForm", () => {
       fireEvent.change(cuitInput, { target: { value: "20345678901" } });
       fireEvent.change(passwordInput, { target: { value: "mypassword" } });
       fireEvent.click(rememberCheckbox);
+      fireEvent.click(screen.getByRole("checkbox", { name: /acepto los/i }));
 
       const submitButton = screen.getByRole("button", { name: /continuar/i });
       fireEvent.click(submitButton);
@@ -252,6 +272,7 @@ describe("LoginForm", () => {
 
       fireEvent.change(cuitInput, { target: { value: "20345678901" } });
       fireEvent.change(passwordInput, { target: { value: "mypassword" } });
+      fireEvent.click(screen.getByRole("checkbox", { name: /acepto los/i }));
 
       // The checkbox is checked by default when CUIT was saved, so uncheck it
       if ((rememberCheckbox as globalThis.HTMLInputElement).checked) {
@@ -276,18 +297,19 @@ describe("LoginForm", () => {
       ],
     };
 
+    /** Fill credentials + accept terms so the form can be submitted */
+    function fillAndSubmit() {
+      fireEvent.change(screen.getByTestId("cuit-input"), { target: { value: "20345678901" } });
+      fireEvent.change(screen.getByTestId("password-input"), { target: { value: "mypassword" } });
+      fireEvent.click(screen.getByRole("checkbox", { name: /acepto los/i }));
+      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    }
+
     it("shows company selector after successful login", async () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      const submitButton = screen.getByRole("button", { name: /continuar/i });
-      fireEvent.click(submitButton);
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();
@@ -306,14 +328,7 @@ describe("LoginForm", () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      const submitButton = screen.getByRole("button", { name: /continuar/i });
-      fireEvent.click(submitButton);
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();
@@ -338,13 +353,7 @@ describe("LoginForm", () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();
@@ -359,13 +368,7 @@ describe("LoginForm", () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();
@@ -380,13 +383,7 @@ describe("LoginForm", () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();
@@ -401,13 +398,7 @@ describe("LoginForm", () => {
       mockOnFetchCompanies.mockResolvedValue(true);
       const { rerender } = render(<LoginForm {...defaultProps} />);
 
-      // Fill and submit form
-      const cuitInput = screen.getByTestId("cuit-input");
-      const passwordInput = screen.getByTestId("password-input");
-      fireEvent.change(cuitInput, { target: { value: "20345678901" } });
-      fireEvent.change(passwordInput, { target: { value: "mypassword" } });
-
-      fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+      fillAndSubmit();
 
       await waitFor(() => {
         expect(mockOnFetchCompanies).toHaveBeenCalled();

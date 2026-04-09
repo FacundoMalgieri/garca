@@ -25,6 +25,8 @@ interface InvoiceContextType {
   state: InvoiceState;
   companiesState: CompaniesState;
   monotributoInfo: MonotributoAFIPInfo | null;
+  manualExchangeRates: Record<string, number>;
+  setManualExchangeRate: (currency: string, rate: number) => void;
   fetchCompanies: (cuit: string, password: string, turnstileToken?: string) => Promise<boolean>;
   fetchInvoicesWithCompany: (
     cuit: string,

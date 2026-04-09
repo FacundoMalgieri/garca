@@ -84,51 +84,60 @@ export function useInvoiceFilters(invoices: AFIPInvoice[]): UseInvoiceFiltersRet
       filtered = filtered.filter((inv) => inv.importeTotal <= max);
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortField) {
-        case "fecha": {
-          const [dayA, monthA, yearA] = a.fecha.split("/");
-          const [dayB, monthB, yearB] = b.fecha.split("/");
-          const dateA = new Date(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
-          const dateB = new Date(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
-          comparison = dateA.getTime() - dateB.getTime();
-          break;
-        }
-        case "tipo":
-          comparison = a.tipo.localeCompare(b.tipo);
-          break;
-        case "numero":
-          comparison = a.numeroCompleto.localeCompare(b.numeroCompleto);
-          break;
-        case "receptor":
-          comparison = a.razonSocialReceptor.localeCompare(b.razonSocialReceptor);
-          break;
-        case "total":
-          comparison = a.importeTotal - b.importeTotal;
-          break;
-        case "moneda":
-          comparison = a.moneda.localeCompare(b.moneda);
-          break;
-        case "totalPesos": {
-          // Handle all foreign currencies (USD, EUR, etc.)
-          const aTotalPesos =
-            a.moneda !== "ARS" && a.xmlData?.exchangeRate
-              ? a.importeTotal * a.xmlData.exchangeRate
-              : a.importeTotal;
-          const bTotalPesos =
-            b.moneda !== "ARS" && b.xmlData?.exchangeRate
-              ? b.importeTotal * b.xmlData.exchangeRate
-              : b.importeTotal;
-          comparison = aTotalPesos - bTotalPesos;
-          break;
-        }
+    // Apply sorting (fecha: pre-compute YYYYMMDD keys to avoid Date allocations per comparison)
+    if (sortField === "fecha") {
+      const fechaSortKeys = new Map<AFIPInvoice, number>();
+      for (const inv of filtered) {
+        const [day, month, year] = inv.fecha.split("/");
+        fechaSortKeys.set(
+          inv,
+          parseInt(year, 10) * 10000 + parseInt(month, 10) * 100 + parseInt(day, 10)
+        );
       }
+      filtered.sort((a, b) => {
+        const keyA = fechaSortKeys.get(a) ?? 0;
+        const keyB = fechaSortKeys.get(b) ?? 0;
+        const comparison = keyA - keyB;
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    } else {
+      filtered.sort((a, b) => {
+        let comparison = 0;
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
+        switch (sortField) {
+          case "tipo":
+            comparison = a.tipo.localeCompare(b.tipo);
+            break;
+          case "numero":
+            comparison = a.numeroCompleto.localeCompare(b.numeroCompleto);
+            break;
+          case "receptor":
+            comparison = a.razonSocialReceptor.localeCompare(b.razonSocialReceptor);
+            break;
+          case "total":
+            comparison = a.importeTotal - b.importeTotal;
+            break;
+          case "moneda":
+            comparison = a.moneda.localeCompare(b.moneda);
+            break;
+          case "totalPesos": {
+            // Handle all foreign currencies (USD, EUR, etc.)
+            const aTotalPesos =
+              a.moneda !== "ARS" && a.xmlData?.exchangeRate
+                ? a.importeTotal * a.xmlData.exchangeRate
+                : a.importeTotal;
+            const bTotalPesos =
+              b.moneda !== "ARS" && b.xmlData?.exchangeRate
+                ? b.importeTotal * b.xmlData.exchangeRate
+                : b.importeTotal;
+            comparison = aTotalPesos - bTotalPesos;
+            break;
+          }
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
 
     return filtered;
   }, [invoices, searchText, filterTipo, filterMoneda, minMonto, maxMonto, sortField, sortDirection]);

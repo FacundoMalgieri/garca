@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { cuit: encryptedCuit, password: encryptedPassword, encrypted = false } = body;
 
+    if (!encrypted) {
+      return NextResponse.json(
+        { success: false, error: "Credentials must be encrypted" },
+        { status: 400 }
+      );
+    }
+
     // Decrypt credentials if they were encrypted
     let cuit = encryptedCuit;
     let password = encryptedPassword;

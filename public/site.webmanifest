@@ -1,4 +1,5 @@
 {
+  "lang": "es-AR",
   "name": "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
   "short_name": "GARCA",
   "description": "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos.",

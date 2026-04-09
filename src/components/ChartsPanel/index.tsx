@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -36,16 +36,19 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function ChartsPanel({ monotributoData, ingresosAnuales, isCurrentYearData = true }: ChartsPanelProps) {
-  const { state } = useInvoiceContext();
+  const { state, manualExchangeRates } = useInvoiceContext();
   const [activeTab, setActiveTab] = useState<TabType>("progreso");
+
+  const monthlyData = useMemo(() => prepareMonthlyData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
+  const distributionData = useMemo(() => prepareDistributionData(state.invoices), [state.invoices]);
+  const currentCategory = useMemo(
+    () => getCurrentCategory(monotributoData, ingresosAnuales),
+    [monotributoData, ingresosAnuales]
+  );
 
   if (!isCurrentYearData) {
     return <NoDataMessage />;
   }
-
-  const monthlyData = prepareMonthlyData(state.invoices);
-  const distributionData = prepareDistributionData(state.invoices);
-  const currentCategory = getCurrentCategory(monotributoData, ingresosAnuales);
 
   return (
     <Card className="h-full flex flex-col border-b-0 md:border-b min-h-[352px]">
@@ -115,18 +118,19 @@ function getInvoiceMultiplier(tipo: string): number {
 function calculateTotalEnPesos(
   importeTotal: number,
   moneda: string,
-  exchangeRate?: number
+  exchangeRate?: number,
+  manualRate?: number,
 ): number {
-  // If it's a foreign currency and has exchange rate, convert
-  if (moneda !== "ARS" && exchangeRate && exchangeRate > 0) {
-    return importeTotal * exchangeRate;
+  if (moneda !== "ARS") {
+    const rate = exchangeRate || manualRate || 0;
+    if (rate > 0) return importeTotal * rate;
   }
-  // For ARS or missing exchange rate, return as-is
   return importeTotal;
 }
 
 function prepareMonthlyData(
-  invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[]
+  invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[],
+  manualRates: Record<string, number> = {},
 ): MonthlyDataPoint[] {
   const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   
@@ -151,7 +155,8 @@ function prepareMonthlyData(
     const totalEnPesos = calculateTotalEnPesos(
       invoice.importeTotal,
       invoice.moneda,
-      invoice.xmlData?.exchangeRate
+      invoice.xmlData?.exchangeRate,
+      manualRates[invoice.moneda],
     );
 
     if (!monthlyTotals[key]) {

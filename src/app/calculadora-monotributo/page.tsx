@@ -201,7 +201,7 @@ export default function CalculadoraMonotributoPage() {
                 <select
                   value={targetRecat}
                   onChange={e => setTargetRecat(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   {recategorizacionOptions.map(opt => (
                     <option key={opt.month} value={opt.month}>{opt.label}</option>
@@ -213,7 +213,7 @@ export default function CalculadoraMonotributoPage() {
                 <select
                   value={targetCategoria || ""}
                   onChange={e => setTargetCategoria(e.target.value || null)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <option value="">Automático</option>
                   {categorias.map(cat => (
@@ -226,14 +226,14 @@ export default function CalculadoraMonotributoPage() {
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-2 block">Margen de seguridad</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">$</span>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={formatInputValue(margenSeguridad)}
                     onChange={e => setMargenSeguridad(parseCurrencyInput(e.target.value))}
                     placeholder="0"
-                    className="w-full pl-7 pr-3 py-2.5 text-sm font-mono rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                    className="w-full pl-7 pr-3 py-2.5 text-base md:text-sm font-mono rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                     autoComplete="off"
                   />
                 </div>
@@ -270,9 +270,9 @@ export default function CalculadoraMonotributoPage() {
             {/* Monthly Inputs */}
             <div>
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-                <h2 className="text-sm font-medium">
+                <h3 className="text-sm font-medium">
                   Facturación mensual
-                </h2>
+                </h3>
                 <div className="flex gap-2">
                   {recommendation != null && recommendation > 0 && (
                     <button
@@ -305,7 +305,7 @@ export default function CalculadoraMonotributoPage() {
                         {getMonthShortLabel(month)}
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base md:text-sm text-muted-foreground">$</span>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -313,7 +313,7 @@ export default function CalculadoraMonotributoPage() {
                           onChange={e => setMonthValue(month, parseCurrencyInput(e.target.value))}
                           placeholder="0"
                           className={cn(
-                            "w-full pl-7 pr-3 py-2.5 text-sm font-mono rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all",
+                            "w-full pl-7 pr-3 py-2.5 text-base md:text-sm font-mono rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all",
                             isFuture ? "border-blue-500/30" : "border-border"
                           )}
                           autoComplete="off"

@@ -34,6 +34,9 @@ const cspDirectives = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   // Enable strict mode for better error catching
   reactStrictMode: true,
   // Enable React Compiler (stable in Next.js 16 + React 19)

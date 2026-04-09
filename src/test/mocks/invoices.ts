@@ -104,7 +104,6 @@ export const mockInvoices: AFIPInvoice[] = [
       cuitEmisor: FAKE_CUITS.emisor,
       cuitReceptor: FAKE_CUITS.receptorExterior,
       cae: generateCAE(3),
-      exchangeRate: 1050,
     },
   },
   {
@@ -216,7 +215,6 @@ export const mockInvoices: AFIPInvoice[] = [
       cuitEmisor: FAKE_CUITS.emisor,
       cuitReceptor: FAKE_CUITS.receptorExterior,
       cae: generateCAE(8),
-      exchangeRate: 1120,
     },
   },
   {
@@ -311,7 +309,6 @@ export const mockInvoices: AFIPInvoice[] = [
       cuitEmisor: FAKE_CUITS.emisor,
       cuitReceptor: FAKE_CUITS.receptorExterior,
       cae: generateCAE(12),
-      exchangeRate: 7.05,
     },
   },
   {
@@ -1222,30 +1219,17 @@ export const mockInvoices: AFIPInvoice[] = [
 /**
  * Summary of mock data:
  * - 20 Facturas C (ARS)
- * - 8 Facturas de Exportación E (USD)
- * - 5 Facturas de Exportación E (EUR)
- * - 4 Facturas de Exportación E (JPY)
+ * - 8 Facturas de Exportación E (USD) — 1 without exchangeRate (manual TC demo)
+ * - 5 Facturas de Exportación E (EUR) — 1 without exchangeRate (manual TC demo)
+ * - 4 Facturas de Exportación E (JPY) — 1 without exchangeRate (manual TC demo)
  * - 5 Notas de Crédito C (ARS)
  * - 4 Notas de Débito C (ARS)
  * - 2 Notas de Crédito E (USD)
  * - 2 Notas de Débito E (USD)
  * Total: 50 invoices
  *
- * TOTAL APROXIMADO EN PESOS: ~$62M
- * (Cerca del límite de Monotributo categoría H de $68M para servicios)
- *
- * Distribution by month:
- * - Enero: ~$5.0M
- * - Febrero: ~$5.5M
- * - Marzo: ~$4.8M
- * - Abril: ~$5.8M
- * - Mayo: ~$5.2M
- * - Junio: ~$5.5M
- * - Julio: ~$6.8M
- * - Agosto: ~$6.5M
- * - Septiembre: ~$5.8M
- * - Octubre: ~$6.2M
- * - Noviembre: ~$5.8M
+ * TOTAL APROXIMADO EN PESOS: ~$54M (without manual TC) / ~$62M (with manual TC applied)
+ * 3 FX invoices (USD, EUR, JPY) lack exchangeRate to demonstrate the manual TC input feature.
  *
  * Date range: 05/01/2025 - 28/11/2025
  */

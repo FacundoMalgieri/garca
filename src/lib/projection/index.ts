@@ -63,10 +63,19 @@ export function getNextRecategorizacionDates(today: Date = new Date()): Recatego
   
   const dates: RecategorizacionInfo[] = []
   
-  // Determine starting point
+  // Determine starting point (Jan and Jul are recategorization months)
   let year = currentYear
-  let startMonth = currentMonth < 6 ? 6 : 0 // July (6) or January (0)
-  if (startMonth === 0) year++ // If next is January, it's next year
+  let startMonth: number
+  if (currentMonth === 0) {
+    startMonth = 0
+  } else if (currentMonth <= 5) {
+    startMonth = 6
+  } else if (currentMonth === 6) {
+    startMonth = 6
+  } else {
+    startMonth = 0
+    year++
+  }
   
   // Generate next 4 recategorization periods
   for (let i = 0; i < 4; i++) {
