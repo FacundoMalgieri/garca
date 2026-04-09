@@ -377,7 +377,7 @@ describe("Navbar", () => {
     expect(mobileLinks.length).toBe(1);
   });
 
-  it("scrolls to top when logo is clicked on /panel with invoices loaded", () => {
+  it("logo always links to home page", () => {
     mockPathname = "/panel";
     mockInvoices = [
       {
@@ -399,38 +399,10 @@ describe("Navbar", () => {
       },
     ];
 
-    const scrollToMock = vi.fn();
-    vi.stubGlobal("scrollTo", scrollToMock);
-
     render(<Navbar />);
 
     const logoLink = screen.getAllByRole("link")[0];
-    fireEvent.click(logoLink);
-
-    expect(scrollToMock).toHaveBeenCalledWith({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    vi.unstubAllGlobals();
-  });
-
-  it("navigates normally when logo is clicked from non-panel page", () => {
-    mockPathname = "/";
-    mockInvoices = [];
-
-    const scrollToMock = vi.fn();
-    vi.stubGlobal("scrollTo", scrollToMock);
-
-    render(<Navbar />);
-
-    const logoLink = screen.getAllByRole("link")[0];
-    fireEvent.click(logoLink);
-
-    // Should NOT scroll - should navigate instead
-    expect(scrollToMock).not.toHaveBeenCalled();
-
-    vi.unstubAllGlobals();
+    expect(logoLink).toHaveAttribute("href", "/");
   });
 
   it("scrolls to section when desktop nav button is clicked", async () => {
