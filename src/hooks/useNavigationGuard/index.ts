@@ -94,8 +94,7 @@ export function useNavigationGuard({
     pushedStateRef.current = true;
 
     const handlePopState = (_e: PopStateEvent) => {
-      // Re-push state to prevent actual navigation
-      window.history.pushState({ navigationGuard: true }, "");
+      window.history.replaceState({ navigationGuard: true }, "");
       
       // Trigger navigation attempt callback
       setIsPending(true);

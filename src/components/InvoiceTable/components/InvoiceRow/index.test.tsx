@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { InvoiceRow } from "./index";
@@ -43,9 +44,11 @@ const mockInvoiceUSD: AFIPInvoice = {
 
 const renderInTable = (children: React.ReactNode) => {
   return render(
-    <table>
-      <tbody>{children}</tbody>
-    </table>
+    <InvoiceProvider>
+      <table>
+        <tbody>{children}</tbody>
+      </table>
+    </InvoiceProvider>
   );
 };
 

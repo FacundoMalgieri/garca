@@ -85,21 +85,16 @@ export function getTurnstileToken(request: Request): string | null {
  * @returns The client IP or undefined
  */
 export function getClientIP(request: Request): string | undefined {
-  // Try various headers in order of preference
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    // x-forwarded-for can contain multiple IPs, take the first one
-    return forwardedFor.split(",")[0].trim();
-  }
+  const cfConnectingIP = request.headers.get("cf-connecting-ip");
+  if (cfConnectingIP) return cfConnectingIP;
 
   const realIP = request.headers.get("x-real-ip");
-  if (realIP) {
-    return realIP;
-  }
+  if (realIP) return realIP;
 
-  const cfConnectingIP = request.headers.get("cf-connecting-ip");
-  if (cfConnectingIP) {
-    return cfConnectingIP;
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const parts = forwardedFor.split(",").map((s) => s.trim());
+    return parts[parts.length - 1];
   }
 
   return undefined;

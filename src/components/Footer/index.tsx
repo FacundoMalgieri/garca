@@ -47,9 +47,20 @@ export function Footer() {
           <div className="w-full max-w-xs h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-border to-transparent" />
 
           {/* Copyright */}
-          <div className="text-center">
+          <div className="text-center space-y-1">
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              © {new Date().getFullYear()} Facundo Malgieri • No afiliado con ARCA
+              {new Date().getFullYear()} • No afiliado con ARCA
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Desarrollado por{" "}
+              <a
+                href="https://fmalgieri.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors underline underline-offset-2"
+              >
+                Facundo Malgieri
+              </a>
             </p>
           </div>
         </div>

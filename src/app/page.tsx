@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -343,9 +344,12 @@ export default function Home() {
                 transform: heroLoaded ? "translateY(0)" : "translateY(40px)",
               }}
             >
-              <img
+              <Image
                 src="/logo-full.svg"
                 alt="GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA"
+                width={144}
+                height={144}
+                priority
                 className="relative h-28 w-28 md:h-36 md:w-36"
               />
             </div>

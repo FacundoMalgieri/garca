@@ -172,7 +172,11 @@ export function InvoiceTable() {
                 <TableHeader sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
                 <tbody>
                   {visibleInvoices.map((invoice, index) => (
-                    <InvoiceRow key={index} invoice={invoice} index={index} />
+                    <InvoiceRow
+                      key={`${invoice.numeroCompleto}-${invoice.fecha}`}
+                      invoice={invoice}
+                      index={index}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -183,8 +187,8 @@ export function InvoiceTable() {
         {/* Mobile Cards */}
         {!state.isLoading && state.invoices.length > 0 && (
           <div className="space-y-4 md:hidden">
-            {visibleInvoices.map((invoice, index) => (
-              <InvoiceCard key={index} invoice={invoice} />
+            {visibleInvoices.map((invoice) => (
+              <InvoiceCard key={`${invoice.numeroCompleto}-${invoice.fecha}`} invoice={invoice} />
             ))}
           </div>
         )}

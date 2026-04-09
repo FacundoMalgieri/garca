@@ -26,23 +26,36 @@ function parseInvoiceDate(fecha: string): Date {
   return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
 }
 
+function getInvoiceMultiplier(tipo: string): number {
+  const lower = tipo.toLowerCase()
+  if (lower.includes("nota de credito") || lower.includes("nota de crédito")) return -1
+  return 1
+}
+
 /**
  * Convert invoices to monthly totals
  */
-export function invoicesToMonthlyTotals(invoices: AFIPInvoice[]): MonthlyTotal[] {
+export function invoicesToMonthlyTotals(
+  invoices: AFIPInvoice[],
+  manualExchangeRates?: Record<string, number>,
+): MonthlyTotal[] {
   const monthlyMap = new Map<MonthKey, { total: number; count: number }>()
 
   for (const invoice of invoices) {
     const date = parseInvoiceDate(invoice.fecha)
     const monthKey = formatMonthKey(date)
 
-    // Get existing or create new
     const existing = monthlyMap.get(monthKey) || { total: 0, count: 0 }
+    const multiplier = getInvoiceMultiplier(invoice.tipo)
 
-    // Convert to ARS if foreign currency
-    let amountArs = invoice.importeTotal
-    if (invoice.moneda !== "ARS" && invoice.xmlData?.exchangeRate) {
-      amountArs = invoice.importeTotal * invoice.xmlData.exchangeRate
+    let amountArs = 0
+    if (invoice.moneda === "ARS") {
+      amountArs = invoice.importeTotal * multiplier
+    } else {
+      const rate = invoice.xmlData?.exchangeRate || manualExchangeRates?.[invoice.moneda] || 0
+      if (rate > 0) {
+        amountArs = invoice.importeTotal * rate * multiplier
+      }
     }
 
     monthlyMap.set(monthKey, {
@@ -92,6 +105,7 @@ function saveProjectionData(data: ProjectionData): void {
 interface UseProjectionOptions {
   invoices: AFIPInvoice[]
   tipoActividad: TipoActividad
+  manualExchangeRates?: Record<string, number>
 }
 
 interface UseProjectionReturn {
@@ -115,7 +129,7 @@ interface UseProjectionReturn {
   categorias: typeof MONOTRIBUTO_DATA.categorias
 }
 
-export function useProjection({ invoices, tipoActividad: _tipoActividad }: UseProjectionOptions): UseProjectionReturn {
+export function useProjection({ invoices, tipoActividad: _tipoActividad, manualExchangeRates }: UseProjectionOptions): UseProjectionReturn {
   const categorias = MONOTRIBUTO_DATA.categorias
 
   // Get recategorization options
@@ -139,7 +153,7 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad }: UsePr
   })
 
   // Convert invoices to monthly totals
-  const monthlyTotals = useMemo(() => invoicesToMonthlyTotals(invoices), [invoices])
+  const monthlyTotals = useMemo(() => invoicesToMonthlyTotals(invoices, manualExchangeRates), [invoices, manualExchangeRates])
 
   // Get future months based on target recategorization
   const futureMonths = useMemo(

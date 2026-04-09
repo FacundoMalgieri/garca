@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { InvoiceCard } from "./index";
 
 import { render, screen } from "@testing-library/react";
+
+const renderWithProvider = (ui: React.ReactNode) => render(<InvoiceProvider>{ui}</InvoiceProvider>);
 
 const mockInvoiceARS: AFIPInvoice = {
   fecha: "15/01/2025",
@@ -44,76 +47,76 @@ const mockInvoiceUSD: AFIPInvoice = {
 describe("InvoiceCard", () => {
   describe("ARS invoice", () => {
     it("should render date", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("15/01/2025")).toBeInTheDocument();
     });
 
     it("should render numero completo", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("00001-00000100")).toBeInTheDocument();
     });
 
     it("should render tipo", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("Factura C")).toBeInTheDocument();
     });
 
     it("should render currency badge", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("ARS")).toBeInTheDocument();
     });
 
     it("should render total label", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("Total (ARS):")).toBeInTheDocument();
     });
 
     it("should render total en pesos label", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.getByText("Total en Pesos:")).toBeInTheDocument();
     });
 
     it("should not show exchange rate for ARS", () => {
-      render(<InvoiceCard invoice={mockInvoiceARS} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(screen.queryByText("Tipo de cambio:")).not.toBeInTheDocument();
     });
   });
 
   describe("USD invoice", () => {
     it("should render date", () => {
-      render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("20/02/2025")).toBeInTheDocument();
     });
 
     it("should format Factura E type", () => {
-      render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("Factura E")).toBeInTheDocument();
     });
 
     it("should render USD badge", () => {
-      render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("USD")).toBeInTheDocument();
     });
 
     it("should show exchange rate", () => {
-      render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("Tipo de cambio:")).toBeInTheDocument();
     });
 
     it("should display total in USD", () => {
-      render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("Total (USD):")).toBeInTheDocument();
     });
   });
 
   describe("styling", () => {
     it("should have card border", () => {
-      const { container } = render(<InvoiceCard invoice={mockInvoiceARS} />);
+      const { container } = renderWithProvider(<InvoiceCard invoice={mockInvoiceARS} />);
       expect(container.firstChild).toHaveClass("border");
     });
 
     it("should apply success styling for Factura E", () => {
-      const { container } = render(<InvoiceCard invoice={mockInvoiceUSD} />);
+      const { container } = renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       const badge = container.querySelector(".bg-success\\/10");
       expect(badge).toBeInTheDocument();
     });

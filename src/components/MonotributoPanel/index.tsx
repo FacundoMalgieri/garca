@@ -198,6 +198,16 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
               </div>
             </div>
 
+            {status.margenDisponible < 0 && status.categoriaSiguiente === null && (
+              <div
+                className="rounded-lg border-2 border-destructive/50 bg-destructive/10 p-3 text-center text-sm text-destructive"
+                role="alert"
+              >
+                Superaste el tope de la categoría más alta ({status.categoriaActual.categoria}). Consultá con un
+                contador o ARCA: podrías necesitar otro régimen o actualizar tu situación fiscal.
+              </div>
+            )}
+
             <div className="border-t border-border my-3"></div>
 
             {/* Monthly payments - calculated category */}

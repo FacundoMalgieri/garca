@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
       companyIndex = 0,
     } = body;
 
+    if (!encrypted) {
+      return NextResponse.json(
+        { success: false, error: "Credentials must be encrypted" },
+        { status: 400 }
+      );
+    }
+
+    const headlessOverride =
+      process.env.NODE_ENV === "production" ? true : (headless ?? true);
+
     // Decrypt credentials if they were encrypted
     let cuit = encryptedCuit;
     let password = encryptedPassword;
@@ -95,7 +105,7 @@ export async function POST(request: NextRequest) {
     // Scrape with concurrency limit to prevent memory exhaustion
     const result = await withConcurrencyLimit(() =>
       scrapeAFIPInvoices(credentials, filters, {
-        headless,
+        headless: headlessOverride,
         downloadXML,
         timeout: 60000,
         companyIndex,

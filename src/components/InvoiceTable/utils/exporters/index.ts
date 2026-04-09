@@ -1,7 +1,3 @@
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
@@ -283,6 +279,12 @@ export async function exportToPDF(
   company: CompanyInfo | null = null,
   monotributoInfo?: MonotributoAFIPInfo | null
 ): Promise<void> {
+  const [{ default: jsPDF }, { default: html2canvas }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("html2canvas"),
+    import("jspdf-autotable"),
+  ]);
+
   const doc = new jsPDF();
 
   // Calculate totals first (needed for monotributo)

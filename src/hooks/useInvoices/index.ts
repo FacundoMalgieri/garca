@@ -8,6 +8,9 @@ import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip
 const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
 const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
+const STORAGE_TTL_KEY = "garca_invoices_ts";
+const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
+const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Company information extracted from invoices.
@@ -64,6 +67,8 @@ export interface UseInvoicesReturn {
   state: InvoiceState;
   companiesState: CompaniesState;
   monotributoInfo: MonotributoAFIPInfo | null;
+  manualExchangeRates: Record<string, number>;
+  setManualExchangeRate: (currency: string, rate: number) => void;
   fetchCompanies: (cuit: string, password: string, turnstileToken?: string) => Promise<boolean>;
   fetchInvoicesWithCompany: (
     cuit: string,
@@ -108,9 +113,34 @@ export function useInvoices(): UseInvoicesReturn {
   // Separate monotributoInfo state that persists across company selection
   const [monotributoInfo, setMonotributoInfo] = useState<MonotributoAFIPInfo | null>(null);
 
+  // Manual exchange rates for FX invoices without XML rate
+  const [manualExchangeRates, setManualExchangeRates] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const stored = localStorage.getItem(MANUAL_FX_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const setManualExchangeRate = useCallback((currency: string, rate: number) => {
+    setManualExchangeRates(prev => {
+      const next = { ...prev };
+      if (rate > 0) {
+        next[currency] = rate;
+      } else {
+        delete next[currency];
+      }
+      try { localStorage.setItem(MANUAL_FX_STORAGE_KEY, JSON.stringify(next)); } catch { /* quota */ }
+      return next;
+    });
+  }, []);
+
   // AbortController refs for cancellable requests
   const companiesAbortRef = useRef<AbortController | null>(null);
   const invoicesAbortRef = useRef<AbortController | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Cleanup abort controllers on unmount
   useEffect(() => {
@@ -125,11 +155,13 @@ export function useInvoices(): UseInvoicesReturn {
     loadFromStorage();
   }, []);
 
-  // Save to localStorage whenever invoices change
   useEffect(() => {
-    if (state.invoices.length > 0) {
+    if (state.invoices.length === 0) return;
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
       saveToStorage(state.invoices, state.company);
-    }
+    }, 300);
+    return () => clearTimeout(saveTimeoutRef.current);
   }, [state.invoices, state.company]);
 
   /**
@@ -137,6 +169,17 @@ export function useInvoices(): UseInvoicesReturn {
    */
   const loadFromStorage = () => {
     try {
+      const storedTs = localStorage.getItem(STORAGE_TTL_KEY);
+      if (storedTs && Date.now() - Number.parseInt(storedTs, 10) > TTL_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(COMPANY_STORAGE_KEY);
+        localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
+        localStorage.removeItem(STORAGE_TTL_KEY);
+        localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
+        setManualExchangeRates({});
+        return;
+      }
+
       const storedInvoices = localStorage.getItem(STORAGE_KEY);
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
       const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
@@ -162,6 +205,7 @@ export function useInvoices(): UseInvoicesReturn {
   const saveToStorage = (invoices: AFIPInvoice[], company: CompanyInfo | null) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+      localStorage.setItem(STORAGE_TTL_KEY, String(Date.now()));
       if (company) {
         localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(company));
       }
@@ -253,11 +297,13 @@ export function useInvoices(): UseInvoicesReturn {
                 if (event.type === "result") {
                   finalResult = event.data;
                 } else if (event.type === "error") {
+                  if (companiesAbortRef.current?.signal.aborted) continue;
                   setCompaniesState((prev) => ({
                     ...prev,
                     progress: { message: event.message, progress: 0, type: "error" },
                   }));
                 } else {
+                  if (companiesAbortRef.current?.signal.aborted) continue;
                   setCompaniesState((prev) => ({
                     ...prev,
                     progress: {
@@ -270,6 +316,19 @@ export function useInvoices(): UseInvoicesReturn {
               } catch {
                 // Ignore JSON parse errors
               }
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          if (buffer.startsWith("data: ")) {
+            try {
+              const event = JSON.parse(buffer.slice(6));
+              if (event.type === "result") {
+                finalResult = event.data;
+              }
+            } catch {
+              // Ignore parse errors
             }
           }
         }
@@ -442,13 +501,13 @@ export function useInvoices(): UseInvoicesReturn {
                   // Final result received
                   finalResult = event.data;
                 } else if (event.type === "error") {
-                  // Error event
+                  if (invoicesAbortRef.current?.signal.aborted) continue;
                   setState((prev) => ({
                     ...prev,
                     progress: { message: event.message, progress: 0, type: "error" },
                   }));
                 } else {
-                  // Progress event
+                  if (invoicesAbortRef.current?.signal.aborted) continue;
                   setState((prev) => ({
                     ...prev,
                     progress: {
@@ -461,6 +520,19 @@ export function useInvoices(): UseInvoicesReturn {
               } catch {
                 // Ignore JSON parse errors
               }
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          if (buffer.startsWith("data: ")) {
+            try {
+              const event = JSON.parse(buffer.slice(6));
+              if (event.type === "result") {
+                finalResult = event.data;
+              }
+            } catch {
+              // Ignore parse errors
             }
           }
         }
@@ -602,9 +674,12 @@ export function useInvoices(): UseInvoicesReturn {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(COMPANY_STORAGE_KEY);
+      localStorage.removeItem(STORAGE_TTL_KEY);
+      localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
     } catch {
       // Silently fail
     }
+    setManualExchangeRates({});
 
     setState({
       invoices: [],
@@ -634,6 +709,8 @@ export function useInvoices(): UseInvoicesReturn {
     state,
     companiesState,
     monotributoInfo,
+    manualExchangeRates,
+    setManualExchangeRate,
     fetchCompanies,
     fetchInvoicesWithCompany,
     clearInvoices,

@@ -12,6 +12,7 @@ import { CuitInput } from "./components/CuitInput";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { PasswordInput } from "./components/PasswordInput";
 import { PrivacyBanner } from "./components/PrivacyBanner";
+import { TermsModal } from "./components/TermsModal";
 import { validateDateRange } from "./utils/validation";
 
 type FlowStep = "credentials" | "company-select";
@@ -55,6 +56,8 @@ export function LoginForm({
   const [cuit, setCuit] = useState("");
   const [password, setPassword] = useState("");
   const [rememberCuit, setRememberCuit] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [step, setStep] = useState<FlowStep>("credentials");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
@@ -132,7 +135,7 @@ export function LoginForm({
   };
 
   const isLoading = isLoadingCompanies || isLoadingInvoices;
-  const isReady = cuit && password && turnstileToken && !isLoading && !dateError;
+  const isReady = cuit && password && turnstileToken && !isLoading && !dateError && acceptedTerms;
 
   // Progressive loading messages
   const loadingMessages = [
@@ -235,6 +238,28 @@ export function LoginForm({
             </label>
           </div>
 
+          {/* Terms & Conditions Checkbox */}
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              disabled={isLoading}
+              className="rounded border-border mt-0.5"
+            />
+            <label htmlFor="terms" className="text-sm cursor-pointer">
+              Acepto los{" "}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-primary dark:text-primary-foreground underline hover:opacity-80 transition-opacity cursor-pointer"
+              >
+                términos y condiciones
+              </button>
+            </label>
+          </div>
+
           {/* Error Message */}
           {error && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
@@ -266,6 +291,15 @@ export function LoginForm({
           {/* Invisible Turnstile widget for bot protection */}
           <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
         </form>
+
+        <TermsModal
+          isOpen={showTermsModal}
+          onClose={() => setShowTermsModal(false)}
+          onAccept={() => {
+            setAcceptedTerms(true);
+            setShowTermsModal(false);
+          }}
+        />
       </CardContent>
     </Card>
   );

@@ -42,7 +42,7 @@ function parseCurrency(value: string): number {
   // Remove thousand separators (.) and replace decimal comma with dot
   const cleaned = value
     .replace(/\./g, "")      // Remove thousand separators
-    .replace(",", ".")       // Replace decimal comma with dot
+    .replace(/,/g, ".")      // Replace decimal comma(s) with dot
     .replace(/[^\d.-]/g, "") // Remove any other non-numeric chars
   return parseFloat(cleaned) || 0
 }
@@ -52,7 +52,7 @@ interface ProjectionPanelProps {
 }
 
 export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
-  const { state } = useInvoiceContext()
+  const { state, manualExchangeRates } = useInvoiceContext()
 
   const {
     projectionData,
@@ -70,38 +70,37 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   } = useProjection({
     invoices: state.invoices,
     tipoActividad,
+    manualExchangeRates,
   })
 
-  // Track if user is manually editing (to avoid overwriting their changes)
-  const isUserEditing = useRef(false)
+  const [userHasCustomized, setUserHasCustomized] = useState(false)
   const lastRecommendation = useRef(0)
 
-  // Auto-apply recommendation when settings change (but not when user is editing individual months)
   useEffect(() => {
-    if (!projectionResult) return
-    
+    if (!projectionResult || userHasCustomized) return
+
     const newRecommendation = roundToNearest(projectionResult.montoRecomendadoMensual)
-    
-    // Only auto-apply if recommendation changed and user isn't manually editing
-    if (newRecommendation !== lastRecommendation.current && !isUserEditing.current) {
+
+    if (newRecommendation !== lastRecommendation.current) {
       lastRecommendation.current = newRecommendation
       applyRecommendation()
     }
-  }, [projectionData.targetRecategorizacion, projectionData.targetCategoria, projectionData.margenSeguridad, projectionResult, applyRecommendation])
+  }, [
+    projectionData.targetRecategorizacion,
+    projectionData.targetCategoria,
+    projectionData.margenSeguridad,
+    projectionResult,
+    applyRecommendation,
+    userHasCustomized,
+  ])
 
-  // Handle individual month edit - marks that user is customizing
   const handleMonthEdit = (month: string, value: number) => {
-    isUserEditing.current = true
+    setUserHasCustomized(true)
     setMonthProjection(month, value)
-    // Reset after a short delay to allow re-applying on next settings change
-    setTimeout(() => {
-      isUserEditing.current = false
-    }, 1000)
   }
 
-  // Clear also resets the editing flag
   const handleClear = () => {
-    isUserEditing.current = false
+    setUserHasCustomized(false)
     clearProjections()
   }
 
@@ -177,7 +176,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
             <select
               value={projectionData.targetRecategorizacion}
               onChange={(e) => setTargetRecategorizacion(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               {recategorizacionOptions.map((opt) => (
                 <option key={opt.month} value={opt.month}>
@@ -195,7 +194,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
             <select
               value={projectionData.targetCategoria || ""}
               onChange={(e) => setTargetCategoria(e.target.value || null)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               <option value="">Automático</option>
               {categorias.map((cat) => (
@@ -214,7 +213,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
             <select
               value={projectionData.margenSeguridad}
               onChange={(e) => setMargenSeguridad(Number(e.target.value))}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               <option value={0}>Sin margen</option>
               <option value={100000}>$100k</option>
@@ -554,7 +553,7 @@ function CurrencyInput({
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder={placeholder ? `$ ${placeholder}` : ""}
-      className="w-full px-2 py-1 text-sm font-mono text-right rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground/40"
+      className="w-full px-2 py-1 text-base md:text-sm font-mono text-right rounded border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground/40"
     />
   )
 }

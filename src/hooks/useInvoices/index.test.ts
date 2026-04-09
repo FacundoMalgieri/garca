@@ -408,6 +408,7 @@ describe("useInvoices", () => {
     });
 
     it("should save invoices to localStorage on success", async () => {
+      vi.useFakeTimers();
       const mockInvoices = [
         {
           fecha: "15/11/2025",
@@ -448,8 +449,14 @@ describe("useInvoices", () => {
         });
       });
 
+      // Save is debounced (300ms), advance timers to trigger it
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+
       expect(localStorage.getItem("garca_invoices")).not.toBeNull();
       expect(localStorage.getItem("garca_company")).not.toBeNull();
+      vi.useRealTimers();
     });
 
     it("should handle error response from SSE", async () => {

@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { MonotributoStatus, TipoActividad } from "@/types/monotributo";
 
 const STORAGE_KEY = "monotributo-tipo-actividad";
+
+const SORTED_CATEGORIAS = [...MONOTRIBUTO_DATA.categorias].sort(
+  (a, b) => a.ingresosBrutos - b.ingresosBrutos
+);
 
 /**
  * Return type for useMonotributo hook.
@@ -28,36 +32,28 @@ export interface UseMonotributoReturn {
 export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
   const [tipoActividad, setTipoActividad] = useState<TipoActividad>("servicios");
 
-  // Load activity type on mount
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "servicios" || saved === "venta") {
       setTipoActividad(saved);
     }
   }, []);
 
-  /**
-   * Updates the activity type and persists to localStorage.
-   */
-  const updateTipoActividad = (tipo: TipoActividad) => {
+  const updateTipoActividad = useCallback((tipo: TipoActividad) => {
     setTipoActividad(tipo);
     localStorage.setItem(STORAGE_KEY, tipo);
-  };
+  }, []);
 
-  /**
-   * Calculates the current Monotributo status based on annual income.
-   */
-  const calcularStatus = (): MonotributoStatus | null => {
-    if (!MONOTRIBUTO_DATA.categorias.length) return null;
+  const status = useMemo((): MonotributoStatus | null => {
+    if (!SORTED_CATEGORIAS.length) return null;
 
-    const categorias = [...MONOTRIBUTO_DATA.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
-
-    // Find current category
     const categoriaActual =
-      categorias.find((cat) => ingresosAnuales <= cat.ingresosBrutos) || categorias[categorias.length - 1];
+      SORTED_CATEGORIAS.find((cat) => ingresosAnuales <= cat.ingresosBrutos) ||
+      SORTED_CATEGORIAS[SORTED_CATEGORIAS.length - 1];
 
-    const index = categorias.indexOf(categoriaActual);
-    const categoriaSiguiente = index < categorias.length - 1 ? categorias[index + 1] : null;
+    const index = SORTED_CATEGORIAS.indexOf(categoriaActual);
+    const categoriaSiguiente = index < SORTED_CATEGORIAS.length - 1 ? SORTED_CATEGORIAS[index + 1] : null;
 
     const porcentajeUtilizado = (ingresosAnuales / categoriaActual.ingresosBrutos) * 100;
     const margenDisponible = categoriaActual.ingresosBrutos - ingresosAnuales;
@@ -72,12 +68,12 @@ export function useMonotributo(ingresosAnuales: number): UseMonotributoReturn {
       tipoActividad,
       pagoMensual,
     };
-  };
+  }, [ingresosAnuales, tipoActividad]);
 
   return {
     data: MONOTRIBUTO_DATA,
     tipoActividad,
     updateTipoActividad,
-    status: calcularStatus(),
+    status,
   };
 }

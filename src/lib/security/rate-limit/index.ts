@@ -53,23 +53,21 @@ if (typeof setInterval !== "undefined") {
  * @returns The client IP or a fallback value
  */
 function getIP(request: Request): string {
-  // Try various headers in order of preference
+  // Prefer Cloudflare's header (cannot be spoofed by client)
+  const cfConnectingIP = request.headers.get("cf-connecting-ip");
+  if (cfConnectingIP) return cfConnectingIP;
+
+  // Then trust proxy's real IP header
+  const realIP = request.headers.get("x-real-ip");
+  if (realIP) return realIP;
+
+  // Last resort: forwarded-for (take last entry, not first, as the proxy appends)
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+    const parts = forwardedFor.split(",").map((s) => s.trim());
+    return parts[parts.length - 1];
   }
 
-  const realIP = request.headers.get("x-real-ip");
-  if (realIP) {
-    return realIP;
-  }
-
-  const cfConnectingIP = request.headers.get("cf-connecting-ip");
-  if (cfConnectingIP) {
-    return cfConnectingIP;
-  }
-
-  // Fallback - in development this might be the only option
   return "unknown";
 }
 

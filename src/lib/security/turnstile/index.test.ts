@@ -133,12 +133,12 @@ describe("validateTurnstile", () => {
   });
 
   describe("getClientIP", () => {
-    it("should return IP from x-forwarded-for header", () => {
+    it("should return IP from x-forwarded-for header (last entry)", () => {
       const headers = new Headers();
       headers.set("x-forwarded-for", "192.168.1.1, 10.0.0.1");
       const request = new Request("http://localhost/api/test", { headers });
 
-      expect(getClientIP(request)).toBe("192.168.1.1");
+      expect(getClientIP(request)).toBe("10.0.0.1");
     });
 
     it("should return IP from x-real-ip header", () => {
@@ -162,14 +162,14 @@ describe("validateTurnstile", () => {
       expect(getClientIP(request)).toBeUndefined();
     });
 
-    it("should prioritize x-forwarded-for over other headers", () => {
+    it("should prioritize cf-connecting-ip over other headers", () => {
       const headers = new Headers();
       headers.set("x-forwarded-for", "192.168.1.1");
       headers.set("x-real-ip", "10.0.0.1");
       headers.set("cf-connecting-ip", "172.16.0.1");
       const request = new Request("http://localhost/api/test", { headers });
 
-      expect(getClientIP(request)).toBe("192.168.1.1");
+      expect(getClientIP(request)).toBe("172.16.0.1");
     });
   });
 });

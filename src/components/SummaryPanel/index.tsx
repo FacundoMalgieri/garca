@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 
@@ -18,16 +20,16 @@ interface PeriodTotals {
 }
 
 export function SummaryPanel() {
-  const { state } = useInvoiceContext();
+  const { state, manualExchangeRates } = useInvoiceContext();
 
-  const { byMonth, byYear } = calculateTotals(state.invoices);
-
-  const sortedMonths = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0]));
-  const sortedYears = Object.entries(byYear).sort((a, b) => b[0].localeCompare(a[0]));
-
-  // For desktop table, we need to know all currencies used
-  const allCurrencies = getAllCurrencies(byMonth, byYear);
-  const foreignCurrencies = allCurrencies.filter((c) => c !== "ARS");
+  const { sortedMonths, sortedYears, foreignCurrencies, monthsWithMissingRates } = useMemo(() => {
+    const { byMonth, byYear, missingRateMonths } = calculateTotals(state.invoices, manualExchangeRates);
+    const sortedMonths = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0]));
+    const sortedYears = Object.entries(byYear).sort((a, b) => b[0].localeCompare(a[0]));
+    const allCurrencies = getAllCurrencies(byMonth, byYear);
+    const foreignCurrencies = allCurrencies.filter((c) => c !== "ARS");
+    return { byMonth, byYear, sortedMonths, sortedYears, foreignCurrencies, monthsWithMissingRates: missingRateMonths };
+  }, [state.invoices, manualExchangeRates]);
 
   return (
     <Card className="md:rounded-lg md:border">
@@ -49,13 +51,14 @@ export function SummaryPanel() {
                 sortedMonths={sortedMonths}
                 sortedYears={sortedYears}
                 foreignCurrencies={foreignCurrencies}
+                monthsWithMissingRates={monthsWithMissingRates}
               />
             </div>
 
             {/* Mobile: Card View */}
             <div className="md:hidden space-y-3">
               {sortedMonths.map(([monthKey, totals]) => (
-                <MobileMonthCard key={monthKey} monthKey={monthKey} totals={totals} />
+                <MobileMonthCard key={monthKey} monthKey={monthKey} totals={totals} hasMissingRate={monthsWithMissingRates.has(monthKey)} />
               ))}
 
               {sortedYears.map(([year, totals]) => (
@@ -74,10 +77,12 @@ export function SummaryPanel() {
 // ============================================================================
 
 function calculateTotals(
-  invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[]
-): { byMonth: Record<string, PeriodTotals>; byYear: Record<string, PeriodTotals> } {
+  invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[],
+  manualRates: Record<string, number> = {},
+): { byMonth: Record<string, PeriodTotals>; byYear: Record<string, PeriodTotals>; missingRateMonths: Set<string> } {
   const byMonth: Record<string, PeriodTotals> = {};
   const byYear: Record<string, PeriodTotals> = {};
+  const missingRateMonths = new Set<string>();
 
   invoices.forEach((invoice) => {
     const [, month, year] = invoice.fecha.split("/");
@@ -85,13 +90,13 @@ function calculateTotals(
     const yearKey = year;
     const currency = invoice.moneda;
 
-    // Check if it's a credit note (should be subtracted)
     const isNotaCredito =
       invoice.tipo.toLowerCase().includes("nota de credito") || invoice.tipo.toLowerCase().includes("nota de crédito");
     const multiplier = isNotaCredito ? -1 : 1;
 
     const isForeign = currency !== "ARS";
-    const exchangeRate = invoice.xmlData?.exchangeRate || 0;
+    const exchangeRate = invoice.xmlData?.exchangeRate || (isForeign ? manualRates[currency] : 0) || 0;
+    if (isForeign && !exchangeRate) missingRateMonths.add(monthKey);
     const amountInPesos = isForeign && exchangeRate ? invoice.importeTotal * exchangeRate * multiplier : invoice.importeTotal * multiplier;
 
     // Initialize month if needed
@@ -143,7 +148,7 @@ function calculateTotals(
   calculateAvgRates(byMonth);
   calculateAvgRates(byYear);
 
-  return { byMonth, byYear };
+  return { byMonth, byYear, missingRateMonths };
 }
 
 function getAllCurrencies(
@@ -188,9 +193,10 @@ interface DesktopTableProps {
   sortedMonths: [string, PeriodTotals][];
   sortedYears: [string, PeriodTotals][];
   foreignCurrencies: string[];
+  monthsWithMissingRates: Set<string>;
 }
 
-function DesktopTable({ sortedMonths, sortedYears, foreignCurrencies }: DesktopTableProps) {
+function DesktopTable({ sortedMonths, sortedYears, foreignCurrencies, monthsWithMissingRates }: DesktopTableProps) {
   // Build columns dynamically based on currencies present
   const hasForeign = foreignCurrencies.length > 0;
 
@@ -219,6 +225,7 @@ function DesktopTable({ sortedMonths, sortedYears, foreignCurrencies }: DesktopT
             foreignCurrencies={foreignCurrencies}
             isYear={false}
             index={index}
+            hasMissingRate={monthsWithMissingRates.has(monthKey)}
           />
         ))}
         {sortedYears.map(([year, totals], index) => (
@@ -242,9 +249,10 @@ interface DesktopTableRowProps {
   foreignCurrencies: string[];
   isYear: boolean;
   index: number;
+  hasMissingRate?: boolean;
 }
 
-function DesktopTableRow({ period, totals, foreignCurrencies, isYear, index }: DesktopTableRowProps) {
+function DesktopTableRow({ period, totals, foreignCurrencies, isYear, index, hasMissingRate }: DesktopTableRowProps) {
   const hasForeign = foreignCurrencies.length > 0;
 
   // Calculate total foreign in pesos and weighted avg exchange rate
@@ -271,7 +279,12 @@ function DesktopTableRow({ period, totals, foreignCurrencies, isYear, index }: D
         isYear ? "bg-primary text-primary-foreground" : index % 2 === 0 ? "bg-muted/80" : ""
       } ${!isYear ? "hover:bg-primary/15" : ""}`}
     >
-      <td className={`py-3 px-4 ${isYear ? "font-bold" : ""}`}>{period}</td>
+      <td className={`py-3 px-4 ${isYear ? "font-bold" : ""}`}>
+        <span className="inline-flex items-center gap-1.5">
+          {period}
+          {hasMissingRate && <FxWarningIcon />}
+        </span>
+      </td>
       {foreignCurrencies.map((currency) => {
         const data = totals.byCurrency[currency];
         return (
@@ -304,12 +317,15 @@ function DesktopTableRow({ period, totals, foreignCurrencies, isYear, index }: D
 // Mobile Card Components
 // ============================================================================
 
-function MobileMonthCard({ monthKey, totals }: { monthKey: string; totals: PeriodTotals }) {
+function MobileMonthCard({ monthKey, totals, hasMissingRate }: { monthKey: string; totals: PeriodTotals; hasMissingRate?: boolean }) {
   const foreignCurrencies = Object.keys(totals.byCurrency).filter((c) => c !== "ARS");
 
   return (
     <div className="rounded-lg border border-border bg-muted/50 p-4 flex flex-col">
-      <div className="text-base font-semibold mb-3">{formatMonth(monthKey)}</div>
+      <div className="text-base font-semibold mb-3 inline-flex items-center gap-1.5">
+        {formatMonth(monthKey)}
+        {hasMissingRate && <FxWarningIcon />}
+      </div>
       <div className="space-y-2 text-sm">
         {/* Foreign currencies */}
         {foreignCurrencies.map((currency) => {
@@ -421,6 +437,18 @@ function MobileYearCard({ year, totals }: { year: string; totals: PeriodTotals }
 // ============================================================================
 // Icons
 // ============================================================================
+
+function FxWarningIcon() {
+  return (
+    <span title="Factura(s) en moneda extranjera sin tipo de cambio">
+      <svg className="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </span>
+  );
+}
 
 function ChartIcon() {
   return (
