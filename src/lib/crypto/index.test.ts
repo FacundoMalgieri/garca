@@ -32,15 +32,13 @@ describe("Crypto Utils", () => {
       expect(decrypted).toBe(original);
     });
 
-    it("should produce different ciphertext for same input", () => {
+    it("should produce different ciphertext for same input (random salt/IV)", () => {
       const text = "same-text";
       const encrypted1 = encrypt(text);
       const encrypted2 = encrypt(text);
 
-      // AES with random IV produces different ciphertext
       expect(encrypted1).not.toBe(encrypted2);
 
-      // But both should decrypt to the same value
       expect(decrypt(encrypted1)).toBe(text);
       expect(decrypt(encrypted2)).toBe(text);
     });
