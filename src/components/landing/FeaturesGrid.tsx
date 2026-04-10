@@ -225,7 +225,7 @@ function FeatureCard({ icon, title, description, gradient, shadow, scrollY, inde
 
         {/* Title - slides in from left */}
         <h3
-          className="font-bold text-lg mb-2 text-slate-800 dark:text-white"
+          className="font-bold text-lg mb-2 text-slate-900 dark:text-white"
           style={{
             opacity: Math.min(1, Math.max(0, (appearProgress - 0.2) * 1.5)),
             transform: `translateX(${(1 - Math.min(1, Math.max(0, (appearProgress - 0.2) * 1.5))) * -20}px)`,
