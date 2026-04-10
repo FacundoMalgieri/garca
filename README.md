@@ -1,13 +1,19 @@
-# GARCA
+<p align="center">
+  <img src="public/logo-full.svg" alt="GARCA" width="280" />
+</p>
 
-[![CI & Deploy](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml/badge.svg)](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml)
-[![codecov](https://codecov.io/gh/FacundoMalgieri/garca/branch/main/graph/badge.svg)](https://codecov.io/gh/FacundoMalgieri/garca)
+<p align="center">
+  <a href="https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml"><img src="https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml/badge.svg" alt="CI & Deploy" /></a>
+  <a href="https://codecov.io/gh/FacundoMalgieri/garca"><img src="https://codecov.io/gh/FacundoMalgieri/garca/branch/main/graph/badge.svg" alt="codecov" /></a>
+</p>
 
-[![Sponsor](https://img.shields.io/badge/Sponsor-EA4AAA?logo=github-sponsors&logoColor=white&style=flat-square)](https://github.com/sponsors/FacundoMalgieri)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black&style=flat-square)](https://buymeacoffee.com/facundo.malgieri)
-[![PayPal](https://img.shields.io/badge/PayPal-00457C?logo=paypal&logoColor=white&style=flat-square)](https://paypal.me/facundomalgieri)
+<p align="center">
+  <a href="https://github.com/sponsors/FacundoMalgieri"><img src="https://img.shields.io/badge/Sponsor-EA4AAA?logo=github-sponsors&logoColor=white&style=flat-square" alt="Sponsor" /></a>
+  <a href="https://buymeacoffee.com/facundo.malgieri"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black&style=flat-square" alt="Buy Me a Coffee" /></a>
+  <a href="https://paypal.me/facundomalgieri"><img src="https://img.shields.io/badge/PayPal-00457C?logo=paypal&logoColor=white&style=flat-square" alt="PayPal" /></a>
+</p>
 
-**Gestor Automático de Recuperación de Comprobantes de ARCA**
+<p align="center"><strong>Gestor Automático de Recuperación de Comprobantes de ARCA</strong></p>
 
 Una herramienta gratuita, segura y open source para recuperar, visualizar y analizar tus comprobantes desde el portal de ARCA. Funciona completamente en tu navegador - **tus datos nunca salen de tu dispositivo**.
 

@@ -13,6 +13,9 @@
 
 import CryptoJS from "crypto-js";
 
+const KEY_SIZE = 256 / 32;
+const ITERATIONS = 10000;
+
 /**
  * Encryption key for credentials obfuscation.
  * MUST be set via NEXT_PUBLIC_ENCRYPTION_KEY environment variable.
@@ -28,24 +31,41 @@ function getEncryptionKey(): string {
   return key;
 }
 
-/**
- * Encrypts a string using AES-256 encryption.
- * @param text - The text to encrypt
- * @returns The encrypted text as a base64 string
- * @throws Error if NEXT_PUBLIC_ENCRYPTION_KEY is not configured
- */
-export function encrypt(text: string): string {
-  return CryptoJS.AES.encrypt(text, getEncryptionKey()).toString();
+function deriveKey(passphrase: string, salt: CryptoJS.lib.WordArray) {
+  return CryptoJS.PBKDF2(passphrase, salt, {
+    keySize: KEY_SIZE,
+    iterations: ITERATIONS,
+  });
 }
 
 /**
- * Decrypts an AES-256 encrypted string.
- * @param encryptedText - The encrypted text (base64 string)
- * @returns The decrypted plain text
- * @throws Error if NEXT_PUBLIC_ENCRYPTION_KEY is not configured
+ * Encrypts a string using AES-256-CBC with PBKDF2-derived key and random salt/IV.
+ * Output format: base64(salt(16) + iv(16) + ciphertext)
+ */
+export function encrypt(text: string): string {
+  const salt = CryptoJS.lib.WordArray.random(16);
+  const iv = CryptoJS.lib.WordArray.random(16);
+  const key = deriveKey(getEncryptionKey(), salt);
+  const encrypted = CryptoJS.AES.encrypt(text, key, { iv });
+  const combined = salt.concat(iv).concat(encrypted.ciphertext);
+  return CryptoJS.enc.Base64.stringify(combined);
+}
+
+/**
+ * Decrypts a string produced by encrypt().
+ * Extracts salt and IV from the payload, derives the key, and decrypts.
  */
 export function decrypt(encryptedText: string): string {
-  const bytes = CryptoJS.AES.decrypt(encryptedText, getEncryptionKey());
+  const data = CryptoJS.enc.Base64.parse(encryptedText);
+  const words = data.words;
+
+  const salt = CryptoJS.lib.WordArray.create(words.slice(0, 4), 16);
+  const iv = CryptoJS.lib.WordArray.create(words.slice(4, 8), 16);
+  const ciphertext = CryptoJS.lib.WordArray.create(words.slice(8), data.sigBytes - 32);
+
+  const key = deriveKey(getEncryptionKey(), salt);
+  const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext });
+  const bytes = CryptoJS.AES.decrypt(cipherParams, key, { iv });
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 
