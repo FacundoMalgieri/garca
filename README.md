@@ -3,6 +3,7 @@
 [![CI & Deploy](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml/badge.svg)](https://github.com/FacundoMalgieri/garca/actions/workflows/deploy.yml)
 [![codecov](https://codecov.io/gh/FacundoMalgieri/garca/branch/main/graph/badge.svg)](https://codecov.io/gh/FacundoMalgieri/garca)
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-EA4AAA?logo=github-sponsors&logoColor=white&style=flat-square)](https://github.com/sponsors/FacundoMalgieri)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black&style=flat-square)](https://buymeacoffee.com/facundo.malgieri)
 [![PayPal](https://img.shields.io/badge/PayPal-00457C?logo=paypal&logoColor=white&style=flat-square)](https://paypal.me/facundomalgieri)
 
@@ -10,7 +11,7 @@
 
 Una herramienta gratuita, segura y open source para recuperar, visualizar y analizar tus comprobantes desde el portal de ARCA. Funciona completamente en tu navegador - **tus datos nunca salen de tu dispositivo**.
 
-> **⭐ Si GARCA te ahorra tiempo, por favor dejá una estrella en el repo y considerá [invitarme un café](https://buymeacoffee.com/facundo.malgieri)!**
+> **⭐ Si GARCA te ahorra tiempo, por favor dejá una estrella en el repo y considerá [ser sponsor](https://github.com/sponsors/FacundoMalgieri)!**
 
 ---
 
@@ -164,6 +165,7 @@ docker run -p 3000:3000 garca
 
 Si GARCA te resulta útil, considerá apoyar el desarrollo:
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-EA4AAA?logo=github-sponsors&logoColor=white&style=for-the-badge)](https://github.com/sponsors/FacundoMalgieri)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black&style=for-the-badge)](https://buymeacoffee.com/facundo.malgieri)
 [![PayPal](https://img.shields.io/badge/PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/facundomalgieri)
 
