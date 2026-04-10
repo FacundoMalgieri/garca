@@ -448,7 +448,7 @@ export default function Home() {
       </section>
 
       {/* ========== FEATURES SECTION ========== */}
-      <section ref={featuresSectionRef} className="relative py-32 md:py-40 overflow-hidden">
+      <section ref={featuresSectionRef} className="relative py-32 md:py-40 overflow-hidden bg-background">
         {/* Entire section content with parallax entry/exit */}
         <div 
           className="relative max-w-6xl mx-auto px-6"
