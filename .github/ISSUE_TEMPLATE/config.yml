@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Preguntas generales
+    url: https://github.com/FacundoMalgieri/garca/discussions
+    about: Para preguntas que no son bugs ni feature requests, usá Discussions.

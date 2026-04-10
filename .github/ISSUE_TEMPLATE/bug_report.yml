@@ -1,0 +1,85 @@
+name: "Bug Report"
+description: "Reportá un error o comportamiento inesperado"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por tomarte el tiempo de reportar este bug. Completá los campos para que podamos resolverlo lo antes posible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del bug
+      description: Descripción clara y concisa de qué está pasando.
+      placeholder: "Cuando hago X, pasa Y en lugar de Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      description: Detallá los pasos exactos para reproducir el problema.
+      placeholder: |
+        1. Ir a '...'
+        2. Hacer click en '...'
+        3. Scrollear hasta '...'
+        4. Ver el error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+      description: ¿Qué debería pasar en su lugar?
+      placeholder: "Debería mostrar el reporte correctamente."
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Videos
+      description: Si aplica, adjuntá capturas de pantalla o videos que muestren el problema.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Dispositivo
+      options:
+        - Desktop
+        - Celular / Tablet
+        - Ambos
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Navegador y versión
+      description: "Ej: Chrome 124, Safari 17.4, Firefox 125"
+      placeholder: "Chrome 124"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Sistema operativo
+      description: "Ej: Windows 11, macOS 15, iOS 18, Android 15"
+      placeholder: "macOS 15"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto adicional
+      description: Cualquier otra información relevante (logs de consola, datos de prueba usados, etc.)
+    validations:
+      required: false

@@ -1,0 +1,43 @@
+name: "Feature Request"
+description: "Proponé una nueva funcionalidad o mejora"
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¿Tenés una idea para mejorar GARCA? Nos encanta recibir feedback.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o necesidad
+      description: ¿Qué problema resolvería esta funcionalidad? ¿Qué te frustra del flujo actual?
+      placeholder: "Me molesta que no pueda..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solución propuesta
+      description: Describí cómo te gustaría que funcione.
+      placeholder: "Me gustaría que al hacer X, pase Y..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      description: ¿Hay alguna otra forma de resolver esto que hayas pensado?
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto adicional
+      description: Screenshots, mockups, links de referencia, etc.
+    validations:
+      required: false
