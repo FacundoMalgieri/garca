@@ -497,7 +497,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Todo lo que necesitás
             </h2>
-            <p className="text-base text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
+            <p className="text-base text-slate-700 dark:text-slate-400 max-w-lg mx-auto">
               Herramientas poderosas para gestionar tu facturación de forma eficiente
             </p>
           </div>
