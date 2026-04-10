@@ -497,7 +497,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Todo lo que necesitás
             </h2>
-            <p className="text-base text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+            <p className="text-base text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
               Herramientas poderosas para gestionar tu facturación de forma eficiente
             </p>
           </div>
@@ -572,7 +572,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-600 dark:text-slate-400">
                 {["Tabla de categorías actualizada", "Cuota mensual por actividad", "Proyección inteligente"].map(text => (
                   <span key={text} className="flex items-center gap-1.5">
                     <svg className="h-3.5 w-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -645,7 +645,7 @@ export default function Home() {
             ))}
           </div>
           
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             y más...
           </p>
         </div>
@@ -740,7 +740,7 @@ export default function Home() {
           </h2>
 
           {/* Description */}
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
             GARCA es gratis y open source. Si te ahorra tiempo, considerá apoyar el desarrollo.
           </p>
 
@@ -802,7 +802,7 @@ export default function Home() {
           </div>
 
           {/* GitHub note */}
-          <p className="mt-6 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-6 text-xs text-slate-600 dark:text-slate-400">
             También podés dejar una ⭐ en{" "}
             <a
               href="https://github.com/FacundoMalgieri/garca"
