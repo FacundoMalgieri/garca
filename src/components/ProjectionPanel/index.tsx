@@ -142,7 +142,18 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     tipoActividad,
   })
 
-  const handleExportPDF = () => exportProjectionToPDF(getExportData())
+  const handleExportPDF = async () => {
+    try {
+      const result = await exportProjectionToPDF(getExportData())
+      if (result.canShare) {
+        try {
+          await navigator.share({ files: [result.file] })
+        } catch { /* user dismissed share sheet */ }
+      }
+    } catch (error) {
+      console.error("Error generando PDF de proyección:", error)
+    }
+  }
   const handleExportCSV = () => exportProjectionToCSV(getExportData())
   const handleExportJSON = () => exportProjectionToJSON(getExportData())
 

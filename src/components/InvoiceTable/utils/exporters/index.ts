@@ -1,7 +1,7 @@
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
-import { savePdf } from "@/lib/pdf-save";
+import { type PdfSaveResult, savePdf } from "@/lib/pdf-save";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 import type { TipoActividad } from "@/types/monotributo";
 
@@ -279,7 +279,7 @@ export async function exportToPDF(
   invoices: AFIPInvoice[], 
   company: CompanyInfo | null = null,
   monotributoInfo?: MonotributoAFIPInfo | null
-): Promise<void> {
+): Promise<PdfSaveResult> {
   const [{ default: jsPDF }, { default: html2canvas }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
     import("html2canvas"),
@@ -723,6 +723,6 @@ export async function exportToPDF(
   // Logo + branded footer on all pages
   await applyBrandedFooter(doc);
 
-  await savePdf(doc, generateFilename(company, "pdf"));
+  return savePdf(doc, generateFilename(company, "pdf"));
 }
 

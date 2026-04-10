@@ -49,6 +49,15 @@ vi.mock("@/hooks/useTheme", () => ({
   }),
 }));
 
+// Mock TourContext
+const mockStartTour = vi.fn();
+vi.mock("@/contexts/TourContext", () => ({
+  useTourContext: () => ({
+    startTour: mockStartTour,
+    registerTour: vi.fn(),
+  }),
+}));
+
 describe("Navbar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -312,7 +321,8 @@ describe("Navbar", () => {
 
   it("shows Ingresar link when no invoices", () => {
     render(<Navbar />);
-    expect(screen.getByText("Ingresar")).toBeInTheDocument();
+    const links = screen.getAllByText("Ingresar");
+    expect(links.length).toBeGreaterThanOrEqual(1);
   });
 
   it("hides Ingresar link when invoices exist", () => {

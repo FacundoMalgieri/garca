@@ -1,30 +1,39 @@
 import type jsPDF from "jspdf";
 
-/**
- * Saves a jsPDF document as a file. Uses the Web Share API on mobile
- * devices that support file sharing (e.g. iOS Safari) so the user gets
- * the native share sheet with a real PDF file instead of a blob URL.
- * Falls back to a standard download on desktop or unsupported browsers.
- */
-export async function savePdf(doc: jsPDF, filename: string): Promise<void> {
-  const blob = doc.output("blob");
-  const file = new File([blob], filename, { type: "application/pdf" });
-
-  if (canNativeShare(file)) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch (err: unknown) {
-      // AbortError means the user dismissed the share sheet — not an error
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      // Any other error → fall through to download
-    }
-  }
-
-  doc.save(filename);
+export interface PdfSaveResult {
+  /** The generated File, available for sharing via sharePdfFile() */
+  file: File;
+  /** Whether the device supports native file sharing */
+  canShare: boolean;
 }
 
-function canNativeShare(file: File): boolean {
+/**
+ * Saves a jsPDF document as a download and returns the File for optional sharing.
+ * On devices that support the Web Share API with files (iOS Safari),
+ * the caller can use sharePdfFile() from a direct user gesture to
+ * open the native share sheet.
+ */
+export function savePdf(doc: jsPDF, filename: string): PdfSaveResult {
+  const blob = doc.output("blob");
+  const file = new File([blob], filename, { type: "application/pdf" });
+  const canShare = canNativeShareFile(file);
+
+  if (!canShare) {
+    doc.save(filename);
+  }
+
+  return { file, canShare };
+}
+
+/**
+ * Opens the native share sheet with a PDF file.
+ * MUST be called from a direct user gesture (click/tap).
+ */
+export async function sharePdfFile(file: File): Promise<void> {
+  await navigator.share({ files: [file] });
+}
+
+function canNativeShareFile(file: File): boolean {
   return (
     typeof navigator !== "undefined" &&
     typeof navigator.share === "function" &&

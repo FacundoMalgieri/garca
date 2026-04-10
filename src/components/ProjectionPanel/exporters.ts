@@ -1,6 +1,6 @@
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
-import { savePdf } from "@/lib/pdf-save";
+import { type PdfSaveResult, savePdf } from "@/lib/pdf-save";
 import type { MonthlyTotal,ProjectionData, ProjectionResult } from "@/types/projection";
 
 interface ExportData {
@@ -167,7 +167,7 @@ export function exportProjectionToJSON(data: ExportData): void {
 /**
  * Exports projection to PDF format.
  */
-export async function exportProjectionToPDF(data: ExportData): Promise<void> {
+export async function exportProjectionToPDF(data: ExportData): Promise<PdfSaveResult> {
   const { companyInfo, projectionData, projectionResult, monthlyTotals, futureMonths, tipoActividad } = data;
 
   const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
@@ -355,7 +355,7 @@ export async function exportProjectionToPDF(data: ExportData): Promise<void> {
   // Logo + branded footer on all pages
   await applyBrandedFooter(doc);
 
-  await savePdf(doc, generateFilename(companyInfo, "proyeccion", "pdf"));
+  return savePdf(doc, generateFilename(companyInfo, "proyeccion", "pdf"));
 }
 
 

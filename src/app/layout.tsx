@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { TourProvider } from "@/contexts/TourContext";
 
 import "./globals.css";
 
@@ -118,13 +119,15 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider>
           <InvoiceProvider>
-            <InitialLoader>
-              <div className="relative flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            </InitialLoader>
+            <TourProvider>
+              <InitialLoader>
+                <div className="relative flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </InitialLoader>
+            </TourProvider>
           </InvoiceProvider>
         </ThemeProvider>
       </body>
