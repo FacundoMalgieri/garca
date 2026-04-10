@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ChartsPanel } from "@/components/ChartsPanel";
 import { CompanyHeader } from "@/components/CompanyHeader";
@@ -11,7 +11,10 @@ import { ProjectionPanel } from "@/components/ProjectionPanel";
 import { SummaryPanel } from "@/components/SummaryPanel";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { useTourContext } from "@/contexts/TourContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
+import { useTour } from "@/hooks/useTour";
+import { getPanelTourSteps, PANEL_TOUR_KEY } from "@/lib/tours/panel-tour";
 
 function parseInvoiceDate(fecha: string): Date {
   const [day, month, year] = fecha.split("/");
@@ -32,6 +35,13 @@ interface FxCurrencyInfo {
 export default function PanelPage() {
   const router = useRouter();
   const { state, manualExchangeRates, setManualExchangeRate, clearInvoices } = useInvoiceContext();
+  const { registerTour } = useTourContext();
+  const getSteps = useCallback(() => getPanelTourSteps(), []);
+  const { startTour } = useTour({ tourKey: PANEL_TOUR_KEY, steps: getSteps });
+
+  useEffect(() => {
+    registerTour(startTour);
+  }, [registerTour, startTour]);
 
   const { ingresosAnuales, hasCurrentYearData, fxCurrenciesNeedingRate } = useMemo(() => {
     if (state.invoices.length === 0)
@@ -118,7 +128,7 @@ export default function PanelPage() {
       )}
 
       {/* Company Header */}
-      <section className="md:px-0">
+      <section id="company-header" className="md:px-0">
         <CompanyHeader />
       </section>
 
@@ -154,7 +164,7 @@ export default function PanelPage() {
       </section>
 
       {/* Support */}
-      <section className="px-4 md:px-0">
+      <section id="support" className="px-4 md:px-0">
         <SupportBanner />
       </section>
 
@@ -204,7 +214,7 @@ function FxRateBanner({
 
   if (allResolved && !editing) {
     return (
-      <div className="mx-4 md:mx-0 rounded-lg border px-4 py-3 bg-emerald-500/10 border-emerald-500/30 flex flex-wrap items-center justify-between gap-2">
+      <div id="fx-rate-banner" className="mx-4 md:mx-0 rounded-lg border px-4 py-3 bg-emerald-500/10 border-emerald-500/30 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-emerald-700 dark:text-emerald-400">
           <span className="font-medium">✓ TC manual aplicado</span>
           {entries.map(([c]) => (
@@ -223,7 +233,7 @@ function FxRateBanner({
   }
 
   return (
-    <div className="mx-4 md:mx-0 rounded-lg border bg-amber-500/10 border-amber-500/30 overflow-hidden">
+    <div id="fx-rate-banner" className="mx-4 md:mx-0 rounded-lg border bg-amber-500/10 border-amber-500/30 overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 flex items-start gap-2 text-amber-700 dark:text-amber-400">
         <span className="mt-0.5"><FxAlertIcon /></span>

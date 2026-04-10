@@ -2,21 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { useTourContext } from "@/contexts/TourContext";
 import { useTheme } from "@/hooks/useTheme";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { state, clearInvoices } = useInvoiceContext();
+  const { startTour } = useTourContext();
   const { theme, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
 
   const invoices = state.invoices;
   const isOnPanel = pathname === "/panel";
+  const hasTour = isOnPanel || pathname === "/calculadora-monotributo";
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
   const handleClearData = () => {
     clearInvoices();
@@ -80,9 +88,8 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            {/* Home */}
+          {/* Desktop Actions — hidden on mobile */}
+          <div className="hidden md:flex items-center gap-2">
             <Link
               href="/"
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
@@ -91,7 +98,6 @@ export function Navbar() {
               <HomeIcon />
             </Link>
 
-            {/* Report — visible when report data exists and not on /panel */}
             {!isOnPanel && invoices.length > 0 && (
               <Link
                 href="/panel"
@@ -102,7 +108,6 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Calculator */}
             <Link
               href="/calculadora-monotributo"
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
@@ -111,7 +116,6 @@ export function Navbar() {
               <CalculatorIcon />
             </Link>
 
-            {/* Theme Toggle */}
             {mounted && (
               <button
                 onClick={toggleTheme}
@@ -122,7 +126,16 @@ export function Navbar() {
               </button>
             )}
 
-            {/* Ingresar CTA when no invoices */}
+            {hasTour && (
+              <button
+                onClick={startTour}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80 cursor-pointer"
+                title="Tutorial guiado"
+              >
+                <HelpIcon />
+              </button>
+            )}
+
             {invoices.length === 0 && (
               <Link
                 href="/ingresar"
@@ -132,57 +145,111 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Clear Data Button */}
             {isOnPanel && invoices.length > 0 && (
               <button
                 onClick={() => setShowClearConfirm(true)}
-                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-destructive border border-destructive transition-colors hover:bg-destructive/10 sm:inline-flex items-center gap-2 cursor-pointer"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-destructive border border-destructive transition-colors hover:bg-destructive/10 inline-flex items-center gap-2 cursor-pointer"
                 title="Limpiar todos los datos almacenados"
               >
                 <TrashIcon />
                 Limpiar Datos
               </button>
             )}
+          </div>
 
-            {/* Hamburger Menu (Mobile) — only on /panel */}
-            {isOnPanel && invoices.length > 0 && (
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden cursor-pointer"
-                aria-label="Abrir menú"
+          {/* Mobile: Ingresar CTA + Hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            {invoices.length === 0 && (
+              <Link
+                href="/ingresar"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                {isOpen ? <CloseIcon /> : <MenuIcon />}
-              </button>
+                Ingresar
+              </Link>
             )}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+              aria-label="Abrir menú"
+            >
+              {isOpen ? <CloseIcon /> : <MenuIcon />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile Menu — only on /panel */}
-        {isOpen && isOnPanel && invoices.length > 0 && (
-          <div className="border-t border-border bg-background py-4 lg:hidden">
-            <div className="flex flex-col gap-3">
-              <MobileNavButton onClick={() => scrollToSection("monotributo")} icon={<ClipboardIcon />}>
-                Monotributo
-              </MobileNavButton>
-              <MobileNavButton onClick={() => scrollToSection("graficos")} icon={<ChartIcon />}>
-                Gráficos
-              </MobileNavButton>
-              <MobileNavButton onClick={() => scrollToSection("totales")} icon={<ChartIcon />}>
-                Totales
-              </MobileNavButton>
-              <MobileNavButton onClick={() => scrollToSection("proyectar")} icon={<ProjectIcon />}>
-                Proyectar
-              </MobileNavButton>
-              <MobileNavButton onClick={() => scrollToSection("facturas")} icon={<InvoiceIcon />}>
-                Facturas
-              </MobileNavButton>
-              <button
-                onClick={() => setShowClearConfirm(true)}
-                className="flex items-center gap-3 rounded-lg px-4 py-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 cursor-pointer"
-              >
-                <TrashIcon />
-                Limpiar Datos
-              </button>
+        {/* Mobile Menu — full screen overlay */}
+        {isOpen && (
+          <div className="fixed inset-0 top-16 z-50 bg-background overflow-y-auto md:hidden">
+            <div className="flex flex-col gap-1 px-2 py-4 border-t border-border">
+              {/* Navigation actions */}
+              <MobileNavLink href="/" icon={<HomeIcon />} onClick={() => setIsOpen(false)}>
+                Inicio
+              </MobileNavLink>
+
+              {!isOnPanel && invoices.length > 0 && (
+                <MobileNavLink href="/panel" icon={<ReportIcon />} onClick={() => setIsOpen(false)}>
+                  Ver reporte
+                </MobileNavLink>
+              )}
+
+              <MobileNavLink href="/calculadora-monotributo" icon={<CalculatorIcon />} onClick={() => setIsOpen(false)}>
+                Calculadora Monotributo
+              </MobileNavLink>
+
+              {mounted && (
+                <MobileNavButton
+                  onClick={() => { toggleTheme(); setIsOpen(false); }}
+                  icon={theme === "light" ? <MoonIcon /> : <SunIcon />}
+                >
+                  {theme === "light" ? "Modo oscuro" : "Modo claro"}
+                </MobileNavButton>
+              )}
+
+              {hasTour && (
+                <MobileNavButton
+                  onClick={() => { setIsOpen(false); startTour(); }}
+                  icon={<HelpIcon />}
+                >
+                  Tutorial guiado
+                </MobileNavButton>
+              )}
+
+              {/* Panel section shortcuts */}
+              {isOnPanel && invoices.length > 0 && (
+                <>
+                  <div className="my-2 mx-4 border-t border-border" />
+                  <p className="px-4 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ir a sección</p>
+                  <MobileNavButton onClick={() => scrollToSection("monotributo")} icon={<ClipboardIcon />}>
+                    Monotributo
+                  </MobileNavButton>
+                  <MobileNavButton onClick={() => scrollToSection("graficos")} icon={<ChartIcon />}>
+                    Gráficos
+                  </MobileNavButton>
+                  <MobileNavButton onClick={() => scrollToSection("totales")} icon={<ChartIcon />}>
+                    Totales
+                  </MobileNavButton>
+                  <MobileNavButton onClick={() => scrollToSection("proyectar")} icon={<ProjectIcon />}>
+                    Proyectar
+                  </MobileNavButton>
+                  <MobileNavButton onClick={() => scrollToSection("facturas")} icon={<InvoiceIcon />}>
+                    Facturas
+                  </MobileNavButton>
+                </>
+              )}
+
+              {/* Destructive actions */}
+              {isOnPanel && invoices.length > 0 && (
+                <>
+                  <div className="my-2 mx-4 border-t border-border" />
+                  <button
+                    onClick={() => setShowClearConfirm(true)}
+                    className="flex items-center gap-3 rounded-lg px-4 py-2 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 cursor-pointer"
+                  >
+                    <TrashIcon />
+                    Limpiar Datos
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -232,6 +299,19 @@ function MobileNavButton({ onClick, icon, children }: NavButtonProps) {
       {icon}
       {children}
     </button>
+  );
+}
+
+function MobileNavLink({ href, icon, children, onClick }: { href: string; icon: React.ReactNode; children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-primary dark:text-white transition-colors hover:bg-muted"
+    >
+      {icon}
+      {children}
+    </Link>
   );
 }
 
@@ -381,6 +461,16 @@ function CalculatorIcon() {
       <circle cx="8.5" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
       <circle cx="12" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
       <circle cx="15.5" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function HelpIcon() {
+  return (
+    <svg className="h-5 w-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="10" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+      <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }

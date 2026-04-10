@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { SupportBanner } from "@/components/ui/SupportBanner"
+import { useTourContext } from "@/contexts/TourContext"
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
+import { useTour } from "@/hooks/useTour"
 import {
   calculateProjection,
   formatMonthKey,
@@ -14,6 +16,7 @@ import {
   getRecategorizacionWindow,
   getRecommendedMonthlyAmount,
 } from "@/lib/projection"
+import { CALCULATOR_TOUR_KEY, getCalculatorTourSteps } from "@/lib/tours/calculator-tour"
 import { cn } from "@/lib/utils"
 import type { TipoActividad } from "@/types/monotributo"
 import type { MonthKey } from "@/types/projection"
@@ -100,6 +103,11 @@ export default function CalculadoraMonotributoPage() {
   const [targetCategoria, setTargetCategoria] = useState<string | null>(null)
   const [margenSeguridad, setMargenSeguridad] = useState(0)
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
+
+  const { registerTour } = useTourContext()
+  const getSteps = useCallback(() => getCalculatorTourSteps(), [])
+  const { startTour } = useTour({ tourKey: CALCULATOR_TOUR_KEY, steps: getSteps })
+  useEffect(() => { registerTour(startTour) }, [registerTour, startTour])
 
   const recategorizacionOptions = useMemo(() => getNextRecategorizacionDates(), [])
   const [targetRecat, setTargetRecat] = useState(recategorizacionOptions[0]?.month || formatMonthKey(new Date()))
@@ -195,7 +203,7 @@ export default function CalculadoraMonotributoPage() {
           <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-lg space-y-6">
 
             {/* Config Row — 1 col mobile, 2x2 desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div id="calc-config" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-2 block">Recategorización</label>
                 <select
@@ -268,7 +276,7 @@ export default function CalculadoraMonotributoPage() {
             </div>
 
             {/* Monthly Inputs */}
-            <div>
+            <div id="calc-months">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
                 <h3 className="text-sm font-medium">
                   Facturación mensual
@@ -327,7 +335,7 @@ export default function CalculadoraMonotributoPage() {
 
             {/* Results */}
             {hasAnyInput ? (
-              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div id="calc-results" className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
                 {/* Category + Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
@@ -476,7 +484,7 @@ export default function CalculadoraMonotributoPage() {
       </section>
 
       {/* Categories Table */}
-      <section className="px-4 py-12 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+      <section id="calc-categories" className="px-4 py-12 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-2">
             Tabla de Categorías Monotributo 2026
@@ -533,7 +541,7 @@ export default function CalculadoraMonotributoPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="px-4 py-12">
+      <section id="calc-faq" className="px-4 py-12">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-8">Preguntas frecuentes</h2>
           <div className="space-y-4">
