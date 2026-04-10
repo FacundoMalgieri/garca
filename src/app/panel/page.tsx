@@ -14,6 +14,7 @@ import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 import { useTour } from "@/hooks/useTour";
+import { getNextRecategorizacionDates } from "@/lib/projection";
 import { getPanelTourSteps, PANEL_TOUR_KEY } from "@/lib/tours/panel-tour";
 
 function parseInvoiceDate(fecha: string): Date {
@@ -43,16 +44,18 @@ export default function PanelPage() {
     registerTour(startTour);
   }, [registerTour, startTour]);
 
-  const { ingresosAnuales, hasCurrentYearData, fxCurrenciesNeedingRate } = useMemo(() => {
-    if (state.invoices.length === 0)
-      return { ingresosAnuales: 0, hasCurrentYearData: false, fxCurrenciesNeedingRate: {} as Record<string, FxCurrencyInfo> };
+  const nextRecateg = useMemo(() => getNextRecategorizacionDates()[0], []);
 
-    const today = new Date();
-    const twelveMonthsAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+  const { ingresosAnuales, hasCurrentYearData, fxCurrenciesNeedingRate, recategWindow } = useMemo(() => {
+    if (state.invoices.length === 0)
+      return { ingresosAnuales: 0, hasCurrentYearData: false, fxCurrenciesNeedingRate: {} as Record<string, FxCurrencyInfo>, recategWindow: nextRecateg };
+
+    const ventana = nextRecateg.ventana;
+    const windowMonths = new Set(ventana);
+
     let total = 0;
     let hasRecent = false;
 
-    // Count FX invoices needing rates across ALL invoices (not just 12-month window)
     const needingRate: Record<string, FxCurrencyInfo> = {};
     for (const inv of state.invoices) {
       if (inv.moneda !== "ARS" && !inv.xmlData?.exchangeRate) {
@@ -62,10 +65,10 @@ export default function PanelPage() {
       }
     }
 
-    // Income calculation within the 12-month window
     for (const inv of state.invoices) {
       const d = parseInvoiceDate(inv.fecha);
-      if (d >= twelveMonthsAgo && d <= today) {
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (windowMonths.has(monthKey)) {
         hasRecent = true;
         const multiplier = getInvoiceMultiplier(inv.tipo);
         if (inv.moneda === "ARS") {
@@ -80,8 +83,8 @@ export default function PanelPage() {
         }
       }
     }
-    return { ingresosAnuales: total, hasCurrentYearData: hasRecent, fxCurrenciesNeedingRate: needingRate };
-  }, [state.invoices, manualExchangeRates]);
+    return { ingresosAnuales: total, hasCurrentYearData: hasRecent, fxCurrenciesNeedingRate: needingRate, recategWindow: nextRecateg };
+  }, [state.invoices, manualExchangeRates, nextRecateg]);
 
   const { data: monotributoData, tipoActividad } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
 
@@ -147,6 +150,9 @@ export default function PanelPage() {
           <MonotributoPanel 
             ingresosAnuales={ingresosAnuales} 
             isCurrentYearData={hasCurrentYearData}
+            recategorizacionLabel={recategWindow.label}
+            ventanaDesde={recategWindow.ventana[0]}
+            ventanaHasta={recategWindow.ventana[recategWindow.ventana.length - 1]}
           />
         </section>
         <section id="graficos">
