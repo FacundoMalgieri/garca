@@ -1,6 +1,7 @@
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
+import { savePdf } from "@/lib/pdf-save";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 import type { TipoActividad } from "@/types/monotributo";
 
@@ -722,6 +723,6 @@ export async function exportToPDF(
   // Logo + branded footer on all pages
   await applyBrandedFooter(doc);
 
-  doc.save(generateFilename(company, "pdf"));
+  await savePdf(doc, generateFilename(company, "pdf"));
 }
 

@@ -57,6 +57,10 @@ vi.mock("html2canvas", () => ({
   }),
 }));
 
+vi.mock("@/lib/pdf-save", () => ({
+  savePdf: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("exporters", () => {
   const mockInvoices: AFIPInvoice[] = [
     {
