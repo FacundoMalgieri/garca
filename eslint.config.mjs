@@ -81,6 +81,9 @@ export default [
                 // Browser events
                 BeforeUnloadEvent: 'readonly',
                 PopStateEvent: 'readonly',
+                // Browser APIs (sharing, errors)
+                navigator: 'readonly',
+                DOMException: 'readonly',
                 // Test globals
                 beforeEach: 'readonly',
                 afterEach: 'readonly',
