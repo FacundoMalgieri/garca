@@ -8,7 +8,7 @@ export function Footer() {
           {/* Logo and branding */}
           <div className="flex items-center gap-3">
             <img src="/logo-icon.svg" alt="GARCA" className="h-8 w-8" />
-            <span className="font-bold text-slate-800 dark:text-white">GARCA</span>
+            <span className="font-bold text-slate-900 dark:text-white">GARCA</span>
           </div>
 
           {/* Links */}
@@ -48,10 +48,10 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="text-center space-y-1">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {new Date().getFullYear()} • No afiliado con ARCA
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Desarrollado por{" "}
               <a
                 href="https://fmalgieri.com"

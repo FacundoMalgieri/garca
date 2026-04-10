@@ -21,7 +21,7 @@ export function FeatureCard({ icon, title, description, gradient }: FeatureCardP
           </div>
         </div>
         
-        <h3 className="font-bold text-lg mb-2 text-slate-800 dark:text-white">{title}</h3>
+        <h3 className="font-bold text-lg mb-2 text-slate-900 dark:text-white">{title}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
       </div>
     </div>

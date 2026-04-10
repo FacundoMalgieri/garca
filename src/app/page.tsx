@@ -356,7 +356,7 @@ export default function Home() {
 
             {/* Title */}
             <h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-slate-800 dark:text-white transition-all duration-700 ease-out"
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-slate-900 dark:text-white transition-all duration-700 ease-out"
               style={{
                 opacity: heroLoaded ? 1 : 0,
                 transform: heroLoaded ? "translateY(0)" : "translateY(40px)",
@@ -380,7 +380,7 @@ export default function Home() {
 
             {/* Description - fourth to appear */}
             <p 
-              className="max-w-xl mx-auto text-sm md:text-base text-slate-500 dark:text-slate-500 mb-10 leading-relaxed transition-all duration-700 ease-out"
+              className="max-w-xl mx-auto text-sm md:text-base text-slate-600 dark:text-slate-400 mb-10 leading-relaxed transition-all duration-700 ease-out"
               style={{
                 opacity: heroLoaded ? 1 : 0,
                 transform: heroLoaded ? "translateY(0)" : "translateY(40px)",
@@ -494,7 +494,7 @@ export default function Home() {
               <SparklesIcon />
               Funcionalidades
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-slate-800 dark:text-white mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Todo lo que necesitás
             </h2>
             <p className="text-base text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
@@ -546,7 +546,7 @@ export default function Home() {
                 Herramienta gratuita
               </span>
 
-              <h2 className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white mb-4">
+              <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
                 Calculadora de Monotributo 2026
               </h2>
               <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
@@ -615,7 +615,7 @@ export default function Home() {
           </span>
 
           {/* Title */}
-          <h2 className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white mb-8">
+          <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-8">
             Soporta múltiples monedas
           </h2>
 
@@ -645,7 +645,7 @@ export default function Home() {
             ))}
           </div>
           
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             y más...
           </p>
         </div>
@@ -684,12 +684,12 @@ export default function Home() {
                 <ShieldCheckIcon />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
                   Privacidad Garantizada
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
                   GARCA funciona{" "}
-                  <strong className="text-slate-800 dark:text-white">completamente en tu navegador</strong>. No
+                  <strong className="text-slate-900 dark:text-white">completamente en tu navegador</strong>. No
                   almacenamos tus credenciales ni enviamos tus datos a ningún servidor externo.
                 </p>
                 <a
@@ -735,7 +735,7 @@ export default function Home() {
           </span>
 
           {/* Title */}
-          <h2 className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white mb-4">
+          <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
             Apoyá el proyecto
           </h2>
 
@@ -802,7 +802,7 @@ export default function Home() {
           </div>
 
           {/* GitHub note */}
-          <p className="mt-6 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-6 text-xs text-slate-500 dark:text-slate-400">
             También podés dejar una ⭐ en{" "}
             <a
               href="https://github.com/FacundoMalgieri/garca"
@@ -850,7 +850,7 @@ export default function Home() {
               Preguntas frecuentes
             </span>
             <h2 
-              className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white transition-all duration-700"
+              className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white transition-all duration-700"
               style={{
                 opacity: faqVisible ? 1 : 0,
                 transform: faqVisible ? "translateY(0)" : "translateY(20px)",
@@ -879,7 +879,7 @@ export default function Home() {
                 >
                   <button
                     onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between gap-4 px-6 py-5 cursor-pointer font-semibold text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+                    className="w-full flex items-center justify-between gap-4 px-6 py-5 cursor-pointer font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
                   >
                     <span>{faq.question}</span>
                     <span 
