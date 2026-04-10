@@ -9,12 +9,22 @@ import { useMonotributo } from "@/hooks/useMonotributo";
 import { cn } from "@/lib/utils";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
+const MONTH_NAMES_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+function formatWindowMonth(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTH_NAMES_SHORT[month - 1]} ${year}`;
+}
+
 interface MonotributoPanelProps {
   ingresosAnuales: number;
   isCurrentYearData?: boolean;
+  recategorizacionLabel?: string;
+  ventanaDesde?: string;
+  ventanaHasta?: string;
 }
 
-export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: MonotributoPanelProps) {
+export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, recategorizacionLabel, ventanaDesde, ventanaHasta }: MonotributoPanelProps) {
   const { data, tipoActividad, updateTipoActividad, status } = useMonotributo(ingresosAnuales);
   const { clearInvoices, monotributoInfo } = useInvoiceContext();
 
@@ -36,6 +46,11 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
           <ClipboardIcon />
           Monotributo
         </CardTitle>
+        {isCurrentYearData && ventanaDesde && ventanaHasta && (
+          <p className="text-xs text-muted-foreground -mt-1">
+            Recategorización {recategorizacionLabel} — ventana {formatWindowMonth(ventanaDesde)} a {formatWindowMonth(ventanaHasta)}
+          </p>
+        )}
       </CardHeader>
 
       <CardContent className="flex-1">
@@ -96,12 +111,19 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
 
             {/* Category comparison: Current vs Suggested */}
             {monotributoInfo && monotributoInfo.categoria !== status.categoriaActual.categoria ? (
-              // Show comparison when recategorization is needed
               (() => {
                 const catRegistrada = data.categorias.find(c => c.categoria === monotributoInfo.categoria)
+                const catCalculada = data.categorias.find(c => c.categoria === status?.categoriaActual?.categoria)
+                const isDowngrade = catRegistrada && catCalculada && catCalculada.ingresosBrutos < catRegistrada.ingresosBrutos
                 const excedente = catRegistrada ? status.ingresosAcumulados - catRegistrada.ingresosBrutos : 0
+
+                const borderColor = isDowngrade ? "border-success/50" : "border-amber-500/50"
+                const bgColor = isDowngrade ? "bg-success/10" : "bg-amber-500/10"
+                const accentColor = isDowngrade ? "text-success" : "text-amber-500"
+                const detailColor = isDowngrade ? "text-success dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+
                 return (
-                  <div className="rounded-lg border-2 border-amber-500/50 bg-amber-500/10 p-4 space-y-3">
+                  <div className={`rounded-lg border-2 ${borderColor} ${bgColor} p-4 space-y-3`}>
                     <div className="flex items-center justify-center gap-6">
                       <div className="text-center flex flex-col items-center">
                         <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">CATEGORÍA ACTUAL</span>
@@ -110,26 +132,28 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
                         </span>
                       </div>
                       
-                      <svg className="w-5 h-5 text-amber-500 mt-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`w-5 h-5 ${accentColor} mt-4`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
                       
                       <div className="text-center flex flex-col items-center">
                         <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">PRÓXIMA RECATEGORIZACIÓN</span>
-                        <span className="text-2xl font-bold text-amber-500 leading-none">
+                        <span className={`text-2xl font-bold ${accentColor} leading-none`}>
                           {status.categoriaActual.categoria}
                         </span>
                       </div>
                     </div>
 
-                    {catRegistrada && excedente > 0 && (
-                      <div className="text-center text-xs text-amber-600 dark:text-amber-400">
+                    {!isDowngrade && catRegistrada && excedente > 0 && (
+                      <div className={`text-center text-xs ${detailColor}`}>
                         Superaste el límite de {monotributoInfo.categoria} (${catRegistrada.ingresosBrutos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}) por ${excedente.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                       </div>
                     )}
 
                     <div className="text-xs text-muted-foreground text-center">
-                      Deberás recategorizarte a {status.categoriaActual.categoria} en tu próxima recategorización
+                      {isDowngrade
+                        ? `Podrías recategorizarte a ${status.categoriaActual.categoria} y pagar menos`
+                        : `Deberás recategorizarte a ${status.categoriaActual.categoria} en tu próxima recategorización`}
                     </div>
                   </div>
                 )
@@ -222,11 +246,11 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true }: 
                   ${status.pagoMensual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              {monotributoInfo && (
-                <div className="text-xs text-muted-foreground text-center">
-                  Basado en tus ingresos acumulados de los últimos 12 meses
-                </div>
-              )}
+              <div className="text-xs text-muted-foreground text-center">
+                {ventanaDesde && ventanaHasta
+                  ? `Basado en ingresos de ${formatWindowMonth(ventanaDesde)} a ${formatWindowMonth(ventanaHasta)}`
+                  : "Basado en tus ingresos acumulados de los últimos 12 meses"}
+              </div>
             </div>
 
             {/* Action buttons */}
