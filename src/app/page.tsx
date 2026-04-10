@@ -464,11 +464,13 @@ export default function Home() {
                         : 0
                   }px)`,
                   opacity:
-                    featuresProgress < 0.1
-                      ? Math.max(0.3, featuresProgress / 0.1)
-                      : featuresProgress > 0.9
-                        ? Math.max(0, 1 - (featuresProgress - 0.9) / 0.15)
-                        : 1,
+                    featuresProgress === 0
+                      ? 1
+                      : featuresProgress < 0.1
+                        ? Math.max(0.3, featuresProgress / 0.1)
+                        : featuresProgress > 0.9
+                          ? Math.max(0, 1 - (featuresProgress - 0.9) / 0.15)
+                          : 1,
                 }
               : {
                   // Desktop/Tablet: use hardcoded scrollY values (original behavior)
@@ -480,11 +482,13 @@ export default function Home() {
                         : 0
                   }px)`,
                   opacity:
-                    scrollY < 200
-                      ? Math.max(0.3, scrollY / 200)
-                      : scrollY > 1100
-                        ? Math.max(0, 1 - (scrollY - 1100) / 400)
-                        : 1,
+                    scrollY === 0
+                      ? 1
+                      : scrollY < 200
+                        ? Math.max(0.3, scrollY / 200)
+                        : scrollY > 1100
+                          ? Math.max(0, 1 - (scrollY - 1100) / 400)
+                          : 1,
                 }
           }
         >
