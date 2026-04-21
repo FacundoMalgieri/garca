@@ -346,8 +346,8 @@ function ProgresoChart({
             domain={[0, yAxisMax]}
           />
           <Tooltip
-            formatter={(value: number) => [
-              `$${value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+            formatter={(value) => [
+              `$${Number(value).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
               "Acumulado",
             ]}
             contentStyle={{ backgroundColor: "var(--color-background)", border: "1px solid var(--color-border)" }}
@@ -410,8 +410,8 @@ function DistribucionChart({ distributionData }: { distributionData: Distributio
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `$${value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+            formatter={(value, name) => [
+              `$${Number(value).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
               name,
             ]}
             contentStyle={{
@@ -447,7 +447,10 @@ function MensualChart({ monthlyData }: { monthlyData: MonthlyDataPoint[] }) {
           <XAxis dataKey="month" fontSize={12} />
           <YAxis fontSize={12} tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
           <Tooltip
-            formatter={(value: number) => [`$${value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, "Ingresos"]}
+            formatter={(value) => [
+              `$${Number(value).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+              "Ingresos",
+            ]}
             contentStyle={{ backgroundColor: "var(--color-background)", border: "1px solid var(--color-border)" }}
           />
           <Bar dataKey="mensual" fill="#3b82f6" radius={[8, 8, 0, 0]} />
