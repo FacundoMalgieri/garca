@@ -574,6 +574,13 @@ export default function Home() {
                   <span className="relative">Abrir calculadora</span>
                   <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
+                <Link
+                  href="/monotributo"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 dark:border-blue-800/60 bg-white/70 dark:bg-white/5 backdrop-blur-sm px-8 py-4 text-base font-semibold text-blue-700 dark:text-blue-200 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
+                >
+                  <span>Ver guía de Monotributo</span>
+                  <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
               </div>
 
               <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-600 dark:text-slate-400">

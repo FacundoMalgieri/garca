@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -254,7 +255,16 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, re
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-2 items-center justify-center">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 items-center justify-center">
+              <Link
+                href={`/monotributo/categoria/${status.categoriaActual.categoria.toLowerCase()}`}
+                className="text-xs text-primary dark:text-blue-400 hover:text-primary/80 dark:hover:text-blue-300 transition-colors cursor-pointer flex items-center justify-center gap-1 font-medium"
+              >
+                Ver detalle categoría {status.categoriaActual.categoria}
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
               <a
                 href="https://www.arca.gob.ar/monotributo/categorias.asp"
                 target="_blank"
