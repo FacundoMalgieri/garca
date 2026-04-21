@@ -15,6 +15,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage --no-watch",
     "update-monotributo": "npx tsx scripts/update-monotributo.ts",
+    "ping-indexnow": "npx tsx scripts/ping-indexnow.ts",
     "docker:build": "bash -c 'set -a; source .env 2>/dev/null; set +a; docker build --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY --build-arg NEXT_PUBLIC_SITE_URL --build-arg NEXT_PUBLIC_ENCRYPTION_KEY -t garca .'",
     "docker:run": "docker run -p 3000:3000 --env-file .env garca",
     "docker:dev": "npm run docker:build && npm run docker:run"

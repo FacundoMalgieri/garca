@@ -23,6 +23,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
+  const cuantoFacturarEntries: MetadataRoute.Sitemap = MONOTRIBUTO_DATA.categorias.map((cat) => ({
+    url: `${siteUrl}/monotributo/cuanto-puedo-facturar-por-mes/${cat.categoria.toLowerCase()}`,
+    lastModified: monotributoLastMod,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   return [
     {
       url: siteUrl,
@@ -43,6 +50,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     ...categoriaEntries,
+    ...cuantoFacturarEntries,
     {
       url: `${siteUrl}/ingresar`,
       lastModified: buildDate,
