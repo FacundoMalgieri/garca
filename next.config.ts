@@ -43,9 +43,33 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   // Standalone output for Docker deployment
   output: "standalone",
-  // Security headers
+  // Security + cache headers
   async headers() {
     return [
+      {
+        // OG hero images - content-addressable-ish, rarely regenerated.
+        // Cache 1 year so Cloudflare edge + browsers reuse the same bytes.
+        // We purge the Cloudflare cache on every deploy, so freshness is
+        // handled at the edge layer; browsers eventually re-validate via
+        // must-revalidate when stale.
+        source: "/og/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, must-revalidate",
+          },
+        ],
+      },
+      {
+        // Brand + PWA assets that change very rarely but are not hashed.
+        source: "/:file(favicon-16x16.png|favicon-32x32.png|favicon-192x192.png|favicon-512x512.png|apple-touch-icon.png|logo-full.svg|logo-icon.svg|og-image.png|og-image.svg|site.webmanifest)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=2592000, must-revalidate",
+          },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [
