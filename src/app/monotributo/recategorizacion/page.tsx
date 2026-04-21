@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { recategorizacionFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -45,86 +46,9 @@ export const metadata: Metadata = {
   },
 };
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-    {
-      "@type": "ListItem",
-      position: 3,
-      name: "Recategorización",
-      item: `${siteUrl}/monotributo/recategorizacion`,
-    },
-  ],
-};
-
-const articleJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: "Recategorización del Monotributo 2026 — Guía paso a paso",
-  description:
-    "Cuándo y cómo recategorizarte en el Monotributo en 2026: fechas, datos que evalúa ARCA, recategorización de oficio y consecuencias de no hacerla.",
-  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-  datePublished: "2026-01-20",
-  dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/recategorizacion` },
-  inLanguage: "es-AR",
-};
-
-const faqEntries = [
-  {
-    question: "¿Cuándo se hace la recategorización del Monotributo?",
-    answer:
-      "La recategorización se realiza dos veces al año: la primera entre enero y principios de febrero, y la segunda entre julio y principios de agosto. ARCA publica la fecha exacta de cierre cada semestre (en 2026, por ejemplo, el plazo cerró el 5 de febrero y cierra el 5 de agosto). En esas dos ventanas tenés que revisar tus ingresos de los últimos 12 meses y confirmar o cambiar tu categoría.",
-  },
-  {
-    question: "¿Qué datos evalúa ARCA en la recategorización?",
-    answer:
-      "ARCA mira cuatro parámetros: ingresos brutos de los últimos 12 meses, energía eléctrica consumida, superficie afectada a la actividad y alquileres devengados. El que te ubique en la categoría más alta es el que aplica. En la práctica, para la mayoría de monotributistas lo determinante son los ingresos brutos.",
-  },
-  {
-    question: "¿Qué pasa si no me recategorizo en el plazo?",
-    answer:
-      "Si superaste el tope de tu categoría y no te recategorizaste en la ventana de enero o julio, ARCA te recategoriza de oficio cuando cruza datos (facturación electrónica, bancos, plataformas de pago). Implica pagar la diferencia de cuota retroactiva más una multa del 50% del impuesto integrado y la cotización previsional omitidos.",
-  },
-  {
-    question: "¿Tengo que recategorizarme si no cambié de categoría?",
-    answer:
-      "Técnicamente la recategorización es obligatoria solamente cuando cambiás de categoría. Si seguís en la misma, no es necesario hacer ningún trámite. De todas formas, muchos monotributistas hacen el trámite igualmente para confirmar su situación y dejar constancia.",
-  },
-  {
-    question: "¿Puedo bajar de categoría en la recategorización?",
-    answer:
-      "Sí. Si tus ingresos de los últimos 12 meses bajaron y ya no alcanzan el tope de tu categoría actual, podés recategorizarte a una categoría inferior y pagar menos cuota. Es especialmente útil después de meses con poca facturación.",
-  },
-  {
-    question: "¿Cómo se hace la recategorización en ARCA?",
-    answer:
-      "Ingresá al portal de ARCA con tu CUIT y clave fiscal, entrá al servicio 'Monotributo', seleccioná 'Recategorización' y completá el formulario con tus ingresos acumulados de los últimos 12 meses y los demás parámetros. El sistema te sugiere la categoría que corresponde y te permite confirmarla.",
-  },
-];
-
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqEntries.map((entry) => ({
-    "@type": "Question",
-    name: entry.question,
-    acceptedAnswer: { "@type": "Answer", text: entry.answer },
-  })),
-};
-
 export default function RecategorizacionPage() {
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -383,7 +307,7 @@ export default function RecategorizacionPage() {
         {/* FAQ */}
         <section className="space-y-4 mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {faqEntries.map((entry) => (
+          {recategorizacionFaqEntries.map((entry) => (
             <details
               key={entry.question}
               className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
@@ -394,8 +318,7 @@ export default function RecategorizacionPage() {
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { serviciosVsBienesFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -50,83 +51,11 @@ export const metadata: Metadata = {
   },
 };
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-    {
-      "@type": "ListItem",
-      position: 3,
-      name: "Servicios vs Venta de Bienes",
-      item: `${siteUrl}/monotributo/servicios-vs-bienes`,
-    },
-  ],
-};
-
-const articleJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
-  description:
-    "Comparativa oficial de cuotas entre prestación de servicios y venta de bienes en el Monotributo 2026, categoría por categoría.",
-  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-  datePublished: "2026-01-20",
-  dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/servicios-vs-bienes` },
-  inLanguage: "es-AR",
-};
-
-const faqEntries = [
-  {
-    question: "¿Qué diferencia hay entre servicios y venta de bienes en el Monotributo?",
-    answer:
-      "La diferencia está en el impuesto integrado, no en el tope de facturación ni en los aportes. Desde la categoría C en adelante, quienes venden bienes pagan un impuesto integrado menor que quienes prestan servicios, aunque los topes de facturación anual son iguales para ambos rubros.",
-  },
-  {
-    question: "¿Los topes de facturación son distintos entre servicios y bienes?",
-    answer:
-      "No. Los topes anuales de facturación son exactamente los mismos para servicios y venta de bienes en las 11 categorías. Lo único que cambia es el impuesto integrado, que hace que la cuota total mensual sea distinta.",
-  },
-  {
-    question: "¿Cómo se declara si presto servicios y también vendo bienes?",
-    answer:
-      "Si desarrollás las dos actividades, tenés que declarar la actividad principal (la que te genera mayores ingresos) al momento de la inscripción. Si el grueso de tu facturación es de servicios, te inscribís como servicios; si es venta de bienes, al revés. La cuota que pagás se define por la actividad principal.",
-  },
-  {
-    question: "¿Puedo cambiar de servicios a venta de bienes más adelante?",
-    answer:
-      "Sí. Podés modificar la actividad principal en el portal de ARCA, dentro del servicio Monotributo. Tené en cuenta que el cambio afecta tu cuota mensual desde el mes siguiente, porque el impuesto integrado puede ser distinto.",
-  },
-  {
-    question: "¿Por qué los bienes pagan menos impuesto integrado?",
-    answer:
-      "Porque en la venta de bienes ya existe un margen comercial que tributa IVA en la cadena productiva, mientras que en la prestación de servicios el valor agregado se genera íntegramente en el monotributista. Por eso, desde la categoría C en adelante, el impuesto integrado es menor para bienes.",
-  },
-];
-
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqEntries.map((entry) => ({
-    "@type": "Question",
-    name: entry.question,
-    acceptedAnswer: { "@type": "Answer", text: entry.answer },
-  })),
-};
-
 export default function ServiciosVsBienesPage() {
   const categorias = MONOTRIBUTO_DATA.categorias;
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -343,7 +272,7 @@ export default function ServiciosVsBienesPage() {
         {/* FAQ */}
         <section className="space-y-4 mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {faqEntries.map((entry) => (
+          {serviciosVsBienesFaqEntries.map((entry) => (
             <details
               key={entry.question}
               className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
@@ -354,8 +283,7 @@ export default function ServiciosVsBienesPage() {
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }

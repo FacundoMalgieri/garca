@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -43,34 +44,6 @@ export const metadata: Metadata = {
   },
 };
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-    {
-      "@type": "ListItem",
-      position: 3,
-      name: "vs Responsable Inscripto",
-      item: `${siteUrl}/monotributo/vs-responsable-inscripto`,
-    },
-  ],
-};
-
-const articleJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
-  description:
-    "Comparativa entre Monotributo y Responsable Inscripto en Argentina: IVA, Ganancias, facturación, retenciones y recomendaciones.",
-  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-  datePublished: "2026-01-20",
-  dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/vs-responsable-inscripto` },
-  inLanguage: "es-AR",
-};
 
 const comparison = [
   {
@@ -115,52 +88,9 @@ const comparison = [
   },
 ];
 
-const faqEntries = [
-  {
-    question: "¿Qué conviene: Monotributo o Responsable Inscripto?",
-    answer:
-      "Depende del tipo de clientes, de si podés computar crédito fiscal (compras con IVA) y del volumen. Si facturás poco y tus clientes son consumidores finales, el Monotributo suele ser más conveniente por la simplicidad y la cuota fija. Si facturás mucho, tenés muchos costos con IVA (importaciones, insumos) y le vendés a empresas grandes, el Responsable Inscripto puede ser más eficiente.",
-  },
-  {
-    question: "¿Cuándo es obligatorio pasar a Responsable Inscripto?",
-    answer:
-      "Cuando tus ingresos de los últimos 12 meses superan el tope de la categoría K del Monotributo, quedás excluido del régimen simplificado y el pase a Responsable Inscripto es obligatorio. También cuando se da alguna causal del art. 20 de la Ley 26.565: más de 3 actividades simultáneas o más de 3 unidades de explotación, importaciones de bienes para reventa, compras y gastos superiores al 80% de tus ingresos (o 40% en servicios), o quedar inscripto en REPSAL, entre otras.",
-  },
-  {
-    question: "¿Puedo volver al Monotributo después de ser Responsable Inscripto?",
-    answer:
-      "Depende. Si pasaste voluntariamente a Responsable Inscripto (por ejemplo, renunciaste al Monotributo sin haber sido excluido), podés reinscribirte cuando quieras siempre que cumplas las condiciones de inclusión. Pero si fuiste excluido por ARCA (por ejemplo, por superar el tope de K), tenés que esperar 3 años calendario completos desde la exclusión para poder reingresar al régimen simplificado.",
-  },
-  {
-    question: "¿Tengo que contratar un contador si paso a Responsable Inscripto?",
-    answer:
-      "No es obligatorio por ley, pero en la práctica sí se recomienda. El Responsable Inscripto presenta DDJJ mensuales de IVA, DDJJ anual de Ganancias, lleva libros IVA y muchas veces convive con Ingresos Brutos multijurisdiccional. Un contador te ahorra errores y posibles multas.",
-  },
-  {
-    question: "¿Qué pasa con las facturas ya emitidas si cambio de régimen?",
-    answer:
-      "Las facturas emitidas antes del cambio siguen siendo válidas con el régimen que tenías al momento de emitirlas. Desde la fecha del cambio, tus comprobantes nuevos tienen que respetar el nuevo régimen (factura A si sos Responsable Inscripto, factura C si sos Monotributista).",
-  },
-];
-
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqEntries.map((entry) => ({
-    "@type": "Question",
-    name: entry.question,
-    acceptedAnswer: { "@type": "Answer", text: entry.answer },
-  })),
-};
-
 export default function VsResponsableInscriptoPage() {
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -323,7 +253,7 @@ export default function VsResponsableInscriptoPage() {
         {/* FAQ */}
         <section className="space-y-4 mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {faqEntries.map((entry) => (
+          {vsResponsableInscriptoFaqEntries.map((entry) => (
             <details
               key={entry.question}
               className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-teal-300 dark:hover:border-teal-700 transition-colors"
@@ -334,8 +264,7 @@ export default function VsResponsableInscriptoPage() {
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }

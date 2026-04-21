@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
+import { buildCuantoFacturarFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -114,113 +115,14 @@ export default async function CuantoFacturarPorMesPage({
   const anterior = index > 0 ? categorias[index - 1] : null;
   const siguiente = index < categorias.length - 1 ? categorias[index + 1] : null;
 
-  const pageUrl = `${siteUrl}/monotributo/cuanto-puedo-facturar-por-mes/${letra}`;
   const topeAnual = categoria.ingresosBrutos;
   const topeMensual = topeAnual / 12;
   const topeSemanal = topeAnual / 52;
   const topeDiario = topeAnual / 365;
-
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-      { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: `Cuánto facturar por mes — ${upper}`,
-        item: pageUrl,
-      },
-    ],
-  };
-
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: `¿Cuánto puedo facturar por mes en la categoría ${upper} del Monotributo 2026?`,
-    description: `En la categoría ${upper} del Monotributo podés facturar en promedio hasta ${currencyFormatter.format(
-      topeMensual
-    )} por mes (${currencyFormatter.format(topeAnual)} al año). Desglose mensual, semanal, diario y qué pasa si te pasás.`,
-    author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-    publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-    datePublished: "2026-01-20",
-    dateModified,
-    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
-    inLanguage: "es-AR",
-  };
-
-  const faqEntries = [
-    {
-      question: `¿Cuánto puedo facturar por mes en la categoría ${upper}?`,
-      answer: `En promedio podés facturar hasta ${currencyFormatter.format(
-        topeMensual
-      )} por mes. El cálculo sale de dividir el tope anual de la categoría ${upper} (${currencyFormatter.format(
-        topeAnual
-      )}) por 12 meses. No es un límite estricto mensual: podés facturar más en un mes y menos en otro, siempre que el acumulado de los últimos 12 meses no supere el tope anual.`,
-    },
-    {
-      question: `¿Qué pasa si un mes facturo más del promedio mensual?`,
-      answer: `No pasa nada mientras el acumulado de los últimos 12 meses siga por debajo del tope anual de ${currencyFormatter.format(
-        topeAnual
-      )}. El Monotributo se evalúa sobre una ventana móvil de 12 meses, no mes a mes. Si un mes facturás más, podés compensar facturando menos otro mes.`,
-    },
-    {
-      question: `¿Qué pasa si me paso del tope anual de ${currencyFormatter.format(topeAnual)}?`,
-      answer: siguiente
-        ? `Si en los últimos 12 meses superás los ${currencyFormatter.format(
-            topeAnual
-          )}, te corresponde recategorizarte a la categoría ${siguiente.categoria}, cuyo tope es de ${currencyFormatter.format(
-            siguiente.ingresosBrutos
-          )}. La recategorización se hace en enero o julio. Si no la hacés, ARCA te recategoriza de oficio.`
-        : `La categoría ${upper} es la más alta del Monotributo. Si superás su tope anual de ${currencyFormatter.format(
-            topeAnual
-          )}, salís del régimen simplificado y tenés que inscribirte como Responsable Inscripto en IVA y Ganancias.`,
-    },
-    {
-      question: `¿Cuánto puedo facturar por día o por semana en la categoría ${upper}?`,
-      answer: `Si dividís el tope anual en partes iguales, la categoría ${upper} permite facturar en promedio ${currencyFormatter.format(
-        topeSemanal
-      )} por semana o ${currencyFormatter.format(
-        topeDiario
-      )} por día. Importante: ARCA no controla esos cortes, solo mira el acumulado de los últimos 12 meses.`,
-    },
-    anterior
-      ? {
-          question: `¿Cuánto más puedo facturar en ${upper} que en la categoría ${anterior.categoria}?`,
-          answer: `La categoría ${upper} permite facturar ${currencyFormatter.format(
-            topeAnual - anterior.ingresosBrutos
-          )} más al año que la ${anterior.categoria} (${currencyFormatter.format(
-            (topeAnual - anterior.ingresosBrutos) / 12
-          )} más por mes). A cambio, la cuota mensual sube de ${currencyFormatter.format(
-            anterior.total.servicios
-          )} a ${currencyFormatter.format(categoria.total.servicios)} para servicios.`,
-        }
-      : {
-          question: `¿Qué pasa si facturo poco en la categoría ${upper}?`,
-          answer: `La categoría ${upper} es la más baja del Monotributo. Aunque factures muy poco, pagás la cuota completa de ${currencyFormatter.format(
-            categoria.total.servicios
-          )} para servicios. No existe una categoría con cuota menor.`,
-        },
-  ];
-
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqEntries.map((entry) => ({
-      "@type": "Question",
-      name: entry.question,
-      acceptedAnswer: { "@type": "Answer", text: entry.answer },
-    })),
-  };
+  const faqEntries = buildCuantoFacturarFaqEntries(letra);
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -483,8 +385,7 @@ export default async function CuantoFacturarPorMesPage({
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }
