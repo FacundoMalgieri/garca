@@ -5,7 +5,11 @@
  * understand the content and purpose of GARCA.
  */
 
+import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
+
+const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
 
 // Software Application Schema
 const softwareApplicationSchema = {
@@ -18,6 +22,7 @@ const softwareApplicationSchema = {
   url: siteUrl,
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web Browser",
+  dateModified,
   offers: {
     "@type": "Offer",
     price: "0",

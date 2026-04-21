@@ -1,4 +1,49 @@
 import Link from "next/link";
+import { Fragment } from "react";
+
+type FooterLink = { href: string; label: string; external?: boolean };
+
+const FOOTER_LINKS: Array<FooterLink> = [
+  { href: "/calculadora-monotributo", label: "Calculadora" },
+  { href: "/monotributo", label: "Monotributo" },
+  { href: "/privacidad", label: "Privacidad" },
+  { href: "/terminos", label: "Términos" },
+  { href: "https://www.arca.gob.ar", label: "ARCA Oficial", external: true },
+  { href: "https://github.com/FacundoMalgieri/garca", label: "GitHub", external: true },
+];
+
+function FooterLinkGroup({ links }: { links: Array<FooterLink> }) {
+  return (
+    <div className="flex items-center gap-x-3">
+      {links.map((link, i) => (
+        <Fragment key={link.href}>
+          {i > 0 && (
+            <span aria-hidden className="text-slate-400 dark:text-slate-600 select-none">
+              ·
+            </span>
+          )}
+          {link.external ? (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+            >
+              {link.label}
+            </a>
+          ) : (
+            <Link
+              href={link.href}
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+            >
+              {link.label}
+            </Link>
+          )}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
 
 export function Footer() {
   return (
@@ -12,36 +57,13 @@ export function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <Link
-              href="/privacidad"
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-            >
-              Privacidad
-            </Link>
-            <Link
-              href="/terminos"
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-            >
-              Términos
-            </Link>
-            <a
-              href="https://www.arca.gob.ar"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-            >
-              ARCA Oficial
-            </a>
-            <a
-              href="https://github.com/FacundoMalgieri/garca"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-            >
-              GitHub
-            </a>
-          </div>
+          <nav className="flex flex-col items-center justify-center gap-y-2 text-sm md:flex-row">
+            <FooterLinkGroup links={FOOTER_LINKS.slice(0, 3)} />
+            <span aria-hidden className="hidden md:inline text-slate-400 dark:text-slate-600 select-none mx-3">
+              ·
+            </span>
+            <FooterLinkGroup links={FOOTER_LINKS.slice(3)} />
+          </nav>
 
           {/* Divider */}
           <div className="w-full max-w-xs h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-border to-transparent" />

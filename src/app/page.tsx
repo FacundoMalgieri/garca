@@ -389,7 +389,7 @@ export default function Home() {
             >
               La herramienta más <span className="font-semibold text-slate-700 dark:text-slate-300">simple</span> y{" "}
               <span className="font-semibold text-slate-700 dark:text-slate-300">segura</span> para visualizar tus
-              comprobantes.
+              comprobantes de ARCA y calcular tu categoría de Monotributo 2026.
             </p>
 
             {/* CTA Buttons - fifth to appear */}
