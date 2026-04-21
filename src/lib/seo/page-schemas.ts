@@ -33,8 +33,35 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
 
 const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
 
-const PUBLISHER = { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" } as const;
-const ORGANIZATION = { "@type": "Organization", name: "GARCA", url: siteUrl } as const;
+/**
+ * Page-level Article schemas reference the canonical Person and Organization
+ * entities defined in the root `JsonLd` component via `@id`, so Google merges
+ * them into a single knowledge graph instead of treating each inline copy as a
+ * separate entity.
+ */
+const PUBLISHER = { "@id": `${siteUrl}#person` } as const;
+const ORGANIZATION = { "@id": `${siteUrl}#organization` } as const;
+
+/**
+ * Shared Article `image` (1200×630 social card). Google treats `image` as one
+ * of the strongest signals for Article rich results.
+ */
+const ARTICLE_IMAGE = {
+  "@type": "ImageObject",
+  url: `${siteUrl}/og-image.png`,
+  width: 1200,
+  height: 630,
+} as const;
+
+function buildMainEntityOfPage(pageUrl: string): Schema {
+  return {
+    "@type": "WebPage",
+    "@id": pageUrl,
+    url: pageUrl,
+    primaryImageOfPage: ARTICLE_IMAGE,
+    isPartOf: { "@id": `${siteUrl}#website` },
+  };
+}
 
 export type FaqEntry = { question: string; answer: string };
 
@@ -142,7 +169,8 @@ const calculadoraWebAppSchema: Schema = {
   offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" },
   isAccessibleForFree: true,
   inLanguage: "es",
-  author: { "@type": "Person", name: "Facundo Malgieri" },
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
 };
 
 const calculadoraFaqEntries: readonly FaqEntry[] = [
@@ -222,11 +250,12 @@ const monotributoHubArticleSchema: Schema = {
   headline: "Monotributo 2026 — Categorías, Cuotas y Topes de Facturación",
   description:
     "Guía completa del Monotributo 2026 en Argentina: las 11 categorías de la A a la K, con cuotas mensuales, topes de facturación y desglose de aportes. Datos oficiales de ARCA.",
+  image: ARTICLE_IMAGE,
   author: PUBLISHER,
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo` },
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo`),
   inLanguage: "es-AR",
 };
 
@@ -281,11 +310,12 @@ const recategorizacionArticleSchema: Schema = {
   headline: "Recategorización del Monotributo 2026 — Guía paso a paso",
   description:
     "Cuándo y cómo recategorizarte en el Monotributo en 2026: fechas, datos que evalúa ARCA, recategorización de oficio y consecuencias de no hacerla.",
+  image: ARTICLE_IMAGE,
   author: PUBLISHER,
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/recategorizacion` },
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/recategorizacion`),
   inLanguage: "es-AR",
 };
 
@@ -340,11 +370,12 @@ const serviciosVsBienesArticleSchema: Schema = {
   headline: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
   description:
     "Comparativa oficial de cuotas entre prestación de servicios y venta de bienes en el Monotributo 2026, categoría por categoría.",
+  image: ARTICLE_IMAGE,
   author: PUBLISHER,
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/servicios-vs-bienes` },
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/servicios-vs-bienes`),
   inLanguage: "es-AR",
 };
 
@@ -399,11 +430,12 @@ const quePasaSiMePasoArticleSchema: Schema = {
   headline: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
   description:
     "Qué sucede cuando superás el tope del Monotributo: recategorización, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
+  image: ARTICLE_IMAGE,
   author: PUBLISHER,
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/que-pasa-si-me-paso` },
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/que-pasa-si-me-paso`),
   inLanguage: "es-AR",
 };
 
@@ -458,11 +490,12 @@ const vsResponsableInscriptoArticleSchema: Schema = {
   headline: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
   description:
     "Comparativa entre Monotributo y Responsable Inscripto en Argentina: IVA, Ganancias, facturación, retenciones y recomendaciones.",
+  image: ARTICLE_IMAGE,
   author: PUBLISHER,
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/vs-responsable-inscripto` },
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/vs-responsable-inscripto`),
   inLanguage: "es-AR",
 };
 
@@ -472,7 +505,7 @@ const ingresarBreadcrumbSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "GARCA", item: siteUrl },
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
     { "@type": "ListItem", position: 2, name: "Ingresar", item: `${siteUrl}/ingresar` },
   ],
 };
@@ -481,7 +514,7 @@ const privacidadBreadcrumbSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "GARCA", item: siteUrl },
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
     { "@type": "ListItem", position: 2, name: "Política de Privacidad", item: `${siteUrl}/privacidad` },
   ],
 };
@@ -490,7 +523,7 @@ const terminosBreadcrumbSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "GARCA", item: siteUrl },
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
     { "@type": "ListItem", position: 2, name: "Términos y Condiciones", item: `${siteUrl}/terminos` },
   ],
 };
@@ -583,11 +616,12 @@ function buildCategoriaSchemas(letra: string): Schema[] {
     )}, tope anual de facturación de ${currencyFormatter.format(
       categoria.ingresosBrutos,
     )}. Desglose de aportes, requisitos y comparativa con otras categorías.`,
+    image: ARTICLE_IMAGE,
     author: PUBLISHER,
     publisher: ORGANIZATION,
     datePublished: "2026-01-20",
     dateModified,
-    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+    mainEntityOfPage: buildMainEntityOfPage(pageUrl),
     inLanguage: "es-AR",
   };
   return [breadcrumb, article, buildFaqSchema(buildCategoriaFaqEntries(letra))];
@@ -694,11 +728,12 @@ function buildCuantoFacturarSchemas(letra: string): Schema[] {
     description: `En la categoría ${upper} del Monotributo podés facturar en promedio hasta ${currencyFormatter.format(
       topeMensual,
     )} por mes (${currencyFormatter.format(topeAnual)} al año). Desglose mensual, semanal, diario y qué pasa si te pasás.`,
+    image: ARTICLE_IMAGE,
     author: PUBLISHER,
     publisher: ORGANIZATION,
     datePublished: "2026-01-20",
     dateModified,
-    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+    mainEntityOfPage: buildMainEntityOfPage(pageUrl),
     inLanguage: "es-AR",
   };
   return [breadcrumb, article, buildFaqSchema(buildCuantoFacturarFaqEntries(letra))];
