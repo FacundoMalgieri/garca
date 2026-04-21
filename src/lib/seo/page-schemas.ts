@@ -1265,7 +1265,7 @@ const guiasCollectionPageSchema: Schema = {
   "@type": "CollectionPage",
   "@id": `${siteUrl}/guias`,
   url: `${siteUrl}/guias`,
-  name: "Guías — Monotributo, ARCA y facturación | GARCA",
+  name: "Guías — Monotributo, ARCA y facturación",
   description:
     "Índice de guías sobre Monotributo en Argentina: recategorización, exclusión, comparativa con Responsable Inscripto, servicios vs. bienes, facturación y más.",
   inLanguage: "es-AR",

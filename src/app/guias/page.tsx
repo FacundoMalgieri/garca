@@ -19,7 +19,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 });
 
 export const metadata: Metadata = {
-  title: "Guías — Monotributo, ARCA y facturación en Argentina | GARCA",
+  title: "Guías — Monotributo, ARCA y facturación en Argentina",
   description:
     "Índice de guías sobre Monotributo en Argentina 2026: recategorización, exclusión del régimen, Monotributo vs Responsable Inscripto, servicios vs. venta de bienes y facturación. Datos oficiales de ARCA.",
   keywords: [
