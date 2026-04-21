@@ -4,8 +4,7 @@ import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
+import { monotributoHubFaqEntries } from "@/lib/seo/page-schemas";
 
 const currencyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -21,80 +20,13 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
 });
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-  ],
-};
-
-const articleJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: "Monotributo 2026 — Categorías, Cuotas y Topes de Facturación",
-  description:
-    "Guía completa del Monotributo 2026 en Argentina: las 11 categorías de la A a la K, con cuotas mensuales, topes de facturación y desglose de aportes. Datos oficiales de ARCA.",
-  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-  datePublished: "2026-01-20",
-  dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo` },
-  inLanguage: "es-AR",
-};
-
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "¿Cuántas categorías de Monotributo hay en 2026?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "En 2026 el Monotributo tiene 11 categorías, de la A a la K. Cada una tiene un tope de facturación anual y una cuota mensual distinta. La categoría más baja es la A y la más alta es la K.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "¿Cómo sé en qué categoría de Monotributo estoy?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Tu categoría depende de tus ingresos brutos acumulados de los últimos 12 meses. Tenés que comparar ese total con el tope anual de cada categoría y ubicarte en la que te corresponde. En GARCA podés hacerlo automáticamente conectándote a ARCA, o usar la calculadora gratuita.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "¿Cuándo se actualizan las categorías?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Los topes y cuotas del Monotributo se actualizan dos veces al año, en enero y julio, siguiendo la evolución del índice de inflación. La recategorización del contribuyente también es semestral.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "¿Qué diferencia hay entre servicios y venta de bienes?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Desde la categoría C en adelante, el impuesto integrado es distinto según si prestás servicios o vendés bienes. Quienes venden bienes pagan menos impuesto integrado. Los topes de facturación en cambio son iguales para ambos rubros.",
-      },
-    },
-  ],
-};
-
 export default function MonotributoIndexPage() {
   const categorias = MONOTRIBUTO_DATA.categorias;
   const primera = categorias[0];
   const ultima = categorias[categorias.length - 1];
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -298,16 +230,15 @@ export default function MonotributoIndexPage() {
 
         <section className="space-y-4 mb-12">
           <h2 className="text-xl md:text-2xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {faqJsonLd.mainEntity.map((item) => (
-            <details key={item.name} className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{item.name}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{item.acceptedAnswer.text}</p>
+          {monotributoHubFaqEntries.map((item) => (
+            <details key={item.question} className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
+              <summary className="cursor-pointer text-base font-semibold text-foreground">{item.question}</summary>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
             </details>
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }

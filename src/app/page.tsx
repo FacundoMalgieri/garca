@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { homeBreadcrumbSchema, homeFaqSchema } from "@/components/JsonLd";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
@@ -292,9 +291,6 @@ export default function Home() {
 
   return (
     <div className="relative overflow-x-hidden bg-background">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeBreadcrumbSchema) }} />
-
       <ConfirmDialog
         isOpen={showDemoConfirm}
         onClose={() => setShowDemoConfirm(false)}

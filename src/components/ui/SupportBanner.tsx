@@ -17,7 +17,7 @@ export function SupportBanner() {
             href="https://github.com/sponsors/FacundoMalgieri"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#ea4aaa] px-3.5 py-2 text-sm font-medium text-white hover:bg-[#ea4aaa]/90 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#bf3999] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#a82f86] transition-all hover:scale-[1.02]"
           >
             <GitHubSponsorsIcon className="h-4 w-4" />
             Sponsor

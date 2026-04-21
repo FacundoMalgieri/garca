@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { quePasaSiMePasoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -51,83 +52,11 @@ export const metadata: Metadata = {
   },
 };
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-    {
-      "@type": "ListItem",
-      position: 3,
-      name: "¿Qué pasa si me paso?",
-      item: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
-    },
-  ],
-};
-
-const articleJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
-  description:
-    "Qué sucede cuando superás el tope del Monotributo: recategorización, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
-  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-  datePublished: "2026-01-20",
-  dateModified,
-  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/que-pasa-si-me-paso` },
-  inLanguage: "es-AR",
-};
-
-const faqEntries = [
-  {
-    question: "¿Cómo saben en ARCA que me pasé del tope?",
-    answer:
-      "ARCA cruza tu facturación electrónica (todos los comprobantes que emitís tienen que ser electrónicos y quedan registrados), con datos de terceros (bancos, tarjetas, plataformas de pago) y con los parámetros que declarás en la recategorización. Es muy difícil pasar desapercibido.",
-  },
-  {
-    question: "¿Qué pasa si me pasé solo por un mes?",
-    answer:
-      "El Monotributo no mira mes a mes, mira el acumulado de los últimos 12 meses. Si tuviste un pico en un mes pero el acumulado anual sigue dentro del tope de tu categoría, no pasa nada. Solo te preocupés si el total anualizado supera el tope.",
-  },
-  {
-    question: "¿Qué diferencia hay entre recategorización y exclusión?",
-    answer:
-      "La recategorización es subir a una categoría superior del Monotributo (por ejemplo, de F a G). La exclusión es salir del régimen: tus ingresos superaron la categoría más alta (K) o incumpliste requisitos no numéricos, y tenés que inscribirte como Responsable Inscripto en IVA y Ganancias.",
-  },
-  {
-    question: "¿Puedo seguir en el Monotributo si me pasé de K?",
-    answer:
-      "No. La categoría K es la más alta del régimen. Si tu acumulado de los últimos 12 meses supera su tope (y también por otras causales del art. 20 de la Ley 26.565), quedás automáticamente excluido y tenés que inscribirte como Responsable Inscripto. La exclusión tiene efectos desde las 0 hs del día en que ocurrió la causal, no desde el mes siguiente. Además, no podés volver al Monotributo hasta que pasen 3 años calendario desde la exclusión.",
-  },
-  {
-    question: "¿Me pueden multar por no haber recategorizado?",
-    answer:
-      "Sí. Si ARCA detecta que debías recategorizarte y no lo hiciste, te aplica una recategorización de oficio e incluye la diferencia de cuota retroactiva más una multa del 50% del impuesto integrado y la cotización previsional omitidos. Tenés 15 días desde la notificación para manifestar disconformidad a través de 'Presentaciones Digitales'.",
-  },
-];
-
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqEntries.map((entry) => ({
-    "@type": "Question",
-    name: entry.question,
-    acceptedAnswer: { "@type": "Answer", text: entry.answer },
-  })),
-};
-
 export default function QuePasaSiMePasoPage() {
   const categoriaK = MONOTRIBUTO_DATA.categorias[MONOTRIBUTO_DATA.categorias.length - 1];
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -345,7 +274,7 @@ export default function QuePasaSiMePasoPage() {
         {/* FAQ */}
         <section className="space-y-4 mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {faqEntries.map((entry) => (
+          {quePasaSiMePasoFaqEntries.map((entry) => (
             <details
               key={entry.question}
               className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
@@ -356,8 +285,7 @@ export default function QuePasaSiMePasoPage() {
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }

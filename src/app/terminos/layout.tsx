@@ -30,19 +30,5 @@ export const metadata: Metadata = {
 }
 
 export default function TerminosLayout({ children }: { children: React.ReactNode }) {
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "GARCA", item: siteUrl },
-      { "@type": "ListItem", position: 2, name: "Términos y Condiciones", item: pageUrl },
-    ],
-  }
-
-  return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      {children}
-    </>
-  )
+  return children
 }

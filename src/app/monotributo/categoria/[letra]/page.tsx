@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
+import { buildCategoriaFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -114,103 +115,11 @@ export default async function CategoriaPage({
   const anterior = index > 0 ? categorias[index - 1] : null;
   const siguiente = index < categorias.length - 1 ? categorias[index + 1] : null;
 
-  const pageUrl = `${siteUrl}/monotributo/categoria/${letra}`;
   const topeMensual = categoria.ingresosBrutos / 12;
-  const topeAnteriorStr = anterior ? currencyFormatter.format(anterior.ingresosBrutos) : "-";
-
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-      { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
-      { "@type": "ListItem", position: 3, name: `Categoría ${upper}`, item: pageUrl },
-    ],
-  };
-
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: `Monotributo Categoría ${upper} 2026 — Cuánto Pago y Cuánto Puedo Facturar`,
-    description: `Categoría ${upper} del Monotributo 2026: cuota mensual de ${currencyFormatter.format(
-      categoria.total.servicios
-    )}, tope anual de facturación de ${currencyFormatter.format(
-      categoria.ingresosBrutos
-    )}. Desglose de aportes, requisitos y comparativa con otras categorías.`,
-    author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
-    publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
-    datePublished: "2026-01-20",
-    dateModified,
-    mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
-    inLanguage: "es-AR",
-  };
-
-  const faqEntries = [
-    {
-      question: `¿Cuánto se paga por la categoría ${upper} del Monotributo en 2026?`,
-      answer: `La cuota mensual de la categoría ${upper} es de ${currencyFormatter.format(
-        categoria.total.servicios
-      )} para servicios y ${currencyFormatter.format(
-        categoria.total.venta
-      )} para venta de bienes. Incluye impuesto integrado, aportes jubilatorios (SIPA) y obra social.`,
-    },
-    {
-      question: `¿Cuánto puedo facturar en la categoría ${upper}?`,
-      answer: `El tope anual de facturación de la categoría ${upper} es de ${currencyFormatter.format(
-        categoria.ingresosBrutos
-      )}. Esto da un promedio de ${currencyFormatter.format(
-        topeMensual
-      )} por mes. Si superás ese monto en los últimos 12 meses, tenés que subir de categoría.`,
-    },
-    anterior
-      ? {
-          question: `¿Cuál es la diferencia entre la categoría ${upper} y la ${anterior.categoria}?`,
-          answer: `La categoría ${upper} permite facturar hasta ${currencyFormatter.format(
-            categoria.ingresosBrutos
-          )} al año, mientras que la ${anterior.categoria} tope en ${topeAnteriorStr}. La cuota mensual pasa de ${currencyFormatter.format(
-            anterior.total.servicios
-          )} (${anterior.categoria}) a ${currencyFormatter.format(
-            categoria.total.servicios
-          )} (${upper}) para servicios.`,
-        }
-      : {
-          question: `¿Qué pasa si gano menos del tope de la categoría ${upper}?`,
-          answer: `La categoría ${upper} es la más baja del Monotributo. Si tus ingresos son menores al tope anual, seguís pagando la cuota de la ${upper} igual — no hay una categoría inferior. Si tu actividad no supera este monto, esta es tu categoría correspondiente.`,
-        },
-    siguiente
-      ? {
-          question: `¿Qué pasa si supero el tope de la categoría ${upper}?`,
-          answer: `Si superás los ${currencyFormatter.format(
-            categoria.ingresosBrutos
-          )} anuales, tenés que recategorizarte a la categoría ${siguiente.categoria}, cuya cuota mensual es de ${currencyFormatter.format(
-            siguiente.total.servicios
-          )} para servicios. La recategorización se hace en enero o julio. Si no la hacés, ARCA te recategoriza de oficio.`,
-        }
-      : {
-          question: `¿Qué pasa si supero el tope de la categoría ${upper}?`,
-          answer: `La categoría ${upper} es la más alta del Monotributo. Si superás su tope anual de ${currencyFormatter.format(
-            categoria.ingresosBrutos
-          )}, salís del régimen simplificado y tenés que inscribirte como Responsable Inscripto en IVA y Ganancias.`,
-        },
-  ];
-
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqEntries.map((entry) => ({
-      "@type": "Question",
-      name: entry.question,
-      acceptedAnswer: { "@type": "Answer", text: entry.answer },
-    })),
-  };
+  const faqEntries = buildCategoriaFaqEntries(letra);
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <Breadcrumbs
           className="mb-6"
           items={[
@@ -484,8 +393,7 @@ export default async function CategoriaPage({
           ))}
         </section>
 
-        <SupportBanner />
-      </div>
-    </>
+      <SupportBanner />
+    </div>
   );
 }
