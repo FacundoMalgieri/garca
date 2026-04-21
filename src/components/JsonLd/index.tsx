@@ -31,7 +31,7 @@ const softwareApplicationSchema = {
   name: "GARCA",
   alternateName: "Gestor de Recuperación de Comprobantes de ARCA",
   description:
-    "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos.",
+    "Herramienta gratuita para recuperar comprobantes de ARCA. Credenciales cifradas con AES-256, sin base de datos y sin retención de comprobantes en servidores.",
   url: siteUrl,
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web Browser",
@@ -48,8 +48,8 @@ const softwareApplicationSchema = {
     "Simulador de recategorización",
     "Exportación a Excel, PDF y JSON",
     "Gráficos de facturación interactivos",
-    "100% privado - datos en tu navegador",
-    "Sin almacenamiento en servidores",
+    "Credenciales cifradas con AES-256 y descartadas al terminar la consulta",
+    "Sin base de datos ni retención de comprobantes en servidores",
   ],
   screenshot: `${siteUrl}/og-image.png`,
   softwareHelp: {
@@ -76,7 +76,7 @@ const webSiteSchema = {
   alternateName: "Gestor de Recuperación de Comprobantes de ARCA",
   url: siteUrl,
   description:
-    "Herramienta segura y privada para recuperar comprobantes de ARCA. Funciona completamente en el navegador sin almacenar datos.",
+    "Herramienta gratuita para recuperar comprobantes de ARCA. Credenciales cifradas con AES-256, sin base de datos y sin retención de comprobantes en servidores.",
   inLanguage: "es-AR",
   publisher: { "@id": `${siteUrl}#organization` },
 };
@@ -97,7 +97,7 @@ const organizationSchema = {
   },
   image: `${siteUrl}/og-image.png`,
   description:
-    "GARCA es una herramienta gratuita y open source para monotributistas argentinos. Permite recuperar comprobantes del portal ARCA (ex AFIP), calcular la categoría de Monotributo, proyectar la facturación y simular recategorizaciones, todo de forma 100% privada en el navegador.",
+    "GARCA es una herramienta gratuita y open source para monotributistas argentinos. Permite recuperar comprobantes del portal ARCA (ex AFIP), calcular la categoría de Monotributo, proyectar la facturación y simular recategorizaciones. Las credenciales se cifran con AES-256 antes de salir del navegador y GARCA no retiene comprobantes en ningún servidor.",
   slogan: "ARCA Monotributo: comprobantes, categorías y calculadora",
   foundingDate: "2025",
   founder: { "@id": `${siteUrl}#person` },

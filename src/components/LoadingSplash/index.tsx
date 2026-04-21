@@ -17,12 +17,12 @@ const tips = [
     text: "GARCA es un software que hace scraping automático del portal de ARCA para recuperar tus comprobantes de forma segura.",
   },
   {
-    title: "100% Privado",
-    text: "Tus datos nunca salen de tu navegador. Todo el procesamiento se realiza localmente en tu dispositivo.",
+    title: "Sin base de datos",
+    text: "GARCA no guarda credenciales ni comprobantes en ningún servidor. Los comprobantes se almacenan solo en el localStorage de tu navegador.",
   },
   {
-    title: "Credenciales Seguras",
-    text: "Tus credenciales se encriptan antes de ser enviadas y nunca se almacenan en ningún servidor.",
+    title: "Credenciales cifradas",
+    text: "Tu clave fiscal se cifra con AES-256 antes de viajar al servidor de scraping, se usa únicamente para conectarse a ARCA y se descarta al terminar la consulta.",
   },
   {
     title: "Sin límites",

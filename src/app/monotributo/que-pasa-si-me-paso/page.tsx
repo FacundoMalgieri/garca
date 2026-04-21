@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArticleByline } from "@/components/ui/ArticleByline";
+import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-import { quePasaSiMePasoFaqEntries } from "@/lib/seo/page-schemas";
+import { getGuideDateModified, quePasaSiMePasoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -16,7 +17,7 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
-const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
   title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
@@ -39,9 +40,18 @@ export const metadata: Metadata = {
     type: "article",
     url: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
     siteName: "GARCA",
+    images: [
+      {
+        url: "/og/que-pasa-si-me-paso.png",
+        width: 1200,
+        height: 630,
+        alt: "Qué pasa si te pasás del tope del Monotributo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/og/que-pasa-si-me-paso.png"],
     title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
     description:
       "Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto.",
@@ -57,34 +67,32 @@ export default function QuePasaSiMePasoPage() {
           className="mb-6"
           items={[
             { label: "Inicio", href: "/" },
-            { label: "Monotributo", href: "/monotributo" },
+            { label: "Guías", href: "/guias" },
             { label: "¿Qué pasa si me paso?" },
           ]}
         />
 
-        {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-rose-950/40 border border-amber-200 dark:border-amber-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(245,158,11,0.25)] dark:shadow-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-400/25 to-orange-400/25 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-rose-400/25 to-orange-400/25 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-amber-500/25">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Excedí el tope — ¿qué hago?
-            </span>
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
-              ¿Qué pasa si me paso del Monotributo?
-            </h1>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
+        <ArticleHero
+          image="/og/que-pasa-si-me-paso.png"
+          imageAlt="¿Qué pasa si me paso del Monotributo?"
+          badgeLabel="Excedí el tope — ¿qué hago?"
+          badgeIcon={
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          }
+          title="¿Qué pasa si me paso del Monotributo?"
+          description={
+            <>
               Si tu facturación de los últimos 12 meses superó el tope de tu categoría, hay{" "}
-              <strong className="text-slate-900 dark:text-white">tres escenarios posibles</strong>: recategorización a
-              una categoría superior del Monotributo, recategorización de oficio por parte de ARCA, o exclusión del
-              régimen simplificado y pase obligatorio a Responsable Inscripto. Acá te explicamos cada uno.
-            </p>
-            <ArticleByline dateModified={dateModified} />
-          </div>
-        </section>
+              <strong className="text-white">tres escenarios posibles</strong>: recategorización a una categoría
+              superior del Monotributo, recategorización de oficio por parte de ARCA, o exclusión del régimen
+              simplificado y pase obligatorio a Responsable Inscripto. Acá te explicamos cada uno.
+            </>
+          }
+          dateModified={dateModified}
+          readingTime="6 min de lectura"
+        />
 
         {/* Ventana móvil explainer */}
         <section className="mb-12 relative overflow-hidden rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 md:p-7">
@@ -264,13 +272,17 @@ export default function QuePasaSiMePasoPage() {
           </div>
         </section>
 
+        <RelatedGuides currentHref="/monotributo/que-pasa-si-me-paso" className="mb-12" />
+
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         {/* FAQ */}
         <section className="mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={quePasaSiMePasoFaqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

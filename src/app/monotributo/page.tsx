@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
+import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-import { monotributoHubFaqEntries } from "@/lib/seo/page-schemas";
+import { getGuideDateModified, monotributoHubFaqEntries } from "@/lib/seo/page-schemas";
 
 const currencyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -13,7 +14,7 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
-const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+const dateModified = getGuideDateModified();
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
@@ -36,32 +37,64 @@ export default function MonotributoIndexPage() {
           ]}
         />
 
-        {/* Hero with gradient + decorative blobs */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-cyan-400/20 to-blue-400/20 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
-
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-blue-500/25">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Guía oficial 2026
-            </span>
-
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
-              Monotributo 2026 — Categorías, Cuotas y Topes
-            </h1>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
-              Las <strong className="text-slate-900 dark:text-white">11 categorías vigentes del Monotributo</strong> en
-              Argentina, de la A a la K, con sus cuotas mensuales, topes de facturación anual y desglose de aportes.
-              Datos tomados directamente de ARCA (ex-AFIP) y actualizados automáticamente.
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+        <ArticleHero
+          image="/og/monotributo.png"
+          imageAlt="Monotributo — categorías, cuotas y topes"
+          badgeLabel="Guía oficial 2026"
+          badgeIcon={
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          }
+          title="Monotributo 2026 — Categorías, Cuotas y Topes"
+          description={
+            <>
+              Las <strong className="text-white">11 categorías vigentes del Monotributo</strong> en Argentina, de
+              la A a la K, con sus cuotas mensuales, topes de facturación anual y desglose de aportes. Datos
+              tomados directamente de ARCA (ex-AFIP) y actualizados automáticamente.
+            </>
+          }
+          footer={
+            <p className="text-xs text-slate-300">
               Actualizado el{" "}
               <time dateTime={dateModified}>{dateFormatter.format(new Date(dateModified))}</time>.
             </p>
-          </div>
+          }
+        />
+
+        {/* Pointer to the full guides index, right under the hero so it is the
+            first thing visible after the intro — much higher discoverability. */}
+        <section className="mb-10">
+          <Link
+            href="/guias"
+            className="group relative overflow-hidden block rounded-2xl border border-indigo-200 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50 via-blue-50 to-violet-50 dark:from-indigo-950/30 dark:via-blue-950/20 dark:to-violet-950/30 p-5 md:p-6 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-sm shrink-0">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-foreground mb-1">
+                    Todas las guías de Monotributo
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                    Recategorización, exclusión del régimen, comparativa con Responsable Inscripto, servicios vs.
+                    venta de bienes y más. Índice completo en un solo lugar.
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0">
+                Ver índice de guías
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </span>
+            </div>
+          </Link>
         </section>
 
         {/* Stat cards with colored gradients */}
@@ -138,40 +171,6 @@ export default function MonotributoIndexPage() {
           </div>
         </section>
 
-        {/* Compact pointer to the dedicated guides index */}
-        <section className="mb-12">
-          <Link
-            href="/monotributo/guias"
-            className="group relative overflow-hidden block rounded-2xl border border-indigo-200 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50 via-blue-50 to-violet-50 dark:from-indigo-950/30 dark:via-blue-950/20 dark:to-violet-950/30 p-5 md:p-6 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-sm shrink-0">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg md:text-xl font-bold text-foreground mb-1">
-                    Todas las guías de Monotributo
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                    Recategorización, exclusión del régimen, comparativa con Responsable Inscripto, servicios vs.
-                    venta de bienes y más. Índice completo en un solo lugar.
-                  </p>
-                </div>
-              </div>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0">
-                Ver índice de guías
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </span>
-            </div>
-          </Link>
-        </section>
-
         {/* CTA with gradient + blobs */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-6 md:p-8 mb-12 shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
           <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
@@ -195,12 +194,14 @@ export default function MonotributoIndexPage() {
           </div>
         </section>
 
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         <section className="mb-12">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={monotributoHubFaqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

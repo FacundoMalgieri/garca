@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArticleByline } from "@/components/ui/ArticleByline";
+import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-import { recategorizacionFaqEntries } from "@/lib/seo/page-schemas";
+import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { getGuideDateModified, recategorizacionFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
-const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+const dateModified = getGuideDateModified();
+
+const tocItems: readonly TocItem[] = [
+  { id: "que-es-la-recategorizacion", label: "¿Qué es la recategorización?" },
+  { id: "cuando-se-hace", label: "¿Cuándo se hace?" },
+  { id: "que-evalua-arca", label: "¿Qué evalúa ARCA?" },
+  { id: "paso-a-paso", label: "Paso a paso en ARCA" },
+  { id: "recategorizacion-de-oficio", label: "Recategorización de oficio" },
+];
 
 export const metadata: Metadata = {
   title: "Recategorización del Monotributo 2026 — Guía paso a paso",
@@ -33,9 +42,18 @@ export const metadata: Metadata = {
     type: "article",
     url: `${siteUrl}/monotributo/recategorizacion`,
     siteName: "GARCA",
+    images: [
+      {
+        url: "/og/recategorizacion.png",
+        width: 1200,
+        height: 630,
+        alt: "Recategorización del Monotributo paso a paso",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/og/recategorizacion.png"],
     title: "Recategorización del Monotributo 2026 — Guía paso a paso",
     description:
       "Cuándo y cómo recategorizarte, qué evalúa ARCA y qué pasa si no te recategorizás. Guía oficial 2026.",
@@ -49,35 +67,40 @@ export default function RecategorizacionPage() {
           className="mb-6"
           items={[
             { label: "Inicio", href: "/" },
-            { label: "Monotributo", href: "/monotributo" },
+            { label: "Guías", href: "/guias" },
             { label: "Recategorización" },
           ]}
         />
 
-        {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-cyan-400/20 to-blue-400/20 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-blue-500/25">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Guía oficial 2026
-            </span>
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
-              Recategorización del Monotributo 2026
-            </h1>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
-              La <strong className="text-slate-900 dark:text-white">recategorización del Monotributo</strong> es el
-              trámite semestral en el que actualizás tu categoría según tus ingresos de los últimos 12 meses. Se
-              hace en <strong className="text-slate-900 dark:text-white">enero y julio</strong>, en el portal de ARCA
-              (ex AFIP). En esta guía vas a ver cuándo hacerla, qué evalúa ARCA, cómo hacerla paso a paso y qué pasa
-              si no la hacés a tiempo.
-            </p>
-            <ArticleByline dateModified={dateModified} />
-          </div>
-        </section>
+        <ArticleHero
+          image="/og/recategorizacion.png"
+          imageAlt="Recategorización del Monotributo"
+          badgeLabel="Guía oficial 2026"
+          badgeIcon={
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+          title="Recategorización del Monotributo 2026"
+          description={
+            <>
+              La <strong className="text-white">recategorización del Monotributo</strong> es el trámite semestral
+              en el que actualizás tu categoría según tus ingresos de los últimos 12 meses. Se hace en{" "}
+              <strong className="text-white">enero y julio</strong>, en el portal de{" "}
+              <Link
+                href="/monotributo/arca-vs-afip"
+                className="text-cyan-300 hover:text-white underline-offset-2 hover:underline font-semibold"
+              >
+                ARCA (ex AFIP)
+              </Link>
+              .
+            </>
+          }
+          dateModified={dateModified}
+          readingTime="5 min de lectura"
+        />
+
+        <TableOfContents items={tocItems} className="mb-10" />
 
         {/* Quick summary stats */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
@@ -98,8 +121,8 @@ export default function RecategorizacionPage() {
               </svg>
               <p className="text-xs uppercase tracking-wide font-semibold">Plazo</p>
             </div>
-            <p className="text-2xl font-bold text-foreground">Hasta el 20</p>
-            <p className="text-sm text-muted-foreground mt-1">De enero y de julio</p>
+            <p className="text-2xl font-bold text-foreground">Primeros días</p>
+            <p className="text-sm text-muted-foreground mt-1">De febrero y de agosto</p>
           </div>
           <div className="rounded-2xl border border-purple-200 dark:border-purple-800/40 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 p-5 shadow-sm">
             <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-2">
@@ -115,7 +138,12 @@ export default function RecategorizacionPage() {
 
         {/* ¿Qué es? */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Qué es la recategorización?</h2>
+          <h2
+            id="que-es-la-recategorizacion"
+            className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4"
+          >
+            ¿Qué es la recategorización?
+          </h2>
           <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
             La recategorización es el trámite en el que un <strong className="text-foreground">monotributista
             actualiza su categoría</strong> en base a sus ingresos y parámetros de actividad de los últimos 12 meses.
@@ -131,7 +159,12 @@ export default function RecategorizacionPage() {
 
         {/* Cuándo */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Cuándo se hace?</h2>
+          <h2
+            id="cuando-se-hace"
+            className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4"
+          >
+            ¿Cuándo se hace?
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20 p-5">
               <h3 className="text-lg font-bold text-foreground mb-2">Primera recategorización</h3>
@@ -158,7 +191,12 @@ export default function RecategorizacionPage() {
 
         {/* Qué evalúa ARCA */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Qué evalúa ARCA?</h2>
+          <h2
+            id="que-evalua-arca"
+            className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4"
+          >
+            ¿Qué evalúa ARCA?
+          </h2>
           <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
             Cuando te recategorizás, ARCA mira cuatro parámetros y te ubica en la categoría que corresponda según el
             más alto. En la práctica, para la mayoría de monotributistas <strong className="text-foreground">los
@@ -207,7 +245,12 @@ export default function RecategorizacionPage() {
 
         {/* Paso a paso */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Paso a paso en ARCA</h2>
+          <h2
+            id="paso-a-paso"
+            className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4"
+          >
+            Paso a paso en ARCA
+          </h2>
           <ol className="space-y-4">
             {[
               {
@@ -246,7 +289,12 @@ export default function RecategorizacionPage() {
 
         {/* Recategorización de oficio */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Recategorización de oficio</h2>
+          <h2
+            id="recategorizacion-de-oficio"
+            className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4"
+          >
+            Recategorización de oficio
+          </h2>
           <div className="relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-6 shadow-sm">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-400/20 to-orange-400/20 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
             <div className="relative flex flex-col sm:flex-row items-start gap-4">
@@ -297,13 +345,17 @@ export default function RecategorizacionPage() {
           </div>
         </section>
 
+        <RelatedGuides currentHref="/monotributo/recategorizacion" className="mb-12" />
+
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         {/* FAQ */}
         <section className="mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={recategorizacionFaqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

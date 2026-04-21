@@ -28,10 +28,10 @@ export const metadata: Metadata = {
       "Todas las categorías del Monotributo 2026 con cuotas mensuales, topes anuales y desglose de aportes. Datos actualizados de ARCA.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/monotributo.png",
         width: 1200,
         height: 630,
-        alt: "Monotributo 2026 — GARCA",
+        alt: "Monotributo 2026 — categorías A a K",
       },
     ],
   },
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     title: "Monotributo 2026 — Categorías y Cuotas",
     description:
       "Todas las categorías del Monotributo 2026 con cuotas, topes y aportes. Datos oficiales de ARCA.",
-    images: ["/og-image.png"],
+    images: ["/og/monotributo.png"],
   },
   alternates: {
     canonical: sectionUrl,

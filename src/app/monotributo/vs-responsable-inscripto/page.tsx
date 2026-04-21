@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArticleByline } from "@/components/ui/ArticleByline";
+import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-import { vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
+import { getGuideDateModified, vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
-const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
   title: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
@@ -31,9 +31,18 @@ export const metadata: Metadata = {
     type: "article",
     url: `${siteUrl}/monotributo/vs-responsable-inscripto`,
     siteName: "GARCA",
+    images: [
+      {
+        url: "/og/vs-responsable-inscripto.png",
+        width: 1200,
+        height: 630,
+        alt: "Monotributo vs Responsable Inscripto",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/og/vs-responsable-inscripto.png"],
     title: "Monotributo vs Responsable Inscripto 2026",
     description:
       "Diferencias clave: IVA, Ganancias, facturación, retenciones y cuándo conviene cada régimen.",
@@ -91,32 +100,27 @@ export default function VsResponsableInscriptoPage() {
           className="mb-6"
           items={[
             { label: "Inicio", href: "/" },
-            { label: "Monotributo", href: "/monotributo" },
+            { label: "Guías", href: "/guias" },
             { label: "vs Responsable Inscripto" },
           ]}
         />
 
-        {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-950/40 dark:via-cyan-950/30 dark:to-blue-950/40 border border-teal-200 dark:border-teal-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(20,184,166,0.25)] dark:shadow-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-teal-400/25 to-cyan-400/25 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-400/25 to-cyan-400/25 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-teal-500/25">
-              Comparativa 2026
-            </span>
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
-              Monotributo vs Responsable Inscripto 2026
-            </h1>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
-              Son los dos regímenes impositivos más comunes en Argentina para quienes facturan por cuenta propia. El{" "}
-              <strong className="text-slate-900 dark:text-white">Monotributo</strong> es un régimen simplificado con
-              cuota fija; el <strong className="text-slate-900 dark:text-white">Responsable Inscripto</strong> es el
-              régimen general, más complejo pero sin tope de facturación. Acá te mostramos las diferencias clave y
-              cuándo conviene cada uno.
-            </p>
-            <ArticleByline dateModified={dateModified} />
-          </div>
-        </section>
+        <ArticleHero
+          image="/og/vs-responsable-inscripto.png"
+          imageAlt="Monotributo vs Responsable Inscripto"
+          badgeLabel="Comparativa 2026"
+          title="Monotributo vs Responsable Inscripto 2026"
+          description={
+            <>
+              Son los dos regímenes impositivos más comunes en Argentina para quienes facturan por cuenta propia.
+              El <strong className="text-white">Monotributo</strong> es un régimen simplificado con cuota fija; el{" "}
+              <strong className="text-white">Responsable Inscripto</strong> es el régimen general, más complejo
+              pero sin tope de facturación.
+            </>
+          }
+          dateModified={dateModified}
+          readingTime="7 min de lectura"
+        />
 
         {/* Resumen */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
@@ -243,13 +247,17 @@ export default function VsResponsableInscriptoPage() {
           </div>
         </section>
 
+        <RelatedGuides currentHref="/monotributo/vs-responsable-inscripto" className="mb-12" />
+
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         {/* FAQ */}
         <section className="mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={vsResponsableInscriptoFaqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

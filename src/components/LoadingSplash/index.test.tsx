@@ -47,8 +47,8 @@ describe("LoadingSplash", () => {
     // Should display one of the tips - check for common elements
     const tipTitles = [
       "¿Qué es GARCA?",
-      "100% Privado",
-      "Credenciales Seguras",
+      "Sin base de datos",
+      "Credenciales cifradas",
       "Sin límites",
       "Múltiples monedas",
       "Cálculo automático",

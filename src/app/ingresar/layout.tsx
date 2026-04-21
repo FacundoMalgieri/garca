@@ -6,7 +6,7 @@ const pageUrl = `${siteUrl}/ingresar`
 export const metadata: Metadata = {
   title: "Ingresar - Conectá con ARCA",
   description:
-    "Ingresá con tu CUIT y clave fiscal para recuperar tus comprobantes de ARCA de forma segura. Sin almacenamiento de datos, 100% privado.",
+    "Ingresá con tu CUIT y clave fiscal para recuperar tus comprobantes de ARCA. Credenciales cifradas con AES-256 y descartadas al terminar. Sin base de datos.",
   alternates: {
     canonical: pageUrl,
   },

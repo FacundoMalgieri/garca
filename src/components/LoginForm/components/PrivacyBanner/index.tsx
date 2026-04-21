@@ -6,10 +6,11 @@ export function PrivacyBanner() {
           <CheckIcon />
         </div>
         <div className="flex-1 text-sm text-left">
-          <p className="font-medium text-success mb-1">Privacidad Garantizada</p>
+          <p className="font-medium text-success mb-1">Cómo cuidamos tus credenciales</p>
           <p className="text-muted-foreground text-xs">
-            Los datos se almacenan únicamente en localStorage de tu navegador.
-            No se envían a servidores externos.
+            Tu clave fiscal se cifra con AES-256 antes de salir del navegador, se usa solo para
+            conectarse a ARCA y se descarta al terminar. Los comprobantes se guardan únicamente en
+            el localStorage de tu navegador.
           </p>
         </div>
       </div>

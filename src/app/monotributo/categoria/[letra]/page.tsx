@@ -384,12 +384,14 @@ export default async function CategoriaPage({
           </div>
         </section>
 
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         <section className="mb-12">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes — Categoría {upper}</h2>
           <FaqAccordion items={faqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

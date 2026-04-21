@@ -233,7 +233,7 @@ export default function AboutPage() {
             Soy monotributista y viví en primera persona la fricción de entrar al portal de ARCA
             (ex AFIP) a consultar facturas, calcular mi tope anual y decidir si me tenía que
             recategorizar. Esa necesidad concreta fue el origen de GARCA: una herramienta rápida y
-            privada para resolver ese problema sin rodeos.
+            privada para resolver ese problema sin vueltas.
           </p>
         </div>
       </section>

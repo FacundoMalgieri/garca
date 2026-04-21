@@ -8,8 +8,10 @@ export default function PrivacidadPage() {
 
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mb-8">
         <p className="text-base font-medium text-primary dark:text-white leading-relaxed">
-          GARCA es una herramienta que funciona <strong>100% en tu navegador</strong>.
-          No recopilamos, almacenamos ni transmitimos tus datos personales a ningún servidor externo.
+          GARCA no tiene base de datos ni retiene tus credenciales. Tu clave fiscal se{" "}
+          <strong>cifra en el navegador con AES-256</strong> antes de enviarse al servidor de scraping,
+          se usa únicamente para conectarse a ARCA en tu nombre y se descarta al terminar la consulta.
+          Los comprobantes que devuelve la consulta se guardan solo en el localStorage de tu navegador.
         </p>
       </div>
 
