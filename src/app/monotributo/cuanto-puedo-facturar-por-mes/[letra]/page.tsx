@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
@@ -373,16 +374,11 @@ export default async function CuantoFacturarPorMesPage({
           </Link>
         </section>
 
-        <section className="space-y-4 mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">
+        <section className="mb-12">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
             Preguntas frecuentes — Facturación mensual categoría {upper}
           </h2>
-          {faqEntries.map((entry) => (
-            <details key={entry.question} className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors">
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{entry.question}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{entry.answer}</p>
-            </details>
-          ))}
+          <FaqAccordion items={faqEntries} />
         </section>
 
       <SupportBanner />

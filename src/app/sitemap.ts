@@ -50,6 +50,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/monotributo/guias`,
+      lastModified: monotributoLastMod,
+      changeFrequency: "monthly",
+      priority: 0.85,
+    },
+    {
       url: `${siteUrl}/monotributo/recategorizacion`,
       lastModified: monotributoLastMod,
       changeFrequency: "monthly",

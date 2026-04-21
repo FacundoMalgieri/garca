@@ -111,6 +111,42 @@ const FAQ_ITEMS = [
   },
 ];
 
+// Monotributo guides featured on the homepage resources section.
+// Three hand-picked reads that work as an "editorial highlights" — the full
+// catalogue lives at /monotributo/guias, so this is just a teaser.
+const MONOTRIBUTO_GUIDES = [
+  {
+    href: "/monotributo/recategorizacion",
+    category: "Trámite",
+    title: "Recategorización paso a paso",
+    description: "Cuándo corresponde, qué mira ARCA y qué pasa si no la hacés en enero o julio.",
+    readingTime: "5 min de lectura",
+    accent: "from-indigo-500 to-blue-500",
+    accentText: "text-indigo-700 dark:text-indigo-300",
+    chip: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-200 ring-indigo-200 dark:ring-indigo-800/60",
+  },
+  {
+    href: "/monotributo/vs-responsable-inscripto",
+    category: "Comparativa",
+    title: "Monotributo vs Responsable Inscripto",
+    description: "IVA, Ganancias, obligaciones formales y cuándo conviene dar el salto de régimen.",
+    readingTime: "7 min de lectura",
+    accent: "from-teal-500 to-cyan-500",
+    accentText: "text-teal-700 dark:text-teal-300",
+    chip: "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-200 ring-teal-200 dark:ring-teal-800/60",
+  },
+  {
+    href: "/monotributo/que-pasa-si-me-paso",
+    category: "Caso límite",
+    title: "¿Qué pasa si me paso del tope?",
+    description: "Recategorización de oficio, exclusión del régimen y cómo volver si ya te excluyeron.",
+    readingTime: "6 min de lectura",
+    accent: "from-amber-500 to-orange-500",
+    accentText: "text-amber-700 dark:text-amber-300",
+    chip: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-200 ring-amber-200 dark:ring-amber-800/60",
+  },
+];
+
 // Currency pill colors
 const currencyColors: Record<string, string> = {
   blue: "from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50",
@@ -190,6 +226,7 @@ export default function Home() {
   // Section refs for dynamic parallax
   const featuresSectionRef = useRef<HTMLElement>(null);
   const calcSectionRef = useRef<HTMLElement>(null);
+  const monotribSectionRef = useRef<HTMLElement>(null);
   const currencySectionRef = useRef<HTMLElement>(null);
   const privacySectionRef = useRef<HTMLElement>(null);
   const supportSectionRef = useRef<HTMLElement>(null);
@@ -198,6 +235,7 @@ export default function Home() {
   // All sections use scroll progress for enter + exit effects
   const featuresProgress = useSectionProgress(featuresSectionRef);
   const calcProgress = useSectionProgress(calcSectionRef);
+  const monotribProgress = useSectionProgress(monotribSectionRef);
   const currencyProgress = useSectionProgress(currencySectionRef);
   const privacyProgress = useSectionProgress(privacySectionRef);
   const supportProgress = useSectionProgress(supportSectionRef);
@@ -205,6 +243,7 @@ export default function Home() {
 
   // Visibility triggers for entry animations (badges, buttons)
   const calcVisible = useSectionVisible(calcSectionRef, 0.3);
+  const monotribVisible = useSectionVisible(monotribSectionRef, 0.2);
   const currencyVisible = useSectionVisible(currencySectionRef, 0.4);
   const supportVisible = useSectionVisible(supportSectionRef, 0.4);
   const faqVisible = useSectionVisible(faqSectionRef, 0.2);
@@ -571,10 +610,10 @@ export default function Home() {
                   <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
                 <Link
-                  href="/monotributo"
+                  href="#monotributo-guias"
                   className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 dark:border-blue-800/60 bg-white/70 dark:bg-white/5 backdrop-blur-sm px-8 py-4 text-base font-semibold text-blue-700 dark:text-blue-200 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
                 >
-                  <span>Ver guía de Monotributo</span>
+                  <span>Ver guías de Monotributo</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
               </div>
@@ -590,6 +629,148 @@ export default function Home() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== MONOTRIBUTO RESOURCES SECTION ========== */}
+      <section
+        ref={monotribSectionRef}
+        id="monotributo-guias"
+        className="relative py-24 md:py-32 overflow-hidden"
+      >
+        <div
+          className="relative max-w-5xl mx-auto px-6"
+          style={{
+            transform: `translateY(${
+              monotribProgress < 0.2
+                ? (1 - monotribProgress / 0.2) * 60
+                : monotribProgress > 0.75
+                  ? -((monotribProgress - 0.75) / 0.25) * 150
+                  : 0
+            }px)`,
+            opacity:
+              monotribProgress < 0.2
+                ? monotribProgress / 0.2
+                : monotribProgress > 0.75
+                  ? Math.max(0, 1 - (monotribProgress - 0.75) / 0.35)
+                  : 1,
+          }}
+        >
+          <div className="text-center mb-12">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-indigo-500/25 transition-all duration-700"
+              style={{
+                opacity: monotribVisible ? 1 : 0,
+                transform: monotribVisible ? "translateY(0)" : "translateY(20px)",
+              }}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Guías y recursos
+            </span>
+            <h2
+              className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 transition-all duration-700"
+              style={{
+                opacity: monotribVisible ? 1 : 0,
+                transform: monotribVisible ? "translateY(0)" : "translateY(20px)",
+                transitionDelay: "100ms",
+              }}
+            >
+              Todo sobre Monotributo 2026
+            </h2>
+            <p
+              className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto transition-all duration-700"
+              style={{
+                opacity: monotribVisible ? 1 : 0,
+                transform: monotribVisible ? "translateY(0)" : "translateY(20px)",
+                transitionDelay: "200ms",
+              }}
+            >
+              Artículos y guías para entender el régimen, planificar tu año y resolver las dudas más
+              comunes. Datos tomados directo de ARCA y actualizados cada semestre.
+            </p>
+          </div>
+
+          {/* Editorial list layout — intentionally different from the features grid
+              above. Each row reads like an article preview in a premium magazine. */}
+          <ol className="flex flex-col gap-3 mb-8">
+            {MONOTRIBUTO_GUIDES.map((guide, index) => {
+              const number = String(index + 1).padStart(2, "0");
+              return (
+                <li
+                  key={guide.href}
+                  style={{
+                    opacity: monotribVisible ? 1 : 0,
+                    transform: monotribVisible ? "translateY(0)" : "translateY(24px)",
+                    transition: "opacity 700ms ease-out, transform 700ms ease-out",
+                    transitionDelay: `${300 + index * 90}ms`,
+                  }}
+                >
+                  <Link
+                    href={guide.href}
+                    className="group relative flex items-stretch gap-5 md:gap-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] backdrop-blur-sm px-4 sm:px-6 py-5 md:py-6 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.05] transition-colors"
+                  >
+                    <div
+                      className={`w-1 rounded-full bg-gradient-to-b ${guide.accent} opacity-80 group-hover:opacity-100 transition-opacity`}
+                      aria-hidden
+                    />
+                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                      <span
+                        className={`font-mono text-3xl md:text-4xl font-bold bg-gradient-to-br ${guide.accent} bg-clip-text text-transparent leading-none shrink-0 tabular-nums`}
+                        aria-hidden
+                      >
+                        {number}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ${guide.chip}`}
+                          >
+                            {guide.category}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {guide.readingTime}
+                          </span>
+                        </div>
+                        <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-1 leading-snug">
+                          {guide.title}
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {guide.description}
+                        </p>
+                      </div>
+                      <span
+                        className={`self-end sm:self-center text-xs font-semibold ${guide.accentText} inline-flex items-center gap-1 shrink-0 group-hover:translate-x-1 transition-transform`}
+                      >
+                        Leer
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+
+          <div
+            className="text-center transition-all duration-700"
+            style={{
+              opacity: monotribVisible ? 1 : 0,
+              transform: monotribVisible ? "translateY(0)" : "translateY(20px)",
+              transitionDelay: "700ms",
+            }}
+          >
+            <Link
+              href="/monotributo/guias"
+              className="group inline-flex items-center gap-2 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800/60 bg-white/70 dark:bg-white/5 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-indigo-700 dark:text-indigo-200 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-white dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
+            >
+              Ver todas las guías
+              <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
+            </Link>
           </div>
         </div>
       </section>

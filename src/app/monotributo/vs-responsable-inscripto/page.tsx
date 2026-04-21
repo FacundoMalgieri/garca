@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ArticleByline } from "@/components/ui/ArticleByline";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
@@ -9,12 +11,6 @@ import { vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
 const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
-
-const dateFormatter = new Intl.DateTimeFormat("es-AR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
 
 export const metadata: Metadata = {
   title: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
@@ -118,10 +114,7 @@ export default function VsResponsableInscriptoPage() {
               régimen general, más complejo pero sin tope de facturación. Acá te mostramos las diferencias clave y
               cuándo conviene cada uno.
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Actualizado el{" "}
-              <time dateTime={dateModified}>{dateFormatter.format(new Date(dateModified))}</time>.
-            </p>
+            <ArticleByline dateModified={dateModified} />
           </div>
         </section>
 
@@ -251,17 +244,9 @@ export default function VsResponsableInscriptoPage() {
         </section>
 
         {/* FAQ */}
-        <section className="space-y-4 mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {vsResponsableInscriptoFaqEntries.map((entry) => (
-            <details
-              key={entry.question}
-              className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-teal-300 dark:hover:border-teal-700 transition-colors"
-            >
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{entry.question}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{entry.answer}</p>
-            </details>
-          ))}
+        <section className="mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
+          <FaqAccordion items={vsResponsableInscriptoFaqEntries} />
         </section>
 
       <SupportBanner />

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { monotributoHubFaqEntries } from "@/lib/seo/page-schemas";
@@ -137,72 +138,38 @@ export default function MonotributoIndexPage() {
           </div>
         </section>
 
+        {/* Compact pointer to the dedicated guides index */}
         <section className="mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Guías de Monotributo</h2>
-          <p className="text-sm text-muted-foreground mb-4 max-w-3xl">
-            Respuestas cortas a las dudas más comunes, con tablas oficiales, ejemplos y pasos concretos.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              {
-                href: "/monotributo/recategorizacion",
-                title: "Recategorización paso a paso",
-                description: "Cuándo y cómo recategorizarte en enero y julio. Qué evalúa ARCA y qué pasa si no lo hacés.",
-                gradient: "from-blue-500 to-indigo-500",
-                border: "border-blue-200 dark:border-blue-800/40",
-                bg: "from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20",
-                hover: "hover:shadow-blue-500/10",
-                text: "text-blue-700 dark:text-blue-300",
-              },
-              {
-                href: "/monotributo/servicios-vs-bienes",
-                title: "Servicios vs Venta de bienes",
-                description: "Diferencia de cuota por rubro con tabla completa de las 11 categorías 2026.",
-                gradient: "from-purple-500 to-pink-500",
-                border: "border-purple-200 dark:border-purple-800/40",
-                bg: "from-purple-50/70 to-pink-50/70 dark:from-purple-950/20 dark:to-pink-950/20",
-                hover: "hover:shadow-purple-500/10",
-                text: "text-purple-700 dark:text-purple-300",
-              },
-              {
-                href: "/monotributo/que-pasa-si-me-paso",
-                title: "¿Qué pasa si me paso del tope?",
-                description: "Recategorización, recategorización de oficio y exclusión del régimen.",
-                gradient: "from-amber-500 to-orange-500",
-                border: "border-amber-200 dark:border-amber-800/40",
-                bg: "from-amber-50/70 to-orange-50/70 dark:from-amber-950/20 dark:to-orange-950/20",
-                hover: "hover:shadow-amber-500/10",
-                text: "text-amber-700 dark:text-amber-300",
-              },
-              {
-                href: "/monotributo/vs-responsable-inscripto",
-                title: "Monotributo vs Responsable Inscripto",
-                description: "Comparativa 2026: IVA, Ganancias, facturación y cuándo conviene cada régimen.",
-                gradient: "from-teal-500 to-cyan-500",
-                border: "border-teal-200 dark:border-teal-800/40",
-                bg: "from-teal-50/70 to-cyan-50/70 dark:from-teal-950/20 dark:to-cyan-950/20",
-                hover: "hover:shadow-teal-500/10",
-                text: "text-teal-700 dark:text-teal-300",
-              },
-            ].map((guide) => (
-              <Link
-                key={guide.href}
-                href={guide.href}
-                className={`group relative overflow-hidden rounded-2xl border ${guide.border} bg-gradient-to-br ${guide.bg} p-5 hover:shadow-lg ${guide.hover} hover:-translate-y-0.5 transition-all`}
-              >
-                <div className={`inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br ${guide.gradient} text-white mb-3 shadow-sm`}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <Link
+            href="/monotributo/guias"
+            className="group relative overflow-hidden block rounded-2xl border border-indigo-200 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50 via-blue-50 to-violet-50 dark:from-indigo-950/30 dark:via-blue-950/20 dark:to-violet-950/30 p-5 md:p-6 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-sm shrink-0">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="text-base font-bold text-foreground mb-1">{guide.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{guide.description}</p>
-                <p className={`mt-3 text-xs font-semibold ${guide.text} group-hover:translate-x-0.5 transition-transform`}>
-                  Leer guía →
-                </p>
-              </Link>
-            ))}
-          </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-foreground mb-1">
+                    Todas las guías de Monotributo
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                    Recategorización, exclusión del régimen, comparativa con Responsable Inscripto, servicios vs.
+                    venta de bienes y más. Índice completo en un solo lugar.
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0">
+                Ver índice de guías
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </span>
+            </div>
+          </Link>
         </section>
 
         {/* CTA with gradient + blobs */}
@@ -228,14 +195,9 @@ export default function MonotributoIndexPage() {
           </div>
         </section>
 
-        <section className="space-y-4 mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {monotributoHubFaqEntries.map((item) => (
-            <details key={item.question} className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{item.question}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
-            </details>
-          ))}
+        <section className="mb-12">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
+          <FaqAccordion items={monotributoHubFaqEntries} />
         </section>
 
       <SupportBanner />

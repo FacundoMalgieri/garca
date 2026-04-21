@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
@@ -383,14 +384,9 @@ export default async function CategoriaPage({
           </div>
         </section>
 
-        <section className="space-y-4 mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">Preguntas frecuentes — Categoría {upper}</h2>
-          {faqEntries.map((entry) => (
-            <details key={entry.question} className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{entry.question}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{entry.answer}</p>
-            </details>
-          ))}
+        <section className="mb-12">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes — Categoría {upper}</h2>
+          <FaqAccordion items={faqEntries} />
         </section>
 
       <SupportBanner />
