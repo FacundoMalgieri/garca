@@ -62,3 +62,12 @@ jobs:
             exit 1
           fi
           echo "Deploy triggered successfully"
+
+      - name: Wait for Dokploy to finish serving new build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: sleep 600
+
+      - name: Ping IndexNow (Bing / Yandex / Seznam / Naver)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: npm run ping-indexnow
