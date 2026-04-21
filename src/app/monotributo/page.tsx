@@ -205,6 +205,74 @@ export default function MonotributoIndexPage() {
           </div>
         </section>
 
+        <section className="mb-12">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Guías de Monotributo</h2>
+          <p className="text-sm text-muted-foreground mb-4 max-w-3xl">
+            Respuestas cortas a las dudas más comunes, con tablas oficiales, ejemplos y pasos concretos.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              {
+                href: "/monotributo/recategorizacion",
+                title: "Recategorización paso a paso",
+                description: "Cuándo y cómo recategorizarte en enero y julio. Qué evalúa ARCA y qué pasa si no lo hacés.",
+                gradient: "from-blue-500 to-indigo-500",
+                border: "border-blue-200 dark:border-blue-800/40",
+                bg: "from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20",
+                hover: "hover:shadow-blue-500/10",
+                text: "text-blue-700 dark:text-blue-300",
+              },
+              {
+                href: "/monotributo/servicios-vs-bienes",
+                title: "Servicios vs Venta de bienes",
+                description: "Diferencia de cuota por rubro con tabla completa de las 11 categorías 2026.",
+                gradient: "from-purple-500 to-pink-500",
+                border: "border-purple-200 dark:border-purple-800/40",
+                bg: "from-purple-50/70 to-pink-50/70 dark:from-purple-950/20 dark:to-pink-950/20",
+                hover: "hover:shadow-purple-500/10",
+                text: "text-purple-700 dark:text-purple-300",
+              },
+              {
+                href: "/monotributo/que-pasa-si-me-paso",
+                title: "¿Qué pasa si me paso del tope?",
+                description: "Recategorización, recategorización de oficio y exclusión del régimen.",
+                gradient: "from-amber-500 to-orange-500",
+                border: "border-amber-200 dark:border-amber-800/40",
+                bg: "from-amber-50/70 to-orange-50/70 dark:from-amber-950/20 dark:to-orange-950/20",
+                hover: "hover:shadow-amber-500/10",
+                text: "text-amber-700 dark:text-amber-300",
+              },
+              {
+                href: "/monotributo/vs-responsable-inscripto",
+                title: "Monotributo vs Responsable Inscripto",
+                description: "Comparativa 2026: IVA, Ganancias, facturación y cuándo conviene cada régimen.",
+                gradient: "from-teal-500 to-cyan-500",
+                border: "border-teal-200 dark:border-teal-800/40",
+                bg: "from-teal-50/70 to-cyan-50/70 dark:from-teal-950/20 dark:to-cyan-950/20",
+                hover: "hover:shadow-teal-500/10",
+                text: "text-teal-700 dark:text-teal-300",
+              },
+            ].map((guide) => (
+              <Link
+                key={guide.href}
+                href={guide.href}
+                className={`group relative overflow-hidden rounded-2xl border ${guide.border} bg-gradient-to-br ${guide.bg} p-5 hover:shadow-lg ${guide.hover} hover:-translate-y-0.5 transition-all`}
+              >
+                <div className={`inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br ${guide.gradient} text-white mb-3 shadow-sm`}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-1">{guide.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{guide.description}</p>
+                <p className={`mt-3 text-xs font-semibold ${guide.text} group-hover:translate-x-0.5 transition-transform`}>
+                  Leer guía →
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* CTA with gradient + blobs */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-6 md:p-8 mb-12 shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
           <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
