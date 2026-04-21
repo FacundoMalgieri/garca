@@ -499,6 +499,33 @@ const vsResponsableInscriptoArticleSchema: Schema = {
   inLanguage: "es-AR",
 };
 
+// ----- /about -----
+
+const aboutBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Sobre el autor", item: `${siteUrl}/about` },
+  ],
+};
+
+const aboutPageSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "@id": `${siteUrl}/about`,
+  url: `${siteUrl}/about`,
+  name: "Sobre el autor — Quién está detrás de GARCA",
+  description:
+    "GARCA lo mantiene Facundo Malgieri, software engineer argentino con más de 10 años de experiencia. Proyecto independiente, open source, no afiliado a ARCA.",
+  inLanguage: "es-AR",
+  isPartOf: { "@id": `${siteUrl}#website` },
+  primaryImageOfPage: ARTICLE_IMAGE,
+  mainEntity: { "@id": `${siteUrl}#person` },
+  about: { "@id": `${siteUrl}#person` },
+  dateModified,
+};
+
 // ----- /ingresar · /privacidad · /terminos -----
 
 const ingresarBreadcrumbSchema: Schema = {
@@ -776,6 +803,8 @@ export function getSchemasForPath(pathname: string): Schema[] {
         vsResponsableInscriptoArticleSchema,
         buildFaqSchema(vsResponsableInscriptoFaqEntries),
       ];
+    case "/about":
+      return [aboutBreadcrumbSchema, aboutPageSchema];
     case "/ingresar":
       return [ingresarBreadcrumbSchema];
     case "/privacidad":
