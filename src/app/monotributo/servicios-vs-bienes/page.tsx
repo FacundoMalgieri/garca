@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ArticleByline } from "@/components/ui/ArticleByline";
+import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
-import { serviciosVsBienesFaqEntries } from "@/lib/seo/page-schemas";
+import { getGuideDateModified, serviciosVsBienesFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 
@@ -16,7 +17,7 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
-const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
   title: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
@@ -38,9 +39,18 @@ export const metadata: Metadata = {
     type: "article",
     url: `${siteUrl}/monotributo/servicios-vs-bienes`,
     siteName: "GARCA",
+    images: [
+      {
+        url: "/og/servicios-vs-bienes.png",
+        width: 1200,
+        height: 630,
+        alt: "Monotributo: servicios vs venta de bienes",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/og/servicios-vs-bienes.png"],
     title: "Monotributo: Servicios vs Venta de Bienes 2026",
     description:
       "Tabla comparativa oficial 2026. Diferencias de cuota e impuesto integrado por categoría.",
@@ -56,31 +66,27 @@ export default function ServiciosVsBienesPage() {
           className="mb-6"
           items={[
             { label: "Inicio", href: "/" },
-            { label: "Monotributo", href: "/monotributo" },
+            { label: "Guías", href: "/guias" },
             { label: "Servicios vs Venta de bienes" },
           ]}
         />
 
-        {/* Hero */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-950/40 dark:via-pink-950/30 dark:to-rose-950/40 border border-purple-200 dark:border-purple-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(168,85,247,0.25)] dark:shadow-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-400/25 to-pink-400/25 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-pink-400/25 to-rose-400/25 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-purple-500/25">
-              Comparativa 2026
-            </span>
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
-              Monotributo: Servicios vs Venta de Bienes 2026
-            </h1>
-            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
-              La distinción entre <strong className="text-slate-900 dark:text-white">prestación de servicios</strong>{" "}
-              y <strong className="text-slate-900 dark:text-white">venta de bienes</strong> cambia cuánto pagás de
-              cuota mensual, pero no cambia el tope de facturación anual. Acá vas a ver la tabla completa con ambos
-              valores por categoría y cuándo conviene cada uno.
-            </p>
-            <ArticleByline dateModified={dateModified} />
-          </div>
-        </section>
+        <ArticleHero
+          image="/og/servicios-vs-bienes.png"
+          imageAlt="Monotributo servicios vs venta de bienes"
+          badgeLabel="Comparativa 2026"
+          title="Monotributo: Servicios vs Venta de Bienes 2026"
+          description={
+            <>
+              La distinción entre <strong className="text-white">prestación de servicios</strong> y{" "}
+              <strong className="text-white">venta de bienes</strong> cambia cuánto pagás de cuota mensual, pero
+              no cambia el tope de facturación anual. Acá vas a ver la tabla completa con ambos valores por
+              categoría y cuándo conviene cada uno.
+            </>
+          }
+          dateModified={dateModified}
+          readingTime="4 min de lectura"
+        />
 
         {/* Key differences */}
         <section className="mb-12">
@@ -262,13 +268,17 @@ export default function ServiciosVsBienesPage() {
           </div>
         </section>
 
+        <RelatedGuides currentHref="/monotributo/servicios-vs-bienes" className="mb-12" />
+
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
+
         {/* FAQ */}
         <section className="mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={serviciosVsBienesFaqEntries} />
         </section>
-
-      <SupportBanner />
     </div>
   );
 }

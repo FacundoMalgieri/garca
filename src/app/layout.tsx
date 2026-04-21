@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
 import { Footer } from "@/components/Footer";
-import { InitialLoader } from "@/components/InitialLoader";
 import { JsonLd } from "@/components/JsonLd";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceProvider } from "@/contexts/InvoiceContext";
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | GARCA",
   },
   description:
-    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado, sin instalar nada.",
+    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source, sin base de datos ni registro. No instalás nada.",
   keywords: [
     "AFIP",
     "ARCA",
@@ -69,7 +68,7 @@ export const metadata: Metadata = {
     siteName: "GARCA",
     title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
     description:
-      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado.",
+      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source y sin base de datos.",
     images: [
       {
         url: "/og-image.png",
@@ -83,7 +82,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
     description:
-      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado.",
+      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source y sin base de datos.",
     images: ["/og-image.png"],
   },
   alternates: {
@@ -120,13 +119,11 @@ export default function RootLayout({
         <ThemeProvider>
           <InvoiceProvider>
             <TourProvider>
-              <InitialLoader>
-                <div className="relative flex min-h-screen flex-col">
-                  <Navbar />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </div>
-              </InitialLoader>
+              <div className="relative flex min-h-screen flex-col">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
             </TourProvider>
           </InvoiceProvider>
         </ThemeProvider>

@@ -6,7 +6,7 @@ const pageUrl = `${siteUrl}/privacidad`
 export const metadata: Metadata = {
   title: "Política de Privacidad",
   description:
-    "GARCA funciona 100% en tu navegador. No recopilamos, almacenamos ni transmitimos tus datos personales. Conocé cómo protegemos tu información.",
+    "Cómo protege GARCA tus datos: credenciales cifradas con AES-256, descartadas al terminar la consulta, sin base de datos ni retención en servidores. Comprobantes guardados solo en tu navegador.",
   alternates: {
     canonical: pageUrl,
   },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "GARCA",
     title: "Política de Privacidad - GARCA",
     description:
-      "GARCA funciona 100% en tu navegador. No recopilamos ni almacenamos tus datos personales.",
+      "Credenciales cifradas con AES-256 y descartadas al terminar. Sin base de datos en servidores. Comprobantes solo en tu navegador.",
     images: [
       {
         url: "/og-image.png",

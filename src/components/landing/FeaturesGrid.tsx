@@ -58,8 +58,8 @@ export function FeaturesGrid({ scrollY }: FeaturesGridProps) {
     },
     {
       icon: <LockIcon />,
-      title: "100% Privado",
-      description: "Todo funciona en tu navegador. Tus datos nunca salen de tu dispositivo",
+      title: "Credenciales cifradas",
+      description: "AES-256 antes de salir del navegador. Nunca las guardamos en nuestros servidores",
       gradient: "from-emerald-500 to-green-500",
       shadow: "shadow-emerald-500/30",
     },

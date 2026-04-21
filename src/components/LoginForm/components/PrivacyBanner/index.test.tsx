@@ -7,13 +7,15 @@ import { render, screen } from "@testing-library/react";
 describe("PrivacyBanner", () => {
   it("should render privacy title", () => {
     render(<PrivacyBanner />);
-    expect(screen.getByText("Privacidad Garantizada")).toBeInTheDocument();
+    expect(screen.getByText("Cómo cuidamos tus credenciales")).toBeInTheDocument();
   });
 
   it("should render privacy description", () => {
     render(<PrivacyBanner />);
-    expect(screen.getByText(/Los datos se almacenan únicamente en localStorage/)).toBeInTheDocument();
-    expect(screen.getByText(/No se envían a servidores externos/)).toBeInTheDocument();
+    expect(screen.getByText(/Tu clave fiscal se cifra con AES-256/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Los comprobantes se guardan únicamente en/),
+    ).toBeInTheDocument();
   });
 
   it("should render check icon", () => {
