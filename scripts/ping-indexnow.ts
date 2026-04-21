@@ -26,6 +26,7 @@ const STATIC_PATHS = [
   "/about",
   "/calculadora-monotributo",
   "/monotributo",
+  "/monotributo/guias",
   "/monotributo/recategorizacion",
   "/monotributo/servicios-vs-bienes",
   "/monotributo/que-pasa-si-me-paso",

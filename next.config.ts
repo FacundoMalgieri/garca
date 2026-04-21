@@ -21,7 +21,7 @@ const cspDirectives = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com https://analytics.garca.app`,
   // unsafe-inline required for Tailwind/CSS-in-JS
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://github.com https://avatars.githubusercontent.com",
   "font-src 'self' data:",
   "connect-src 'self' https://challenges.cloudflare.com https://analytics.garca.app",
   "frame-src https://challenges.cloudflare.com",

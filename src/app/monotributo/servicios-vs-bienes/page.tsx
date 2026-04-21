@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ArticleByline } from "@/components/ui/ArticleByline";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { serviciosVsBienesFaqEntries } from "@/lib/seo/page-schemas";
@@ -15,12 +17,6 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
 });
 
 const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
-
-const dateFormatter = new Intl.DateTimeFormat("es-AR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
 
 export const metadata: Metadata = {
   title: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
@@ -82,10 +78,7 @@ export default function ServiciosVsBienesPage() {
               cuota mensual, pero no cambia el tope de facturación anual. Acá vas a ver la tabla completa con ambos
               valores por categoría y cuándo conviene cada uno.
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Actualizado el{" "}
-              <time dateTime={dateModified}>{dateFormatter.format(new Date(dateModified))}</time>.
-            </p>
+            <ArticleByline dateModified={dateModified} />
           </div>
         </section>
 
@@ -270,17 +263,9 @@ export default function ServiciosVsBienesPage() {
         </section>
 
         {/* FAQ */}
-        <section className="space-y-4 mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
-          {serviciosVsBienesFaqEntries.map((entry) => (
-            <details
-              key={entry.question}
-              className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-            >
-              <summary className="cursor-pointer text-base font-semibold text-foreground">{entry.question}</summary>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{entry.answer}</p>
-            </details>
-          ))}
+        <section className="mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
+          <FaqAccordion items={serviciosVsBienesFaqEntries} />
         </section>
 
       <SupportBanner />

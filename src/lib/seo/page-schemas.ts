@@ -766,6 +766,89 @@ function buildCuantoFacturarSchemas(letra: string): Schema[] {
   return [breadcrumb, article, buildFaqSchema(buildCuantoFacturarFaqEntries(letra))];
 }
 
+// ----- /monotributo/guias (dedicated guides index) -----
+
+export const guiasFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Para qué sirven estas guías?",
+    answer:
+      "Son artículos cortos y prácticos sobre los temas que más consulta el monotributista argentino: cuándo recategorizarse, qué pasa si superás el tope, diferencias con el Responsable Inscripto, servicios vs. venta de bienes y más. Cada guía está actualizada con datos oficiales de ARCA.",
+  },
+  {
+    question: "¿Cada cuánto se actualizan?",
+    answer:
+      "Las guías se revisan cada semestre, cuando ARCA publica la actualización oficial de topes y cuotas (enero y julio). Los cambios normativos significativos se reflejan en el momento, con la fecha de actualización visible al pie de cada artículo.",
+  },
+  {
+    question: "¿Puedo usar estas guías como asesoramiento contable?",
+    answer:
+      "No. GARCA es una herramienta de información basada en los datos oficiales de ARCA, pero no reemplaza el asesoramiento de un contador matriculado. Si tenés una situación compleja (exclusión del régimen, combinación de regímenes, actividad internacional), consultá con un profesional.",
+  },
+];
+
+const guiasBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
+    { "@type": "ListItem", position: 3, name: "Guías", item: `${siteUrl}/monotributo/guias` },
+  ],
+};
+
+const guiasCollectionPageSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "@id": `${siteUrl}/monotributo/guias`,
+  url: `${siteUrl}/monotributo/guias`,
+  name: "Guías de Monotributo 2026 — GARCA",
+  description:
+    "Índice completo de guías sobre Monotributo en Argentina: recategorización, exclusión, comparativa con Responsable Inscripto, servicios vs. bienes, facturación y más.",
+  inLanguage: "es-AR",
+  isPartOf: { "@id": `${siteUrl}#website` },
+  primaryImageOfPage: ARTICLE_IMAGE,
+  dateModified,
+  about: {
+    "@type": "Thing",
+    name: "Monotributo Argentina",
+  },
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        url: `${siteUrl}/monotributo`,
+        name: "Monotributo 2026 — Categorías, cuotas y topes",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        url: `${siteUrl}/monotributo/recategorizacion`,
+        name: "Recategorización del Monotributo paso a paso",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        url: `${siteUrl}/monotributo/servicios-vs-bienes`,
+        name: "Servicios vs. Venta de bienes en Monotributo",
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        url: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
+        name: "¿Qué pasa si me paso del tope del Monotributo?",
+      },
+      {
+        "@type": "ListItem",
+        position: 5,
+        url: `${siteUrl}/monotributo/vs-responsable-inscripto`,
+        name: "Monotributo vs. Responsable Inscripto",
+      },
+    ],
+  },
+};
+
 // ----- Matcher -----
 
 /**
@@ -787,6 +870,8 @@ export function getSchemasForPath(pathname: string): Schema[] {
         monotributoHubArticleSchema,
         buildFaqSchema(monotributoHubFaqEntries),
       ];
+    case "/monotributo/guias":
+      return [guiasBreadcrumbSchema, guiasCollectionPageSchema, buildFaqSchema(guiasFaqEntries)];
     case "/monotributo/recategorizacion":
       return [recategorizacionBreadcrumbSchema, recategorizacionArticleSchema, buildFaqSchema(recategorizacionFaqEntries)];
     case "/monotributo/servicios-vs-bienes":

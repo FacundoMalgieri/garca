@@ -6,10 +6,10 @@ type FooterLink = { href: string; label: string; external?: boolean };
 const FOOTER_LINKS: Array<FooterLink> = [
   { href: "/calculadora-monotributo", label: "Calculadora" },
   { href: "/monotributo", label: "Monotributo" },
-  { href: "/about", label: "Sobre el autor" },
+  { href: "/about", label: "Autor" },
   { href: "/privacidad", label: "Privacidad" },
   { href: "/terminos", label: "Términos" },
-  { href: "https://www.arca.gob.ar", label: "ARCA Oficial", external: true },
+  { href: "https://www.arca.gob.ar", label: "ARCA", external: true },
   { href: "https://github.com/FacundoMalgieri/garca", label: "GitHub", external: true },
 ];
 
