@@ -56,15 +56,8 @@ const softwareApplicationSchema = {
     "@type": "WebPage",
     url: `${siteUrl}/privacidad`,
   },
-  author: {
-    "@type": "Person",
-    name: "Facundo Malgieri",
-    url: "https://github.com/FacundoMalgieri",
-  },
-  maintainer: {
-    "@type": "Person",
-    name: "Facundo Malgieri",
-  },
+  author: { "@id": `${siteUrl}#person` },
+  maintainer: { "@id": `${siteUrl}#person` },
   publisher: { "@id": `${siteUrl}#organization` },
   isAccessibleForFree: true,
   inLanguage: "es-AR",
@@ -107,11 +100,7 @@ const organizationSchema = {
     "GARCA es una herramienta gratuita y open source para monotributistas argentinos. Permite recuperar comprobantes del portal ARCA (ex AFIP), calcular la categoría de Monotributo, proyectar la facturación y simular recategorizaciones, todo de forma 100% privada en el navegador.",
   slogan: "ARCA Monotributo: comprobantes, categorías y calculadora",
   foundingDate: "2025",
-  founder: {
-    "@type": "Person",
-    name: "Facundo Malgieri",
-    url: "https://github.com/FacundoMalgieri",
-  },
+  founder: { "@id": `${siteUrl}#person` },
   areaServed: {
     "@type": "Country",
     name: "Argentina",
@@ -139,6 +128,26 @@ const organizationSchema = {
   },
 };
 
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": `${siteUrl}#person`,
+  name: "Facundo Malgieri",
+  url: "https://github.com/FacundoMalgieri",
+  jobTitle: "Software Engineer",
+  nationality: { "@type": "Country", name: "Argentina" },
+  knowsAbout: [
+    "Monotributo",
+    "ARCA",
+    "AFIP",
+    "Facturación electrónica",
+    "Impuestos Argentina",
+    "Next.js",
+    "TypeScript",
+  ],
+  sameAs: ["https://github.com/FacundoMalgieri"],
+};
+
 export async function JsonLd() {
   const requestHeaders = await headers();
   const pathname = requestHeaders.get("x-pathname") ?? "/";
@@ -152,6 +161,7 @@ export async function JsonLd() {
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(webSiteSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(organizationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(personSchema) }} />
       {pageSchemas.map((schema, index) => (
         <script
            
