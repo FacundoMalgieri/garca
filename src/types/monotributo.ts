@@ -26,6 +26,7 @@ export interface CategoriaMonotributo {
 export interface MonotributoData {
   categorias: CategoriaMonotributo[];
   fechaVigencia: string; // "01/08/2025"
+  lastUpdated?: string; // ISO date, e.g. "2026-01-20"
 }
 
 export interface MonotributoStatus {

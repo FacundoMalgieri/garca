@@ -37,6 +37,7 @@ interface CategoriaMonotributo {
 interface MonotributoData {
   categorias: CategoriaMonotributo[];
   fechaVigencia: string;
+  lastUpdated?: string;
 }
 
 const MONOTRIBUTO_URL = "https://www.arca.gob.ar/monotributo/categorias.asp";
@@ -135,6 +136,7 @@ async function scrapeMonotributoCategories(): Promise<MonotributoData> {
     return {
       categorias: validCategorias,
       fechaVigencia,
+      lastUpdated: new Date().toISOString().split("T")[0],
     };
   } catch (error) {
     await browser.close();

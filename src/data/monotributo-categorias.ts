@@ -211,5 +211,6 @@ export const MONOTRIBUTO_DATA: MonotributoData = {
       }
     }
   ],
-  fechaVigencia: ""
+  fechaVigencia: "",
+  lastUpdated: "2026-01-20"
 };

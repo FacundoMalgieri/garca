@@ -15,11 +15,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
+    default: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
     template: "%s | GARCA",
   },
   description:
-    "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel. 100% privado.",
+    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado, sin instalar nada.",
   keywords: [
     "AFIP",
     "ARCA",
@@ -67,23 +67,23 @@ export const metadata: Metadata = {
     locale: "es_AR",
     url: siteUrl,
     siteName: "GARCA",
-    title: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
+    title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
     description:
-      "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel.",
+      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
+        alt: "GARCA - ARCA Monotributo: comprobantes, categorías y calculadora 2026",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GARCA - Gestor de Recuperación de Comprobantes de ARCA",
+    title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
     description:
-      "Recuperá tus comprobantes de ARCA de forma segura. Consultá facturas, calculá monotributo y exportá a Excel.",
+      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. 100% gratis, 100% privado.",
     images: ["/og-image.png"],
   },
   alternates: {
