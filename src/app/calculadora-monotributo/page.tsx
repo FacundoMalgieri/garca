@@ -515,14 +515,18 @@ export default function CalculadoraMonotributoPage() {
                     )}
                   >
                     <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold",
-                        projectionResult?.categoriaResultante === cat.categoria
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      )}>
+                      <Link
+                        href={`/monotributo/categoria/${cat.categoria.toLowerCase()}`}
+                        className={cn(
+                          "inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all hover:scale-110 hover:shadow-md",
+                          projectionResult?.categoriaResultante === cat.categoria
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary"
+                        )}
+                        title={`Ver detalle de la categoría ${cat.categoria}`}
+                      >
                         {cat.categoria}
-                      </span>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-right font-mono">${formatARS(cat.ingresosBrutos)}</td>
                     <td className="px-4 py-3 text-right font-mono">${formatARS(cat.total.servicios)}</td>
@@ -537,6 +541,21 @@ export default function CalculadoraMonotributoPage() {
             Fuente: <a href="https://www.arca.gob.ar/monotributo/categorias.asp" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">ARCA (ex AFIP)</a>.
             Los topes se actualizan en cada período de recategorización (enero y julio).
           </p>
+
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
+            <Link
+              href="/monotributo"
+              className="group inline-flex items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md px-4 py-2.5 font-semibold text-blue-700 dark:text-blue-200 transition-all"
+            >
+              Ver guía completa de Monotributo
+              <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+            <span className="text-xs text-muted-foreground">
+              con desglose por categoría, requisitos y topes mensuales
+            </span>
+          </div>
         </div>
       </section>
 
