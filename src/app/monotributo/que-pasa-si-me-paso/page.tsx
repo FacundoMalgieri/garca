@@ -1,0 +1,363 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { SupportBanner } from "@/components/ui/SupportBanner";
+import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
+
+const currencyFormatter = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  maximumFractionDigits: 0,
+});
+
+const dateModified = MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString().split("T")[0];
+
+const dateFormatter = new Intl.DateTimeFormat("es-AR", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
+export const metadata: Metadata = {
+  title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+  description:
+    "Qué pasa si superás el tope del Monotributo en 2026: recategorización obligatoria, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
+  keywords: [
+    "me pase del monotributo",
+    "superé el monotributo",
+    "qué pasa si me paso del monotributo",
+    "exclusión monotributo",
+    "recategorización de oficio",
+    "pasar a responsable inscripto",
+    "monotributo 2026",
+  ],
+  alternates: { canonical: `${siteUrl}/monotributo/que-pasa-si-me-paso` },
+  openGraph: {
+    title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+    description:
+      "Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto. Guía 2026 actualizada.",
+    type: "article",
+    url: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
+    siteName: "GARCA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+    description:
+      "Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto.",
+  },
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Monotributo", item: `${siteUrl}/monotributo` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "¿Qué pasa si me paso?",
+      item: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
+    },
+  ],
+};
+
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+  description:
+    "Qué sucede cuando superás el tope del Monotributo: recategorización, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
+  author: { "@type": "Person", name: "Facundo Malgieri", url: "https://github.com/FacundoMalgieri" },
+  publisher: { "@type": "Organization", name: "GARCA", url: siteUrl },
+  datePublished: "2026-01-20",
+  dateModified,
+  mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/monotributo/que-pasa-si-me-paso` },
+  inLanguage: "es-AR",
+};
+
+const faqEntries = [
+  {
+    question: "¿Cómo saben en ARCA que me pasé del tope?",
+    answer:
+      "ARCA cruza tu facturación electrónica (todos los comprobantes que emitís tienen que ser electrónicos y quedan registrados), con datos de terceros (bancos, tarjetas, plataformas de pago) y con los parámetros que declarás en la recategorización. Es muy difícil pasar desapercibido.",
+  },
+  {
+    question: "¿Qué pasa si me pasé solo por un mes?",
+    answer:
+      "El Monotributo no mira mes a mes, mira el acumulado de los últimos 12 meses. Si tuviste un pico en un mes pero el acumulado anual sigue dentro del tope de tu categoría, no pasa nada. Solo te preocupés si el total anualizado supera el tope.",
+  },
+  {
+    question: "¿Qué diferencia hay entre recategorización y exclusión?",
+    answer:
+      "La recategorización es subir a una categoría superior del Monotributo (por ejemplo, de F a G). La exclusión es salir del régimen: tus ingresos superaron la categoría más alta (K) o incumpliste requisitos no numéricos, y tenés que inscribirte como Responsable Inscripto en IVA y Ganancias.",
+  },
+  {
+    question: "¿Puedo seguir en el Monotributo si me pasé de K?",
+    answer:
+      "No. La categoría K es la más alta del régimen. Si tu acumulado de los últimos 12 meses supera su tope (y también por otras causales del art. 20 de la Ley 26.565), quedás automáticamente excluido y tenés que inscribirte como Responsable Inscripto. La exclusión tiene efectos desde las 0 hs del día en que ocurrió la causal, no desde el mes siguiente. Además, no podés volver al Monotributo hasta que pasen 3 años calendario desde la exclusión.",
+  },
+  {
+    question: "¿Me pueden multar por no haber recategorizado?",
+    answer:
+      "Sí. Si ARCA detecta que debías recategorizarte y no lo hiciste, te aplica una recategorización de oficio e incluye la diferencia de cuota retroactiva más una multa del 50% del impuesto integrado y la cotización previsional omitidos. Tenés 15 días desde la notificación para manifestar disconformidad a través de 'Presentaciones Digitales'.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqEntries.map((entry) => ({
+    "@type": "Question",
+    name: entry.question,
+    acceptedAnswer: { "@type": "Answer", text: entry.answer },
+  })),
+};
+
+export default function QuePasaSiMePasoPage() {
+  const categoriaK = MONOTRIBUTO_DATA.categorias[MONOTRIBUTO_DATA.categorias.length - 1];
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
+      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <Breadcrumbs
+          className="mb-6"
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Monotributo", href: "/monotributo" },
+            { label: "¿Qué pasa si me paso?" },
+          ]}
+        />
+
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-rose-950/40 border border-amber-200 dark:border-amber-800/30 p-6 md:p-10 mb-10 shadow-[0_8px_40px_-8px_rgba(245,158,11,0.25)] dark:shadow-none">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-400/25 to-orange-400/25 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-rose-400/25 to-orange-400/25 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold mb-4 shadow-lg shadow-amber-500/25">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Excedí el tope — ¿qué hago?
+            </span>
+            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3">
+              ¿Qué pasa si me paso del Monotributo?
+            </h1>
+            <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 mb-3 max-w-3xl">
+              Si tu facturación de los últimos 12 meses superó el tope de tu categoría, hay{" "}
+              <strong className="text-slate-900 dark:text-white">tres escenarios posibles</strong>: recategorización a
+              una categoría superior del Monotributo, recategorización de oficio por parte de ARCA, o exclusión del
+              régimen simplificado y pase obligatorio a Responsable Inscripto. Acá te explicamos cada uno.
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Actualizado el{" "}
+              <time dateTime={dateModified}>{dateFormatter.format(new Date(dateModified))}</time>.
+            </p>
+          </div>
+        </section>
+
+        {/* Ventana móvil explainer */}
+        <section className="mb-12 relative overflow-hidden rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 md:p-7">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="shrink-0 h-11 w-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Primero: ¿realmente te pasaste?</h2>
+              <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
+                El Monotributo <strong className="text-foreground">no controla mes por mes</strong>, controla el
+                acumulado de los últimos 12 meses corridos (ventana móvil). Podés tener un mes pico muy alto sin
+                problemas, siempre que el total anualizado no supere el tope de tu categoría.
+              </p>
+              <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
+                Antes de asumir que te pasaste, sumá el total facturado (importe final de todas las facturas C
+                emitidas) en los últimos 12 meses y compará con el tope anual de tu categoría. Si el total sigue
+                debajo del tope, no pasa nada.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 3 Escenarios */}
+        <section className="mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Los 3 escenarios posibles</h2>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Escenario 1 */}
+            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50/80 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/30 p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white flex items-center justify-center font-bold shadow-sm">
+                  1
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-foreground mb-2">Recategorización a categoría superior</h3>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                    Es el escenario más común y menos grave. Tu facturación superó el tope de tu categoría actual,
+                    pero sigue por debajo del tope de la categoría K. Simplemente tenés que recategorizarte a una
+                    categoría superior en la próxima ventana (enero o julio).
+                  </p>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <strong className="text-foreground">Qué hacer:</strong> entrar a ARCA en enero o julio, hacer
+                    el trámite de recategorización y confirmar la categoría que te sugiere el sistema. La nueva
+                    cuota se aplica al mes siguiente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Escenario 2 */}
+            <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30 p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold shadow-sm">
+                  2
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-foreground mb-2">Recategorización de oficio</h3>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                    Pasa cuando te pasaste del tope y <strong className="text-foreground">no te recategorizaste
+                    en término</strong>. ARCA detecta la situación cuando cruza tus datos (facturación electrónica,
+                    bancos) y te recategoriza automáticamente.
+                  </p>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
+                    <strong className="text-foreground">Consecuencias:</strong> diferencia de cuota retroactiva
+                    desde el momento en que debías haber subido, más una multa del 50% del impuesto integrado y
+                    la cotización previsional omitidos. Para evitarla, siempre recategorizate vos en la ventana
+                    que corresponde.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Escenario 3 */}
+            <div className="rounded-2xl border border-rose-200 dark:border-rose-800/40 bg-gradient-to-br from-rose-50/80 to-red-50/80 dark:from-rose-950/30 dark:to-red-950/30 p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-rose-500 to-red-500 text-white flex items-center justify-center font-bold shadow-sm">
+                  3
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-foreground mb-2">Exclusión del régimen</h3>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                    Tu acumulado de los últimos 12 meses supera el tope de la categoría K (
+                    {currencyFormatter.format(categoriaK.ingresosBrutos)}). Quedás automáticamente excluido del
+                    Monotributo y tenés que inscribirte como <strong className="text-foreground">Responsable
+                    Inscripto</strong> en IVA y Ganancias.
+                  </p>
+                  <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                    <strong className="text-foreground">Qué implica:</strong> empezar a liquidar IVA mensualmente
+                    (10,5% o 21% según la actividad), presentar Ganancias anual, emitir factura A en vez de C, y
+                    tener que llevar una contabilidad más prolija. Se recomienda consultar con un contador.
+                  </p>
+                  <Link
+                    href="/monotributo/vs-responsable-inscripto"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 transition-colors"
+                  >
+                    Ver comparativa Monotributo vs Responsable Inscripto →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Cuándo se detecta */}
+        <section className="mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">¿Cuándo detecta ARCA que me pasé?</h2>
+          <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            ARCA tiene varios mecanismos automáticos para identificar monotributistas que excedieron sus topes:
+          </p>
+          <ul className="space-y-3">
+            {[
+              {
+                title: "Facturación electrónica",
+                body: "Todos los comprobantes del Monotributo son electrónicos y quedan automáticamente registrados en ARCA. La suma de facturación está siempre disponible para el fisco.",
+              },
+              {
+                title: "Cruce con terceros",
+                body: "ARCA cruza datos con bancos, tarjetas de crédito, plataformas de pago (MercadoPago, PayPal), y organismos provinciales (Ingresos Brutos).",
+              },
+              {
+                title: "Ventana semestral",
+                body: "En enero y julio, el sistema automáticamente evalúa tus parámetros. Si cruzaste el tope y no te recategorizaste, puede ejecutar la recategorización de oficio.",
+              },
+              {
+                title: "Fiscalizaciones",
+                body: "En casos específicos ARCA puede iniciar una fiscalización formal que mira tu situación durante los últimos 5 años.",
+              },
+            ].map((item) => (
+              <li
+                key={item.title}
+                className="rounded-xl border border-border bg-white dark:bg-background p-4 flex gap-3"
+              >
+                <span className="shrink-0 h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white flex items-center justify-center">
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-foreground mb-1">{item.title}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{item.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* CTA */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-6 md:p-8 mb-12 shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+          <div className="relative">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              Mirá tu situación actual
+            </h2>
+            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 mb-5 max-w-2xl">
+              Entrá a GARCA con tus credenciales de ARCA (no se guardan en ningún servidor) o usá la calculadora
+              gratuita con tus datos de facturación para ver si estás cerca del tope y cuánto margen tenés.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/ingresar"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
+              >
+                Ingresar a GARCA
+                <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+              <Link
+                href="/calculadora-monotributo"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-200 dark:border-blue-800/60 bg-white/70 dark:bg-white/5 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-blue-700 dark:text-blue-200 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-white/10 transition-all hover:scale-105"
+              >
+                Usar calculadora
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="space-y-4 mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground">Preguntas frecuentes</h2>
+          {faqEntries.map((entry) => (
+            <details
+              key={entry.question}
+              className="rounded-xl border border-border bg-white dark:bg-background p-4 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+            >
+              <summary className="cursor-pointer text-base font-semibold text-foreground">{entry.question}</summary>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{entry.answer}</p>
+            </details>
+          ))}
+        </section>
+
+        <SupportBanner />
+      </div>
+    </>
+  );
+}

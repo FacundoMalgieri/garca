@@ -49,6 +49,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.9,
     },
+    {
+      url: `${siteUrl}/monotributo/recategorizacion`,
+      lastModified: monotributoLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/monotributo/servicios-vs-bienes`,
+      lastModified: monotributoLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
+      lastModified: monotributoLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/monotributo/vs-responsable-inscripto`,
+      lastModified: monotributoLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
     ...categoriaEntries,
     ...cuantoFacturarEntries,
     {

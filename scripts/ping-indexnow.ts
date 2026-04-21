@@ -25,6 +25,10 @@ const STATIC_PATHS = [
   "/",
   "/calculadora-monotributo",
   "/monotributo",
+  "/monotributo/recategorizacion",
+  "/monotributo/servicios-vs-bienes",
+  "/monotributo/que-pasa-si-me-paso",
+  "/monotributo/vs-responsable-inscripto",
   "/privacidad",
   "/terminos",
 ];
