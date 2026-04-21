@@ -23,6 +23,7 @@ const ENDPOINT = "https://api.indexnow.org/indexnow";
 
 const STATIC_PATHS = [
   "/",
+  "/about",
   "/calculadora-monotributo",
   "/monotributo",
   "/monotributo/recategorizacion",

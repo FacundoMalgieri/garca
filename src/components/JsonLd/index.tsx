@@ -133,8 +133,17 @@ const personSchema = {
   "@type": "Person",
   "@id": `${siteUrl}#person`,
   name: "Facundo Malgieri",
-  url: "https://github.com/FacundoMalgieri",
+  givenName: "Facundo",
+  familyName: "Malgieri",
+  url: "https://fmalgieri.com",
   jobTitle: "Software Engineer",
+  description:
+    "Software engineer argentino con más de 10 años de experiencia. Creador y mantenedor de GARCA.",
+  worksFor: {
+    "@type": "Organization",
+    name: "Lumenalta",
+    url: "https://lumenalta.com",
+  },
   nationality: { "@type": "Country", name: "Argentina" },
   knowsAbout: [
     "Monotributo",
@@ -143,9 +152,14 @@ const personSchema = {
     "Facturación electrónica",
     "Impuestos Argentina",
     "Next.js",
+    "React",
     "TypeScript",
   ],
-  sameAs: ["https://github.com/FacundoMalgieri"],
+  sameAs: [
+    "https://github.com/FacundoMalgieri",
+    "https://www.linkedin.com/in/facundo-malgieri/",
+    "https://fmalgieri.com",
+  ],
 };
 
 export async function JsonLd() {

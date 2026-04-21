@@ -76,6 +76,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...categoriaEntries,
     ...cuantoFacturarEntries,
     {
+      url: `${siteUrl}/about`,
+      lastModified: buildDate,
+      changeFrequency: "yearly",
+      priority: 0.6,
+    },
+    {
       url: `${siteUrl}/ingresar`,
       lastModified: buildDate,
       changeFrequency: "yearly",
