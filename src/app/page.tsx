@@ -6,6 +6,7 @@ import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
 import { ArrowRightIcon, SparklesIcon } from "@/components/ui/icons";
 
+// Trivial edit: verify Dokploy reuses deps + runner pre-copy layers; builder should rebuild.
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
 // it without waiting for React hydration. Only the small interactive pieces
