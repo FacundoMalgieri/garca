@@ -65,7 +65,7 @@ jobs:
 
       - name: Wait for Dokploy to finish serving new build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: sleep 600
+        run: sleep 300
 
       - name: Purge Cloudflare cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
