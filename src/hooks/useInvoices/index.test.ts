@@ -40,6 +40,7 @@ describe("useInvoices", () => {
         errorCode: null,
         company: null,
         progress: null,
+        isHydrated: true,
       });
     });
 
@@ -121,6 +122,76 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toBeNull();
       expect(localStorage.getItem("garca_invoices")).toBeNull();
       expect(localStorage.getItem("garca_company")).toBeNull();
+    });
+
+    it("should also clear monotributo info from state and localStorage", () => {
+      const mockMonotributo = {
+        categoria: "G",
+        tipoActividad: "servicios",
+        actividadDescripcion: "LOCACIONES DE SERVICIOS",
+        proximaRecategorizacion: "Julio 2026",
+        nombreCompleto: "Mi Empresa SA",
+        cuit: "20345678901",
+      };
+      localStorage.setItem("garca_monotributo", JSON.stringify(mockMonotributo));
+
+      const { result } = renderHook(() => useInvoices());
+      expect(result.current.monotributoInfo).not.toBeNull();
+
+      act(() => {
+        result.current.clearInvoices();
+      });
+
+      expect(result.current.monotributoInfo).toBeNull();
+      expect(localStorage.getItem("garca_monotributo")).toBeNull();
+      expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
+      expect(localStorage.getItem("garca_manual_fx_rates")).toBeNull();
+    });
+  });
+
+  describe("loadDemoData", () => {
+    it("should populate state and persist monotributo info", () => {
+      const demoInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "Demo SA",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente",
+          importeNeto: 1000,
+          importeIVA: 210,
+          importeTotal: 1210,
+          moneda: "ARS",
+          cae: "111",
+        },
+      ];
+      const demoCompany = { cuit: "20345678901", razonSocial: "Demo SA" };
+      const demoMonotributo = {
+        categoria: "G",
+        tipoActividad: "servicios" as const,
+        actividadDescripcion: "LOCACIONES DE SERVICIOS",
+        proximaRecategorizacion: "Julio 2026",
+        nombreCompleto: "Demo SA",
+        cuit: "20345678901",
+      };
+
+      const { result } = renderHook(() => useInvoices());
+
+      act(() => {
+        result.current.loadDemoData(demoInvoices, demoCompany, demoMonotributo);
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.company).toEqual(demoCompany);
+      expect(result.current.monotributoInfo).toEqual(demoMonotributo);
+      expect(localStorage.getItem("garca_monotributo")).toEqual(
+        JSON.stringify(demoMonotributo)
+      );
     });
   });
 

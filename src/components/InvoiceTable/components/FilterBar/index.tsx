@@ -33,8 +33,10 @@ export function FilterBar({
       {/* Row 1: Search and Type */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Buscar</label>
+          <label htmlFor="invoice-filter-search" className="text-xs font-medium text-muted-foreground mb-2 block">Buscar</label>
           <input
+            id="invoice-filter-search"
+            name="searchText"
             type="text"
             placeholder="Número o receptor..."
             value={filters.searchText}
@@ -75,8 +77,10 @@ export function FilterBar({
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Monto Mínimo</label>
+          <label htmlFor="invoice-filter-min-monto" className="text-xs font-medium text-muted-foreground mb-2 block">Monto Mínimo</label>
           <input
+            id="invoice-filter-min-monto"
+            name="minMonto"
             type="number"
             placeholder="0"
             value={filters.minMonto}
@@ -85,8 +89,10 @@ export function FilterBar({
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Monto Máximo</label>
+          <label htmlFor="invoice-filter-max-monto" className="text-xs font-medium text-muted-foreground mb-2 block">Monto Máximo</label>
           <input
+            id="invoice-filter-max-monto"
+            name="maxMonto"
             type="number"
             placeholder="∞"
             value={filters.maxMonto}

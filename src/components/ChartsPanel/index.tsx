@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -11,7 +11,6 @@ import {
   Pie,
   PieChart,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -298,6 +297,53 @@ function getCurrentCategory(monotributoData: MonotributoData | null, ingresosAnu
 // ============================================================================
 
 /**
+ * Measures the wrapper div and passes concrete pixel dimensions to its render
+ * prop. Avoids Recharts' `ResponsiveContainer` internal -1/-1 measurement pass
+ * on mount (which otherwise logs "width(-1) and height(-1) of chart should be
+ * greater than 0"). Children only render once non-zero dimensions are known.
+ */
+function ChartReady({
+  children,
+}: {
+  children: (dims: { width: number; height: number }) => React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [dims, setDims] = useState<{ width: number; height: number }>({
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setDims((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height }
+      );
+    };
+
+    update();
+
+    if (typeof ResizeObserver === "undefined") {
+      setDims({ width: 600, height: 400 });
+      return;
+    }
+
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className="flex-1 min-h-0 w-full relative">
+      {dims.width > 0 && dims.height > 0 ? children(dims) : null}
+    </div>
+  );
+}
+
+/**
  * Rounds a number up to the next "nice" value for chart axis.
  * E.g., 18.5M -> 19M, 16.8M -> 17M
  */
@@ -330,8 +376,9 @@ function ProgresoChart({
   return (
     <div id="chart-progreso" className="h-[400px] md:h-[500px] flex flex-col">
       <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Ingresos Acumulados vs Límites de Categorías</h3>
-      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
-        <AreaChart data={monthlyData}>
+      <ChartReady>
+        {({ width, height }) => (
+          <AreaChart width={width} height={height} data={monthlyData}>
           <defs>
             <linearGradient id="colorAcumulado" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -383,8 +430,9 @@ function ProgresoChart({
               }}
             />
           )}
-        </AreaChart>
-      </ResponsiveContainer>
+          </AreaChart>
+        )}
+      </ChartReady>
     </div>
   );
 }
@@ -393,8 +441,9 @@ function DistribucionChart({ distributionData }: { distributionData: Distributio
   return (
     <div id="chart-distribucion" className="h-[400px] md:h-[500px] pb-4 flex flex-col">
       <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Distribución de Ingresos por Moneda</h3>
-      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
-        <PieChart>
+      <ChartReady>
+        {({ width, height }) => (
+          <PieChart width={width} height={height}>
           <Pie
             data={distributionData}
             cx="50%"
@@ -422,8 +471,9 @@ function DistribucionChart({ distributionData }: { distributionData: Distributio
             labelStyle={{ color: "var(--color-foreground)" }}
             itemStyle={{ color: "var(--color-foreground)" }}
           />
-        </PieChart>
-      </ResponsiveContainer>
+          </PieChart>
+        )}
+      </ChartReady>
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-3 -mt-2">
         {distributionData.map((entry, index) => (
@@ -441,8 +491,9 @@ function MensualChart({ monthlyData }: { monthlyData: MonthlyDataPoint[] }) {
   return (
     <div id="chart-mensual" className="h-[400px] md:h-[500px] flex flex-col">
       <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Ingresos por Mes</h3>
-      <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-0">
-        <BarChart data={monthlyData}>
+      <ChartReady>
+        {({ width, height }) => (
+          <BarChart width={width} height={height} data={monthlyData}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis dataKey="month" fontSize={12} />
           <YAxis fontSize={12} tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
@@ -454,8 +505,9 @@ function MensualChart({ monthlyData }: { monthlyData: MonthlyDataPoint[] }) {
             contentStyle={{ backgroundColor: "var(--color-background)", border: "1px solid var(--color-border)" }}
           />
           <Bar dataKey="mensual" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+          </BarChart>
+        )}
+      </ChartReady>
     </div>
   );
 }

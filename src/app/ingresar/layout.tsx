@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 
-import { InvoiceProvider } from "@/contexts/InvoiceContext"
-
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app"
 const pageUrl = `${siteUrl}/ingresar`
 
@@ -32,5 +30,5 @@ export const metadata: Metadata = {
 }
 
 export default function IngresarLayout({ children }: { children: React.ReactNode }) {
-  return <InvoiceProvider>{children}</InvoiceProvider>
+  return <>{children}</>
 }

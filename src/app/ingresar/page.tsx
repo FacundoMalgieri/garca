@@ -23,11 +23,18 @@ export default function IngresoPage() {
   // State for the confirmation dialog
   const [showExitDialog, setShowExitDialog] = useState(false);
 
+  // Stable callback so the navigation guard effect doesn't rebind on every render.
+  // (The hook also refs this internally as a defense in depth, but we pass a
+  // stable function here to avoid any surprises.)
+  const handleNavigationAttempt = useCallback(() => {
+    setShowExitDialog(true);
+  }, []);
+
   // Navigation guard to prevent accidental exit during operations
   const { isPending, confirmNavigation, cancelNavigation } = useNavigationGuard({
     enabled: isOperationInProgress,
     message: "¿Estás seguro que querés salir? Se cancelará el proceso en curso.",
-    onNavigationAttempt: () => setShowExitDialog(true),
+    onNavigationAttempt: handleNavigationAttempt,
   });
 
   // Show dialog when navigation is pending
@@ -37,12 +44,14 @@ export default function IngresoPage() {
     }
   }, [isPending]);
 
-  // Si ya hay facturas cargadas, redirigir al panel
+  // Si ya hay facturas cargadas, redirigir al panel. Gate sobre isHydrated
+  // para evitar el loop /ingresar ↔ /panel en el primer render.
   useEffect(() => {
+    if (!state.isHydrated) return;
     if (!state.isLoading && state.invoices.length > 0 && !state.error) {
       router.push("/panel");
     }
-  }, [state.isLoading, state.invoices.length, state.error, router]);
+  }, [state.isHydrated, state.isLoading, state.invoices.length, state.error, router]);
 
   const handleFetchCompanies = async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
     return await fetchCompanies(cuit, password, turnstileToken);
@@ -70,8 +79,14 @@ export default function IngresoPage() {
     cancelNavigation();
   }, [cancelNavigation]);
 
-  // Show loading splash when fetching companies OR invoices OR about to redirect
-  const showSplash = companiesState.isLoading || state.isLoading || state.invoices.length > 0;
+  // Show loading splash when fetching companies OR invoices OR about to redirect.
+  // Also keep it up while hydrating from localStorage to avoid a brief flash
+  // of the login form before the redirect to /panel kicks in.
+  const showSplash =
+    !state.isHydrated ||
+    companiesState.isLoading ||
+    state.isLoading ||
+    state.invoices.length > 0;
   
   // Use progress from whichever is loading
   const currentProgress = companiesState.isLoading ? companiesState.progress : state.progress;

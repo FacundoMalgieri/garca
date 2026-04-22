@@ -63,6 +63,8 @@ export default [
                 URL: 'readonly',
                 File: 'readonly',
                 FileReader: 'readonly',
+                ResizeObserver: 'readonly',
+                IntersectionObserver: 'readonly',
                 // DOM types
                 SVGSVGElement: 'readonly',
                 Document: 'readonly',

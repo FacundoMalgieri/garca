@@ -33,6 +33,24 @@ export async function sharePdfFile(file: File): Promise<void> {
   await navigator.share({ files: [file] });
 }
 
+/**
+ * Triggers a browser download for a previously generated PDF File.
+ * Used to complement the share flow: when the Web Share API is available
+ * (iOS/Android and modern desktop Chrome) we also want to give the user
+ * an explicit "Guardar" option, since the desktop share sheet does not
+ * include a "save to disk" action.
+ */
+export function downloadPdfFile(file: File): void {
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function canNativeShareFile(file: File): boolean {
   return (
     typeof navigator !== "undefined" &&

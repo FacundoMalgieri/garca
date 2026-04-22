@@ -19,6 +19,7 @@ interface InvoiceState {
   errorCode: string | null;
   company: CompanyInfo | null;
   progress: ScraperProgress | null;
+  isHydrated: boolean;
 }
 
 interface InvoiceContextType {
@@ -39,6 +40,11 @@ interface InvoiceContextType {
   clearInvoices: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
+  loadDemoData: (
+    invoices: AFIPInvoice[],
+    company: CompanyInfo | null,
+    monotributoInfo: MonotributoAFIPInfo | null
+  ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
 }

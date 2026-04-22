@@ -191,12 +191,29 @@ export function ActionDropdown({
     setIsOpen(!isOpen);
   };
 
+  const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleToggle();
+    }
+  };
+
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
-      <div onClick={handleToggle}>{trigger}</div>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={handleToggle}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        {trigger}
+      </div>
 
       {isOpen && (
         <div
+          role="menu"
           className={cn(
             "absolute z-50 mt-2 min-w-[160px] bg-white dark:bg-background border border-border rounded-lg shadow-lg overflow-hidden",
             computedAlign === "right" ? "right-0" : "left-0",

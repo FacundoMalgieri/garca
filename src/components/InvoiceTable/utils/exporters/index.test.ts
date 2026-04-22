@@ -307,8 +307,8 @@ describe("exporters", () => {
       const firstCallBody = (autoTable as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as {
         body: string[][];
       };
-      expect(firstCallBody.body.some((row) => row.includes("Categoría actual:"))).toBe(true);
-      expect(firstCallBody.body.some((row) => row.includes("Pago mensual actual (A):"))).toBe(true);
+      expect(firstCallBody.body.some((row) => row.includes("Categoría actual (ARCA):"))).toBe(true);
+      expect(firstCallBody.body.some((row) => row.includes("Pago mens. actual (ARCA A):"))).toBe(true);
     });
 
     it("sorts multiple foreign currencies alphabetically in totals table", async () => {

@@ -1,5 +1,6 @@
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
+import { computeMonotributoPdfSums, formatRecategorizacionLine } from "@/lib/monotributo-pdf-sums";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
 import { type PdfSaveResult, savePdf } from "@/lib/pdf-save";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
@@ -23,6 +24,25 @@ interface PeriodTotals {
 
 /** Storage key for activity type preference */
 const MONOTRIBUTO_ACTIVITY_KEY = "monotributo-tipo-actividad";
+
+/** Word wrap for PDF (no dependency on jspdf.splitTextToSize — works with test mocks) */
+function wrapTextForPdf(text: string, maxCharsPerLine: number): string[] {
+  if (text.length <= maxCharsPerLine) return [text];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (next.length > maxCharsPerLine && line) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length > 0 ? lines : [text];
+}
 
 /**
  * Gets monotributo data and activity type preference.
@@ -158,8 +178,12 @@ function isNotaCredito(tipo: string): boolean {
 /**
  * Calculates monthly and yearly totals from invoices.
  * Groups by individual currency for maximum flexibility.
+ * Optional manual FX rates (same as Totales panel) when the invoice omits TC in XML.
  */
-function calculateTotals(invoices: AFIPInvoice[]): {
+function calculateTotals(
+  invoices: AFIPInvoice[],
+  manualRates: Record<string, number> = {},
+): {
   byMonth: Record<string, PeriodTotals>;
   byYear: Record<string, PeriodTotals>;
 } {
@@ -176,7 +200,7 @@ function calculateTotals(invoices: AFIPInvoice[]): {
     const multiplier = isNotaCredito(invoice.tipo) ? -1 : 1;
 
     const isForeign = currency !== "ARS";
-    const exchangeRate = invoice.xmlData?.exchangeRate || 0;
+    const exchangeRate = invoice.xmlData?.exchangeRate || (isForeign ? manualRates[currency] : 0) || 0;
     const amountInPesos = isForeign && exchangeRate
       ? invoice.importeTotal * exchangeRate * multiplier
       : invoice.importeTotal * multiplier;
@@ -276,9 +300,11 @@ function formatMonth(monthKey: string): string {
  * 4. Charts
  */
 export async function exportToPDF(
-  invoices: AFIPInvoice[], 
+  invoices: AFIPInvoice[],
   company: CompanyInfo | null = null,
-  monotributoInfo?: MonotributoAFIPInfo | null
+  monotributoInfo?: MonotributoAFIPInfo | null,
+  /** Same TC manuales que en Totales; alinear PDF con el panel. */
+  manualExchangeRates: Record<string, number> = {},
 ): Promise<PdfSaveResult> {
   const [{ default: jsPDF }, { default: html2canvas }, { default: autoTable }] = await Promise.all([
     import("jspdf"),
@@ -288,10 +314,13 @@ export async function exportToPDF(
 
   const doc = new jsPDF();
 
-  // Calculate totals first (needed for monotributo)
-  const { byMonth, byYear } = calculateTotals(invoices);
-  // Sum all years in the queried period (not just current year)
-  const ingresosAnuales = Object.values(byYear).reduce((sum, year) => sum + year.totalPesos, 0);
+  // Calculate totals first (needed for monotributo + sección Totales)
+  const { byMonth, byYear } = calculateTotals(invoices, manualExchangeRates);
+  const mtSums = computeMonotributoPdfSums(invoices, manualExchangeRates);
+  /** Suma de todos los comprobantes (período consultado) — alineada con el header / Totales */
+  const totalPeriodoConsultado = mtSums.totalPeriodoConsultado;
+  /** 12 meses oficiales previos a la recategorización — mismo criterio que el panel de Monotributo */
+  const ingresosVentana = mtSums.hasFacturasEnVentana ? mtSums.totalVentanaRecategorizacion : 0;
   const hasYearData = Object.keys(byYear).length > 0;
 
   // ========== PAGE 1: COMPANY HEADER + MONOTRIBUTO ==========
@@ -319,13 +348,17 @@ export async function exportToPDF(
   // Get monotributo data (static) and activity preference
   const { data: monotributoData, tipoActividad } = getMonotributoData();
   
-  if (hasYearData && ingresosAnuales > 0 && monotributoData.categorias.length > 0) {
+  if (hasYearData && totalPeriodoConsultado > 0 && monotributoData.categorias.length > 0) {
     const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
-    
-    // Find calculated category based on income
-    const categoriaCalculada = categorias.find((cat) => ingresosAnuales <= cat.ingresosBrutos) || categorias[categorias.length - 1];
-    const porcentajeUsado = Math.min((ingresosAnuales / categoriaCalculada.ingresosBrutos) * 100, 100);
-    const margenDisponible = categoriaCalculada.ingresosBrutos - ingresosAnuales;
+
+    // Categoría / % / margen: ingresos de la ventana de 12 meses (igual que el panel)
+    const categoriaCalculada =
+      categorias.find((cat) => ingresosVentana <= cat.ingresosBrutos) ?? categorias[categorias.length - 1];
+    const porcentajeUsado =
+      categoriaCalculada.ingresosBrutos > 0
+        ? Math.min((ingresosVentana / categoriaCalculada.ingresosBrutos) * 100, 100)
+        : 0;
+    const margenDisponible = categoriaCalculada.ingresosBrutos - ingresosVentana;
     
     // Get payment for calculated category
     const pagoMensualCalculado = tipoActividad === "servicios" 
@@ -340,10 +373,29 @@ export async function exportToPDF(
       ? (tipoActividad === "servicios" ? categoriaActualARCA.total.servicios : categoriaActualARCA.total.venta)
       : null;
 
-    // Section header
+    // Section header + sublinea (misma lógica que el panel: período consultado vs ventana)
     doc.setFontSize(14);
     doc.setTextColor(38, 47, 85);
-    doc.text("Monotributo", 14, 45);
+    doc.text("Monotributo", 14, 40);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    // Evitar doc.splitTextToSize / jsPDF.splitTextToSize: en tests el mock de jsPDF no lo expone
+    const recatLines = [formatRecategorizacionLine(mtSums)];
+    let yAfterHeader = 45;
+    doc.text(recatLines, 14, yAfterHeader);
+    yAfterHeader += recatLines.length * 4.5 + 3;
+    if (!mtSums.hasFacturasEnVentana) {
+      const warnLines = wrapTextForPdf(
+        "Aviso: en la base descargada no hay comprobantes en la ventana de 12 meses usada para la recategorización; los importes (ventana) y la categoría por ingresos resultan 0. Consultá un rango de fechas que cubra toda la ventana.",
+        90,
+      );
+      doc.setTextColor(200, 120, 0);
+      doc.text(warnLines, 14, yAfterHeader);
+      yAfterHeader += warnLines.length * 4.5 + 3;
+      doc.setTextColor(100, 100, 100);
+    }
+    doc.setFontSize(10);
+    const monotributoTableStartY = yAfterHeader;
 
     // Build activity text
     const actividadText = monotributoInfo?.tipoActividad === "servicios" 
@@ -352,82 +404,81 @@ export async function exportToPDF(
         ? "Venta de Bienes" 
         : monotributoInfo?.actividadDescripcion || (tipoActividad === "servicios" ? "Servicios" : "Venta de Bienes");
 
-    // Build 2-column table
-    // Col 1: Tu actividad, Categoría actual, Ingresos Acumulados, Límite de Categoría, Margen Disponible
-    // Col 2: Porcentaje utilizado, Próxima Recategorización, Categoría estimada, Pago mensual actual, Pago mensual estimado
+    // Tabla: discrimina monto del período consultado vs monto (ventana 12 meses) y deriva
+    // categoría / límite / pago estimado a partir de la ventana, igual que el panel.
     const monotributoStats: string[][] = [];
 
     if (monotributoInfo && pagoMensualActual !== null) {
       monotributoStats.push(
         [
-          "Tu actividad:", 
-          actividadText, 
-          "Porcentaje Utilizado:", 
-          `${porcentajeUsado.toFixed(1)}%`
+          "Total (período consultado):",
+          `$${totalPeriodoConsultado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          "Ingresos (12 meses, ventana recat.):",
+          `$${ingresosVentana.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
         ],
         [
-          "Categoría actual:", 
-          monotributoInfo.categoria, 
-          "Próxima recategorización:", 
-          monotributoInfo.proximaRecategorizacion || "-"
+          "Tu actividad:",
+          actividadText,
+          "Uso de límite (ingresos ventana):",
+          `${porcentajeUsado.toFixed(1)}%`,
         ],
         [
-          "Ingresos Acumulados:", 
-          `$${ingresosAnuales.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          "Categoría estimada:", 
-          categoriaCalculada.categoria
+          "Categoría (según ingresos ventana):",
+          categoriaCalculada.categoria,
+          "Categoría actual (ARCA):",
+          monotributoInfo.categoria,
         ],
         [
-          "Límite de Categoría:", 
-          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          `Pago mensual actual (${monotributoInfo.categoria}):`, 
-          `$${pagoMensualActual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
+          "Próxima recategorización:",
+          monotributoInfo.proximaRecategorizacion || "-",
+          "Límite (cat. por ingresos ventana):",
+          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
         ],
         [
-          "Margen Disponible:", 
-          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          `Pago mensual estimado (${categoriaCalculada.categoria}):`, 
-          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
-        ]
+          "Margen a tope (ventana):",
+          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          `Pago mens. actual (ARCA ${monotributoInfo.categoria}):`,
+          `$${pagoMensualActual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+        ],
+        [
+          "Pago estimado (cat. por ingresos ventana):",
+          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          "",
+          "",
+        ],
       );
     } else {
-      // Without ARCA info
+      // Sin datos de ARCA (scraping)
       monotributoStats.push(
         [
-          "Tu actividad:", 
-          actividadText, 
-          "Porcentaje Utilizado:", 
-          `${porcentajeUsado.toFixed(1)}%`
+          "Total (período consultado):",
+          `$${totalPeriodoConsultado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          "Ingresos (12 meses, ventana recat.):",
+          `$${ingresosVentana.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
         ],
         [
-          "Categoría calculada:", 
-          categoriaCalculada.categoria, 
-          "", 
-          ""
+          "Tu actividad:",
+          actividadText,
+          "Uso de límite (ingresos ventana):",
+          `${porcentajeUsado.toFixed(1)}%`,
         ],
         [
-          "Ingresos Acumulados:", 
-          `$${ingresosAnuales.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          "Pago mensual:", 
-          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
+          "Categoría (según ingresos ventana):",
+          categoriaCalculada.categoria,
+          "Límite (categoría por ingresos):",
+          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
         ],
         [
-          "Límite de Categoría:", 
-          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          "", 
-          ""
+          "Margen a tope (ventana):",
+          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          "Pago mensual (cat. por ingresos):",
+          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
         ],
-        [
-          "Margen Disponible:", 
-          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`, 
-          "", 
-          ""
-        ]
       );
     }
 
     autoTable(doc, {
-      startY: 50,
+      startY: monotributoTableStartY,
       body: monotributoStats,
       theme: "plain",
       styles: {

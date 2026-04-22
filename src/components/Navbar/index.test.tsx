@@ -22,12 +22,24 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Keep the `mockInvoices` array as the source of truth for what the Navbar
-// should consider "has data" — useHasStoredInvoices is mocked to derive its
-// boolean from this same fixture so existing tests keep their shape.
+// should consider "has data" — useInvoiceContext is mocked to derive its
+// state from this same fixture so existing tests keep their shape.
 let mockInvoices: AFIPInvoice[] = [];
+const mockClearInvoices = vi.fn();
 
-vi.mock("@/hooks/useHasStoredInvoices", () => ({
-  useHasStoredInvoices: () => mockInvoices.length > 0,
+vi.mock("@/contexts/InvoiceContext", () => ({
+  useInvoiceContext: () => ({
+    state: {
+      invoices: mockInvoices,
+      isLoading: false,
+      error: null,
+      errorCode: null,
+      company: null,
+      progress: null,
+      isHydrated: true,
+    },
+    clearInvoices: mockClearInvoices,
+  }),
 }));
 
 // Mock useTheme
@@ -162,7 +174,7 @@ describe("Navbar", () => {
     expect(screen.queryByText("Limpiar Datos")).not.toBeInTheDocument();
   });
 
-  it("clears localStorage and redirects home when clear button is confirmed", () => {
+  it("clears invoice data via context and redirects home when clear button is confirmed", () => {
     mockInvoices = [
       {
         fecha: "15/11/2025",
@@ -183,22 +195,14 @@ describe("Navbar", () => {
       },
     ];
 
-    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
-
     render(<Navbar />);
 
     fireEvent.click(screen.getByText("Limpiar Datos"));
     expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Sí, limpiar"));
 
-    expect(removeItemSpy).toHaveBeenCalledWith("garca_invoices");
-    expect(removeItemSpy).toHaveBeenCalledWith("garca_company");
-    expect(removeItemSpy).toHaveBeenCalledWith("garca_monotributo");
-    expect(removeItemSpy).toHaveBeenCalledWith("garca_invoices_ts");
-    expect(removeItemSpy).toHaveBeenCalledWith("garca_manual_fx_rates");
+    expect(mockClearInvoices).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).toHaveBeenCalledWith("/");
-
-    removeItemSpy.mockRestore();
   });
 
   it("opens mobile menu when hamburger is clicked", () => {

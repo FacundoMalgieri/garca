@@ -39,6 +39,12 @@ export interface InvoiceState {
   errorCode: string | null;
   company: CompanyInfo | null;
   progress: ScraperProgress | null;
+  // True once loadFromStorage has run on mount. Consumers (e.g. /panel and
+  // /ingresar) must gate their "empty invoices → redirect" effects on this
+  // flag, otherwise the first render (pre-hydration) would see invoices=[]
+  // and bounce to /ingresar → /panel → /ingresar in an infinite loop when
+  // data is actually present in localStorage.
+  isHydrated: boolean;
 }
 
 /**
@@ -81,6 +87,11 @@ export interface UseInvoicesReturn {
   clearInvoices: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
+  loadDemoData: (
+    invoices: AFIPInvoice[],
+    company: CompanyInfo | null,
+    monotributoInfo: MonotributoAFIPInfo | null
+  ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
 }
@@ -100,6 +111,7 @@ export function useInvoices(): UseInvoicesReturn {
     errorCode: null,
     company: null,
     progress: null,
+    isHydrated: false,
   });
 
   const [companiesState, setCompaniesState] = useState<CompaniesState>({
@@ -155,14 +167,38 @@ export function useInvoices(): UseInvoicesReturn {
     loadFromStorage();
   }, []);
 
+  // Track the latest invoices/company so the flush-on-unmount cleanup can
+  // write the most recent values synchronously without re-running the effect.
+  const pendingSaveRef = useRef<{ invoices: AFIPInvoice[]; company: CompanyInfo | null } | null>(null);
+
   useEffect(() => {
     if (state.invoices.length === 0) return;
+    pendingSaveRef.current = { invoices: state.invoices, company: state.company };
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      saveToStorage(state.invoices, state.company);
+      const pending = pendingSaveRef.current;
+      if (pending) {
+        saveToStorage(pending.invoices, pending.company);
+        pendingSaveRef.current = null;
+      }
     }, 300);
-    return () => clearTimeout(saveTimeoutRef.current);
+    return () => {
+      clearTimeout(saveTimeoutRef.current);
+    };
   }, [state.invoices, state.company]);
+
+  // Defensive: if the provider unmounts while a debounced save is pending
+  // (e.g. during a fast route change), flush it synchronously so data isn't
+  // lost. Runs only on final unmount thanks to the empty deps array.
+  useEffect(() => {
+    return () => {
+      const pending = pendingSaveRef.current;
+      if (pending) {
+        saveToStorage(pending.invoices, pending.company);
+        pendingSaveRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Loads invoices, company info, and monotributo info from localStorage.
@@ -177,6 +213,7 @@ export function useInvoices(): UseInvoicesReturn {
         localStorage.removeItem(STORAGE_TTL_KEY);
         localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
         setManualExchangeRates({});
+        setState((prev) => ({ ...prev, isHydrated: true }));
         return;
       }
 
@@ -187,7 +224,9 @@ export function useInvoices(): UseInvoicesReturn {
       if (storedInvoices) {
         const invoices = JSON.parse(storedInvoices);
         const company = storedCompany ? JSON.parse(storedCompany) : extractCompanyInfo(invoices);
-        setState((prev) => ({ ...prev, invoices, company }));
+        setState((prev) => ({ ...prev, invoices, company, isHydrated: true }));
+      } else {
+        setState((prev) => ({ ...prev, isHydrated: true }));
       }
 
       if (storedMonotributo) {
@@ -196,6 +235,7 @@ export function useInvoices(): UseInvoicesReturn {
       }
     } catch {
       // Silently fail - localStorage might not be available
+      setState((prev) => ({ ...prev, isHydrated: true }));
     }
   };
 
@@ -571,6 +611,7 @@ export function useInvoices(): UseInvoicesReturn {
             errorCode: null,
             company,
             progress: null,
+            isHydrated: true,
           });
 
           clearCompanies();
@@ -613,6 +654,7 @@ export function useInvoices(): UseInvoicesReturn {
           errorCode: null,
           company,
           progress: null,
+          isHydrated: true,
         });
 
         clearCompanies();
@@ -632,6 +674,7 @@ export function useInvoices(): UseInvoicesReturn {
         errorCode: "UNKNOWN",
         company: null,
         progress: null,
+        isHydrated: true,
       });
     }
   };
@@ -671,15 +714,21 @@ export function useInvoices(): UseInvoicesReturn {
    * Clears invoice data from state and localStorage.
    */
   const clearInvoices = () => {
+    // Drop any pending debounced save so we don't resurrect just-cleared data.
+    clearTimeout(saveTimeoutRef.current);
+    pendingSaveRef.current = null;
+
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(COMPANY_STORAGE_KEY);
+      localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
       localStorage.removeItem(STORAGE_TTL_KEY);
       localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
     } catch {
       // Silently fail
     }
     setManualExchangeRates({});
+    setMonotributoInfo(null);
 
     setState({
       invoices: [],
@@ -688,7 +737,31 @@ export function useInvoices(): UseInvoicesReturn {
       errorCode: null,
       company: null,
       progress: null,
+      isHydrated: true,
     });
+  };
+
+  /**
+   * Loads pre-baked demo data into state + persists it. Used by the landing
+   * page's "Ver demo" button so it goes through the provider instead of
+   * writing to localStorage behind the hook's back.
+   */
+  const loadDemoData = (
+    invoices: AFIPInvoice[],
+    company: CompanyInfo | null,
+    info: MonotributoAFIPInfo | null
+  ) => {
+    setState({
+      invoices,
+      isLoading: false,
+      error: null,
+      errorCode: null,
+      company,
+      progress: null,
+      isHydrated: true,
+    });
+    setMonotributoInfo(info);
+    saveMonotributoToStorage(info);
   };
 
   /**
@@ -716,6 +789,7 @@ export function useInvoices(): UseInvoicesReturn {
     clearInvoices,
     clearCompanies,
     loadFromStorage,
+    loadDemoData,
     cancelOperation,
     isOperationInProgress,
   };

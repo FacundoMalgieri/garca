@@ -21,6 +21,7 @@ const colorClasses: Record<string, string> = {
 export function CurrencyPill({ currency, label, color, delay = 0 }: CurrencyPillProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -28,14 +29,26 @@ export function CurrencyPill({ currency, label, color, delay = 0 }: CurrencyPill
     const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay);
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          timeoutRef.current = setTimeout(() => {
+            setIsVisible(true);
+            timeoutRef.current = null;
+          }, delay);
         }
       },
       { threshold: 0.1 }
     );
 
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [delay]);
 
   return (
