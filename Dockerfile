@@ -40,8 +40,14 @@ RUN npm run build
 # ============================================
 # Stage 3: Runner
 # ============================================
-FROM node:22-slim AS runner
+# Base from `deps` so we keep a single set of system libs (apt) + Playwright
+# browser cache. A fresh `node:22-slim` + `npx playwright install-deps` would
+# duplicate the same apt work (~40s) and can pull a different @playwright version
+# (see build logs: runner npx → playwright@1.59 while lockfile may differ).
+FROM deps AS runner
 
+# Drop the full dev `node_modules` in /app; we'll replace with Next standalone.
+RUN rm -rf /app
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -51,16 +57,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
 ENV HOSTNAME=0.0.0.0
 
-# Install runtime dependencies for Playwright
-RUN npx playwright install-deps chromium
-
-# Copy standalone build (much smaller than full node_modules)
+# Copy standalone build (pruned `node_modules` for Node server only)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-
-# Copy Playwright browsers
-COPY --from=deps /root/.cache/ms-playwright /root/.cache/ms-playwright
 
 EXPOSE 3000
 
