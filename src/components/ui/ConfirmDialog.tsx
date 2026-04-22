@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -27,6 +28,11 @@ export function ConfirmDialog({
   variant = "default",
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle escape key
   const handleKeyDown = useCallback(
@@ -58,7 +64,7 @@ export function ConfirmDialog({
     }
   }, [isOpen, handleKeyDown]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleConfirm = () => {
     onConfirm();
@@ -72,7 +78,11 @@ export function ConfirmDialog({
     }
   };
 
-  return (
+  // Render into document.body via portal so the dialog's position:fixed is
+  // relative to the viewport, even when an ancestor has a `transform`,
+  // `filter` or `perspective` that would otherwise become its containing
+  // block (e.g. the scroll-parallax wrapper on the landing hero).
+  return createPortal(
     <div
       className="fixed top-0 left-0 right-0 bottom-0 w-screen h-screen z-[100] flex items-center justify-center p-4"
       style={{ margin: 0 }}
@@ -133,7 +143,8 @@ export function ConfirmDialog({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

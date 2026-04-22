@@ -88,14 +88,17 @@ export default function PanelPage() {
 
   const { data: monotributoData, tipoActividad } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
 
-  // Si no hay facturas, redirigir a /ingresar
+  // Si no hay facturas, redirigir a /ingresar. Gate sobre isHydrated para
+  // evitar el loop /panel ↔ /ingresar en el primer render (antes de que
+  // loadFromStorage haya leído localStorage).
   useEffect(() => {
+    if (!state.isHydrated) return;
     if (!state.isLoading && state.invoices.length === 0) {
       router.push("/ingresar");
     }
-  }, [state.isLoading, state.invoices.length, router]);
+  }, [state.isHydrated, state.isLoading, state.invoices.length, router]);
 
-  if (state.isLoading) {
+  if (!state.isHydrated || state.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -345,6 +348,9 @@ function FxRateInput({
         <input
           type="text"
           inputMode="decimal"
+          id={`manual-fx-rate-${currency}`}
+          name={`manual-fx-rate-${currency}`}
+          aria-label={`Tipo de cambio manual para ${currency}`}
           value={display ? `$ ${display}` : ""}
           onChange={handleChange}
           onBlur={handleBlur}

@@ -2,29 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
-import { useHasStoredInvoices } from "@/hooks/useHasStoredInvoices";
 import { useTheme } from "@/hooks/useTheme";
-
-// localStorage keys owned by the invoice/session flow. Kept in sync with
-// src/hooks/useInvoices. Clearing from the Navbar bypasses the context (only
-// mounted on /panel + /ingresar) to avoid forcing those dependencies onto
-// public pages.
-const INVOICE_STORAGE_KEYS = [
-  "garca_invoices",
-  "garca_company",
-  "garca_monotributo",
-  "garca_invoices_ts",
-  "garca_manual_fx_rates",
-];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const hasInvoices = useHasStoredInvoices();
+  const { state, clearInvoices } = useInvoiceContext();
+  // Treat pre-hydration as "unknown" so we don't flash either CTA. Once
+  // loadFromStorage has run (state.isHydrated === true) we trust
+  // state.invoices.length as the source of truth.
+  const hasInvoices = state.isHydrated && state.invoices.length > 0;
+  const showIngresarCta = state.isHydrated && state.invoices.length === 0;
   const { startTour } = useTourContext();
   const { theme, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
@@ -33,19 +26,23 @@ export function Navbar() {
   const isOnPanel = pathname === "/panel";
   const hasTour = isOnPanel || pathname === "/calculadora-monotributo";
 
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  const handleClearData = () => {
-    INVOICE_STORAGE_KEYS.forEach((key) => {
-      try {
-        localStorage.removeItem(key);
-      } catch {
-        // ignore — private mode / disabled storage
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
-    });
+    };
+  }, []);
+
+  const handleClearData = () => {
+    clearInvoices();
     setIsOpen(false);
     setShowClearConfirm(false);
     router.push("/");
@@ -54,7 +51,10 @@ export function Navbar() {
   const scrollToSection = (id: string) => {
     setIsOpen(false);
 
-    setTimeout(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
       const element = document.getElementById(id);
       if (element) {
         const offset = 80;
@@ -156,7 +156,7 @@ export function Navbar() {
               </button>
             )}
 
-            {!hasInvoices && (
+            {showIngresarCta && (
               <Link
                 href="/ingresar"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -179,7 +179,7 @@ export function Navbar() {
 
           {/* Mobile: Ingresar CTA + Hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            {!hasInvoices && (
+            {showIngresarCta && (
               <Link
                 href="/ingresar"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"

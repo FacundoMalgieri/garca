@@ -52,6 +52,14 @@ export function useNavigationGuard({
   const pushedStateRef = useRef(false);
   // Track the original pathname to detect if we navigated away programmatically
   const originalPathnameRef = useRef<string | null>(null);
+  // Keep latest callback in a ref so the popstate effect doesn't need to rebind
+  // every time the caller passes an inline lambda. Rebinding on every render
+  // would otherwise stack history entries via pushState during long-running
+  // operations (e.g. 30-90s scraping flows on /ingresar).
+  const onNavigationAttemptRef = useRef(onNavigationAttempt);
+  useEffect(() => {
+    onNavigationAttemptRef.current = onNavigationAttempt;
+  }, [onNavigationAttempt]);
 
   // Handle beforeunload (refresh, close tab, close browser)
   useEffect(() => {
@@ -96,9 +104,10 @@ export function useNavigationGuard({
     const handlePopState = (_e: PopStateEvent) => {
       window.history.replaceState({ navigationGuard: true }, "");
       
-      // Trigger navigation attempt callback
+      // Trigger navigation attempt callback (read latest from ref to avoid
+      // rebinding this effect when the caller passes an inline lambda).
       setIsPending(true);
-      onNavigationAttempt?.();
+      onNavigationAttemptRef.current?.();
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -106,7 +115,7 @@ export function useNavigationGuard({
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [enabled, onNavigationAttempt]);
+  }, [enabled]);
 
   const confirmNavigation = useCallback(() => {
     setIsPending(false);

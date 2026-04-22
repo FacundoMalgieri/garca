@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { ExportDropdown } from "@/components/ExportDropdown"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
+import { PdfReadySplash } from "@/components/ui/PdfReadySplash"
 import { useInvoiceContext } from "@/contexts/InvoiceContext"
 import { useProjection } from "@/hooks/useProjection"
+import { downloadPdfFile, sharePdfFile } from "@/lib/pdf-save"
 import { getMonthShortLabel, roundToNearest } from "@/lib/projection"
 import { cn } from "@/lib/utils"
 import type { TipoActividad } from "@/types/monotributo"
@@ -74,6 +76,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   })
 
   const [userHasCustomized, setUserHasCustomized] = useState(false)
+  const [pdfReady, setPdfReady] = useState<File | null>(null)
   const lastRecommendation = useRef(0)
 
   useEffect(() => {
@@ -146,20 +149,49 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     try {
       const result = await exportProjectionToPDF(getExportData())
       if (result.canShare) {
-        try {
-          await navigator.share({ files: [result.file] })
-        } catch { /* user dismissed share sheet */ }
+        setPdfReady(result.file)
       }
     } catch (error) {
       console.error("Error generando PDF de proyección:", error)
     }
   }
+
+  const handleSharePdf = useCallback(async () => {
+    if (!pdfReady) return
+    try {
+      await sharePdfFile(pdfReady)
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      console.error("Error sharing PDF:", err)
+    } finally {
+      setPdfReady(null)
+    }
+  }, [pdfReady])
+
+  const handleDownloadPdf = useCallback(() => {
+    if (!pdfReady) return
+    downloadPdfFile(pdfReady)
+    setPdfReady(null)
+  }, [pdfReady])
+
+  const handleDismissPdf = useCallback(() => {
+    setPdfReady(null)
+  }, [])
+
   const handleExportCSV = () => exportProjectionToCSV(getExportData())
   const handleExportJSON = () => exportProjectionToJSON(getExportData())
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <>
+      {pdfReady && (
+        <PdfReadySplash
+          onShare={handleSharePdf}
+          onDownload={handleDownloadPdf}
+          onDismiss={handleDismissPdf}
+        />
+      )}
+      <Card className="h-full">
+        <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <ProjectIcon />
@@ -181,10 +213,12 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
         <div className="grid gap-3 sm:grid-cols-3">
           {/* Target Recategorization */}
           <div>
-            <label className="text-xs text-muted-foreground block mb-1.5">
+            <label htmlFor="projection-target-recategorizacion" className="text-xs text-muted-foreground block mb-1.5">
               Recategorización
             </label>
             <select
+              id="projection-target-recategorizacion"
+              name="projection-target-recategorizacion"
               value={projectionData.targetRecategorizacion}
               onChange={(e) => setTargetRecategorizacion(e.target.value)}
               className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -199,10 +233,12 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 
           {/* Target Category */}
           <div>
-            <label className="text-xs text-muted-foreground block mb-1.5">
+            <label htmlFor="projection-target-categoria" className="text-xs text-muted-foreground block mb-1.5">
               Categoría objetivo
             </label>
             <select
+              id="projection-target-categoria"
+              name="projection-target-categoria"
               value={projectionData.targetCategoria || ""}
               onChange={(e) => setTargetCategoria(e.target.value || null)}
               className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -218,10 +254,12 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 
           {/* Margin Setting */}
           <div>
-            <label className="text-xs text-muted-foreground block mb-1.5">
+            <label htmlFor="projection-margen-seguridad" className="text-xs text-muted-foreground block mb-1.5">
               Margen seguridad
             </label>
             <select
+              id="projection-margen-seguridad"
+              name="projection-margen-seguridad"
               value={projectionData.margenSeguridad}
               onChange={(e) => setMargenSeguridad(Number(e.target.value))}
               className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -409,6 +447,8 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                           value={projectedValue}
                           onChange={(val) => handleMonthEdit(month, val)}
                           placeholder={formatCurrency(recommendedRounded)}
+                          ariaLabel={`Facturación proyectada para ${getMonthShortLabel(month)}`}
+                          name={`projection-${month}`}
                         />
                       </div>
                     </div>
@@ -512,7 +552,8 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
           * Proyección estimativa. Puede variar según cotización del dólar al momento de facturar.
         </p>
       </CardContent>
-    </Card>
+      </Card>
+    </>
   )
 }
 
@@ -522,10 +563,14 @@ function CurrencyInput({
   value,
   onChange,
   placeholder,
+  ariaLabel,
+  name,
 }: {
   value: number
   onChange: (value: number) => void
   placeholder?: string
+  ariaLabel?: string
+  name?: string
 }) {
   const [displayValue, setDisplayValue] = useState(formatCurrency(value))
 
@@ -560,6 +605,8 @@ function CurrencyInput({
     <input
       type="text"
       inputMode="decimal"
+      name={name}
+      aria-label={ariaLabel}
       value={displayValue ? `$ ${displayValue}` : ""}
       onChange={handleChange}
       onBlur={handleBlur}

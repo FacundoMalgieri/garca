@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GitHubIcon, GitHubSponsorsIcon, PayPalIcon } from "@/components/ui/icons";
 import type { ScraperProgress } from "@/hooks/useInvoices";
@@ -64,33 +64,56 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function LoadingSplash({ isLoading, message = "Cargando", progress }: LoadingSplashProps) {
-  const shuffledTips = useMemo(() => shuffleArray(tips), []);
+  // Shuffle lazily on the client to avoid SSR/CSR hydration mismatches
+  // (Math.random() on the server produces a different order than on the
+  // client, which would trigger React error #418 on first render).
+  const [shuffledTips, setShuffledTips] = useState<typeof tips>(tips);
+  useEffect(() => {
+    setShuffledTips(shuffleArray(tips));
+  }, []);
 
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [fadeIn, setFadeIn] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopInterval = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const stopFadeTimeout = useCallback(() => {
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+      fadeTimeoutRef.current = null;
+    }
+  }, []);
 
   const goToTip = useCallback(
     (index: number) => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopInterval();
+      stopFadeTimeout();
 
       setFadeIn(false);
-      setTimeout(() => {
+      fadeTimeoutRef.current = setTimeout(() => {
         setCurrentTipIndex(index);
         setFadeIn(true);
+        fadeTimeoutRef.current = null;
       }, 300);
 
       intervalRef.current = setInterval(() => {
         setFadeIn(false);
-        setTimeout(() => {
+        stopFadeTimeout();
+        fadeTimeoutRef.current = setTimeout(() => {
           setCurrentTipIndex((prev) => (prev + 1) % shuffledTips.length);
           setFadeIn(true);
+          fadeTimeoutRef.current = null;
         }, 300);
       }, 5000);
     },
-    [shuffledTips.length]
+    [shuffledTips.length, stopInterval, stopFadeTimeout]
   );
 
   useEffect(() => {
@@ -106,21 +129,21 @@ export function LoadingSplash({ isLoading, message = "Cargando", progress }: Loa
 
     intervalRef.current = setInterval(() => {
       setFadeIn(false);
-
-      setTimeout(() => {
+      stopFadeTimeout();
+      fadeTimeoutRef.current = setTimeout(() => {
         setCurrentTipIndex((prev) => (prev + 1) % shuffledTips.length);
         setFadeIn(true);
+        fadeTimeoutRef.current = null;
       }, 300);
     }, 5000);
 
     return () => {
       html.style.overflow = originalHtmlOverflow;
       body.style.overflow = originalBodyOverflow;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopInterval();
+      stopFadeTimeout();
     };
-  }, [isLoading, shuffledTips.length]);
+  }, [isLoading, shuffledTips.length, stopInterval, stopFadeTimeout]);
 
   if (!isLoading) return null;
 
