@@ -15,26 +15,19 @@ vi.mock("next/link", () => ({
 
 // Mock next/navigation
 let mockPathname = "/";
+const mockRouterPush = vi.fn();
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: mockRouterPush, replace: vi.fn(), back: vi.fn() }),
 }));
 
-// Mock invoice context
-const mockClearInvoices = vi.fn();
+// Keep the `mockInvoices` array as the source of truth for what the Navbar
+// should consider "has data" — useHasStoredInvoices is mocked to derive its
+// boolean from this same fixture so existing tests keep their shape.
 let mockInvoices: AFIPInvoice[] = [];
 
-vi.mock("@/contexts/InvoiceContext", () => ({
-  useInvoiceContext: () => ({
-    state: {
-      invoices: mockInvoices,
-      isLoading: false,
-      error: null,
-      errorCode: null,
-      company: null,
-    },
-    clearInvoices: mockClearInvoices,
-  }),
+vi.mock("@/hooks/useHasStoredInvoices", () => ({
+  useHasStoredInvoices: () => mockInvoices.length > 0,
 }));
 
 // Mock useTheme
@@ -169,7 +162,7 @@ describe("Navbar", () => {
     expect(screen.queryByText("Limpiar Datos")).not.toBeInTheDocument();
   });
 
-  it("calls clearInvoices when clear button is clicked", () => {
+  it("clears localStorage and redirects home when clear button is confirmed", () => {
     mockInvoices = [
       {
         fecha: "15/11/2025",
@@ -190,18 +183,22 @@ describe("Navbar", () => {
       },
     ];
 
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+
     render(<Navbar />);
-    
-    // Click "Limpiar Datos" opens confirmation dialog
+
     fireEvent.click(screen.getByText("Limpiar Datos"));
-    
-    // Verify dialog is shown
     expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
-    
-    // Click confirm button
     fireEvent.click(screen.getByText("Sí, limpiar"));
-    
-    expect(mockClearInvoices).toHaveBeenCalled();
+
+    expect(removeItemSpy).toHaveBeenCalledWith("garca_invoices");
+    expect(removeItemSpy).toHaveBeenCalledWith("garca_company");
+    expect(removeItemSpy).toHaveBeenCalledWith("garca_monotributo");
+    expect(removeItemSpy).toHaveBeenCalledWith("garca_invoices_ts");
+    expect(removeItemSpy).toHaveBeenCalledWith("garca_manual_fx_rates");
+    expect(mockRouterPush).toHaveBeenCalledWith("/");
+
+    removeItemSpy.mockRestore();
   });
 
   it("opens mobile menu when hamburger is clicked", () => {
@@ -315,8 +312,8 @@ describe("Navbar", () => {
     // Dialog should close
     expect(screen.queryByText("¿Limpiar todos los datos?")).not.toBeInTheDocument();
 
-    // clearInvoices should NOT have been called
-    expect(mockClearInvoices).not.toHaveBeenCalled();
+    // Redirect should NOT have been triggered
+    expect(mockRouterPush).not.toHaveBeenCalledWith("/");
   });
 
   it("shows Ingresar link when no invoices", () => {

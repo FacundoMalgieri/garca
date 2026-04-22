@@ -15,8 +15,7 @@ import {
   PlayIcon,
   SparklesIcon,
 } from "@/components/ui/icons";
-import { useInvoiceContext } from "@/contexts/InvoiceContext";
-import { mockInvoices } from "@/test/mocks/invoices";
+import { useHasStoredInvoices } from "@/hooks/useHasStoredInvoices";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
@@ -218,7 +217,7 @@ function useSectionVisible(ref: React.RefObject<HTMLElement | null>, threshold =
 
 export default function Home() {
   const router = useRouter();
-  const { state, loadFromStorage } = useInvoiceContext();
+  const hasInvoices = useHasStoredInvoices();
   const [isLoadingDemo, setIsLoadingDemo] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
@@ -264,20 +263,23 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const hasInvoices = state.invoices.length > 0;
   const [showDemoConfirm, setShowDemoConfirm] = useState(false);
 
   const handleDemoClick = () => {
     if (hasInvoices) {
       setShowDemoConfirm(true);
     } else {
-      handleLoadDemo();
+      void handleLoadDemo();
     }
   };
 
-  const handleLoadDemo = () => {
+  const handleLoadDemo = async () => {
     setIsLoadingDemo(true);
     try {
+      // Demo fixture is loaded lazily so the ~36 KB of JSON only ships when
+      // the user actually clicks "Ver demo" — not on every landing visit.
+      const { mockInvoices } = await import("@/test/mocks/invoices");
+
       // Adjust demo invoice dates to be relative to today
       // The mock data covers Jan-Nov 2025, we shift it so the latest invoice is recent
       const adjustedInvoices = mockInvoices.map((invoice) => {
@@ -308,7 +310,9 @@ export default function Home() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(adjustedInvoices));
       localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(DEMO_COMPANY));
       localStorage.setItem(MONOTRIBUTO_STORAGE_KEY, JSON.stringify(DEMO_MONOTRIBUTO_INFO));
-      loadFromStorage();
+      // Navigating to /panel mounts InvoiceProvider which calls
+      // loadFromStorage on mount (see src/hooks/useInvoices/index.ts), so we
+      // don't need to manually hydrate context state from here.
       router.push("/panel");
     } catch (error) {
       console.error("Error loading demo data:", error);
@@ -321,7 +325,7 @@ export default function Home() {
       <ConfirmDialog
         isOpen={showDemoConfirm}
         onClose={() => setShowDemoConfirm(false)}
-        onConfirm={() => { setShowDemoConfirm(false); handleLoadDemo(); }}
+        onConfirm={() => { setShowDemoConfirm(false); void handleLoadDemo(); }}
         title="¿Cargar datos de demo?"
         description="Se reemplazarán los datos de tu reporte actual con datos ficticios. Para recuperar tus datos reales tendrás que volver a ingresar con tu clave fiscal."
         confirmText="Sí, cargar demo"
