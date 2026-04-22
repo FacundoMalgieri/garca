@@ -47,16 +47,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // OG hero images - content-addressable-ish, rarely regenerated.
-        // Cache 1 year so Cloudflare edge + browsers reuse the same bytes.
-        // We purge the Cloudflare cache on every deploy, so freshness is
-        // handled at the edge layer; browsers eventually re-validate via
-        // must-revalidate when stale.
+        // OG hero images - 30 days so we stay flexible if we need to
+        // re-touch an image without renaming. Cloudflare edge is purged
+        // on every deploy, and browsers revalidate via must-revalidate.
         source: "/og/:path*",
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=31536000, must-revalidate",
+            value: "public, max-age=2592000, must-revalidate",
           },
         ],
       },
