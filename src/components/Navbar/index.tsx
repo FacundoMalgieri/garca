@@ -1,23 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
+import { useHasStoredInvoices } from "@/hooks/useHasStoredInvoices";
 import { useTheme } from "@/hooks/useTheme";
+
+// localStorage keys owned by the invoice/session flow. Kept in sync with
+// src/hooks/useInvoices. Clearing from the Navbar bypasses the context (only
+// mounted on /panel + /ingresar) to avoid forcing those dependencies onto
+// public pages.
+const INVOICE_STORAGE_KEYS = [
+  "garca_invoices",
+  "garca_company",
+  "garca_monotributo",
+  "garca_invoices_ts",
+  "garca_manual_fx_rates",
+];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const { state, clearInvoices } = useInvoiceContext();
+  const hasInvoices = useHasStoredInvoices();
   const { startTour } = useTourContext();
   const { theme, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
 
-  const invoices = state.invoices;
   const isOnPanel = pathname === "/panel";
   const hasTour = isOnPanel || pathname === "/calculadora-monotributo";
 
@@ -27,8 +39,16 @@ export function Navbar() {
   }, [isOpen]);
 
   const handleClearData = () => {
-    clearInvoices();
+    INVOICE_STORAGE_KEYS.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // ignore — private mode / disabled storage
+      }
+    });
     setIsOpen(false);
+    setShowClearConfirm(false);
+    router.push("/");
   };
 
   const scrollToSection = (id: string) => {
@@ -68,7 +88,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation — only on /panel */}
-          {isOnPanel && invoices.length > 0 && (
+          {isOnPanel && hasInvoices && (
             <div className="hidden lg:flex items-center gap-4 xl:gap-6">
               <NavButton onClick={() => scrollToSection("monotributo")} icon={<ClipboardIcon />}>
                 Monotributo
@@ -98,7 +118,7 @@ export function Navbar() {
               <HomeIcon />
             </Link>
 
-            {!isOnPanel && invoices.length > 0 && (
+            {!isOnPanel && hasInvoices && (
               <Link
                 href="/panel"
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
@@ -136,7 +156,7 @@ export function Navbar() {
               </button>
             )}
 
-            {invoices.length === 0 && (
+            {!hasInvoices && (
               <Link
                 href="/ingresar"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -145,7 +165,7 @@ export function Navbar() {
               </Link>
             )}
 
-            {isOnPanel && invoices.length > 0 && (
+            {isOnPanel && hasInvoices && (
               <button
                 onClick={() => setShowClearConfirm(true)}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-destructive border border-destructive transition-colors hover:bg-destructive/10 inline-flex items-center gap-2 cursor-pointer"
@@ -159,7 +179,7 @@ export function Navbar() {
 
           {/* Mobile: Ingresar CTA + Hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            {invoices.length === 0 && (
+            {!hasInvoices && (
               <Link
                 href="/ingresar"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -186,7 +206,7 @@ export function Navbar() {
                 Inicio
               </MobileNavLink>
 
-              {!isOnPanel && invoices.length > 0 && (
+              {!isOnPanel && hasInvoices && (
                 <MobileNavLink href="/panel" icon={<ReportIcon />} onClick={() => setIsOpen(false)}>
                   Ver reporte
                 </MobileNavLink>
@@ -215,7 +235,7 @@ export function Navbar() {
               )}
 
               {/* Panel section shortcuts */}
-              {isOnPanel && invoices.length > 0 && (
+              {isOnPanel && hasInvoices && (
                 <>
                   <div className="my-2 mx-4 border-t border-border" />
                   <p className="px-4 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Ir a sección</p>
@@ -238,7 +258,7 @@ export function Navbar() {
               )}
 
               {/* Destructive actions */}
-              {isOnPanel && invoices.length > 0 && (
+              {isOnPanel && hasInvoices && (
                 <>
                   <div className="my-2 mx-4 border-t border-border" />
                   <button

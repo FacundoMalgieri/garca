@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
 import { Navbar } from "@/components/Navbar";
-import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { TourProvider } from "@/contexts/TourContext";
 
@@ -118,15 +117,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider>
-          <InvoiceProvider>
-            <TourProvider>
-              <div className="relative flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            </TourProvider>
-          </InvoiceProvider>
+          <TourProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </TourProvider>
         </ThemeProvider>
       </body>
     </html>
