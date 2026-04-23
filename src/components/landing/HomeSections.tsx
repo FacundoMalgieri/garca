@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
+import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import {
   ArrowRightIcon,
   GitHubSponsorsIcon,
@@ -412,14 +413,15 @@ export function HomeSections() {
                   transitionDelay: "200ms",
                 }}
               >
-                <Link
+                <TrackedLandingCtaLink
                   href="/calculadora-monotributo"
+                  target="calculadora"
                   className="group relative inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <span className="relative">Abrir calculadora</span>
                   <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
-                </Link>
+                </TrackedLandingCtaLink>
               </div>
 
               <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-600 dark:text-slate-400">

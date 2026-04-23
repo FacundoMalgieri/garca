@@ -6,6 +6,7 @@ import { ExportDropdown } from "@/components/ExportDropdown";
 import { LoadingSplash } from "@/components/LoadingSplash";
 import { PdfReadySplash } from "@/components/ui/PdfReadySplash";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { downloadPdfFile, sharePdfFile } from "@/lib/pdf-save";
 
 import { exportToCSV, exportToJSON, exportToPDF } from "../InvoiceTable/utils/exporters";
@@ -62,6 +63,7 @@ export function CompanyHeader() {
     setPdfReady(null);
     try {
       const result = await exportToPDF(state.invoices, state.company, monotributoInfo, manualExchangeRates);
+      trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "invoices", format: "pdf" });
       if (result.canShare) {
         setPdfReady(result.file);
         return; // Don't clear loading — show "ready" state
@@ -98,8 +100,14 @@ export function CompanyHeader() {
     setIsGeneratingPDF(false);
   }, []);
 
-  const handleExportCSV = () => exportToCSV(state.invoices, state.company);
-  const handleExportJSON = () => exportToJSON(state.invoices, state.company);
+  const handleExportCSV = () => {
+    exportToCSV(state.invoices, state.company);
+    trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "invoices", format: "csv" });
+  };
+  const handleExportJSON = () => {
+    exportToJSON(state.invoices, state.company);
+    trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "invoices", format: "json" });
+  };
 
   if (!state.company) return null;
 

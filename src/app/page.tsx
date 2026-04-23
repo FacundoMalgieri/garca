@@ -1,12 +1,11 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
+import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { ArrowRightIcon, SparklesIcon } from "@/components/ui/icons";
 
-// Trivial edit: verify Dokploy reuses deps + runner pre-copy layers; builder should rebuild.
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
 // it without waiting for React hydration. Only the small interactive pieces
@@ -50,15 +49,16 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-hero-entry-4">
-              <Link
+              <TrackedLandingCtaLink
                 href="/ingresar"
+                target="ingresar"
                 className="group relative w-full sm:w-52 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-6 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_-20%,white,transparent_70%)]" />
                 <span className="relative">Comenzar ahora</span>
                 <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
-              </Link>
+              </TrackedLandingCtaLink>
 
               <HeroDemoButton />
             </div>

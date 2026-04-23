@@ -68,17 +68,34 @@ export default function PrivacidadPage() {
             <li><strong className="text-foreground">Almacenamiento:</strong> Los tipos de cambio que ingresás manualmente se guardan en el localStorage de tu navegador.</li>
             <li><strong className="text-foreground">Transmisión:</strong> <strong className="text-foreground">NO</strong> se envían a ningún servidor.</li>
           </ul>
+
+          <H3>3.5 Medición agregada (estadísticas de uso)</H3>
+          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+            <li>
+              <strong className="text-foreground">Herramienta:</strong> usamos <strong className="text-foreground">Umami</strong> alojado en nuestro propio dominio
+              (analytics.garca.app), de código abierto y de primera parte. No es Google Analytics ni otra red publicitaria.
+            </li>
+            <li>
+              <strong className="text-foreground">Qué se mide:</strong> vistas de página; pasos del flujo de consulta a ARCA (éxito o
+              <strong className="text-foreground"> códigos de error</strong> genéricos del servidor, sin el texto del mensaje);
+              clics en enlaces de la página de inicio hacia &quot;Ingresar&quot; o &quot;Calculadora&quot;; y
+              <strong className="text-foreground"> exportaciones</strong> (tipo PDF/CSV/JSON y si vienen del listado o de la proyección), siempre con totales
+              o etiquetas, no contenido de facturas. Sirve para entender el uso del sitio, no para publicidad.
+            </li>
+            <li>
+              <strong className="text-foreground">Qué no se envía a Umami:</strong> CUIT, contraseñas, ni el contenido de facturas o comprobantes. Los eventos no incorporan datos identificables tuyos.
+            </li>
+          </ul>
         </Section>
 
         <Section title="4. Información que NO Recopilamos">
-          <p className="text-muted-foreground mb-2">No recopilamos, almacenamos ni procesamos:</p>
+          <p className="text-muted-foreground mb-2">No recopilamos, almacenamos ni procesamos (salvo lo descrito de forma agregada en la sección 3.5):</p>
           <ul className="space-y-1.5 text-muted-foreground">
             <li>&#10060; Contraseñas (se descartan después de cada consulta)</li>
             <li>&#10060; Datos personales identificables en nuestros servidores</li>
             <li>&#10060; Historial de navegación o actividad dentro del Servicio</li>
             <li>&#10060; Cookies de seguimiento o marketing</li>
             <li>&#10060; Información de ubicación o geolocalización</li>
-            <li>&#10060; Datos de uso, analytics o telemetría</li>
             <li>&#10060; Contenido de tus comprobantes en nuestros servidores</li>
             <li>&#10060; Información financiera más allá de lo que devuelve ARCA</li>
             <li>&#10060; Datos de dispositivo (modelo, sistema operativo, etc.)</li>
@@ -168,9 +185,10 @@ export default function PrivacidadPage() {
         <Section title="8. Cookies y Tecnologías de Rastreo">
           <p className="text-muted-foreground mb-2">
             GARCA <strong className="text-foreground">no utiliza cookies</strong> propias de ningún tipo (ni de sesión, ni persistentes, ni de tracking).
+            El script de <strong className="text-foreground">Umami</strong> (sección 3.5) se sirve de nuestro propio host; en su configuración habitual de medición básica no añade cookies de seguimiento de publicidad o de terceros analíticos.
           </p>
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>No usamos cookies de analytics (Google Analytics, etc.).</li>
+            <li>No usamos cookies de analytics de redes de terceros (p. ej. Google Analytics, Meta Pixel).</li>
             <li>No usamos cookies de marketing o publicidad.</li>
             <li>No usamos píxeles de seguimiento ni web beacons.</li>
             <li>Cloudflare Turnstile puede establecer cookies técnicas necesarias para su funcionamiento anti-bot, las cuales están sujetas a la{" "}
