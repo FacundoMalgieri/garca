@@ -27,6 +27,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ingresar a GARCA - Conectá con ARCA",
+    description:
+      "Recuperá tus comprobantes de ARCA. Ingresá tu CUIT y clave fiscal de forma segura y privada.",
+    images: ["/og-image.png"],
+  },
 }
 
 export default function IngresarLayout({ children }: { children: React.ReactNode }) {

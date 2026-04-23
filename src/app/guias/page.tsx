@@ -10,6 +10,8 @@ import { getGuideDateModified, guiasFaqEntries } from "@/lib/seo/page-schemas";
 import { GUIDES } from "./guides-data";
 import { GuidesExplorer } from "./GuidesExplorer";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
+
 const dateModified = getGuideDateModified();
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
@@ -31,12 +33,12 @@ export const metadata: Metadata = {
     "ARCA monotributo",
     "arca afip monotributo",
   ],
-  alternates: { canonical: "/guias" },
+  alternates: { canonical: `${siteUrl}/guias` },
   openGraph: {
     title: "Guías — Monotributo, ARCA y facturación | GARCA",
     description:
       "Todo lo que un monotributista necesita saber, explicado corto y claro. Con datos oficiales de ARCA y actualizaciones semestrales.",
-    url: "/guias",
+    url: `${siteUrl}/guias`,
     type: "website",
     locale: "es_AR",
     images: [

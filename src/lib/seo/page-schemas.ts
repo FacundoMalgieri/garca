@@ -88,12 +88,13 @@ function buildArticleImage(slug: string): Schema {
   };
 }
 
-function buildMainEntityOfPage(pageUrl: string): Schema {
+/** When `primaryImage` is omitted, uses the global OG card (same as dynamic category pages). */
+function buildMainEntityOfPage(pageUrl: string, primaryImage: Schema = ARTICLE_IMAGE): Schema {
   return {
     "@type": "WebPage",
     "@id": pageUrl,
     url: pageUrl,
-    primaryImageOfPage: ARTICLE_IMAGE,
+    primaryImageOfPage: primaryImage,
     isPartOf: { "@id": `${siteUrl}#website` },
   };
 }
@@ -190,7 +191,22 @@ const homeBreadcrumbSchema: Schema = {
   itemListElement: [{ "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl }],
 };
 
+const homeWebPageSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": siteUrl,
+  url: siteUrl,
+  name: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
+  description:
+    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source, sin base de datos ni registro. No instalás nada.",
+  inLanguage: "es-AR",
+  isPartOf: { "@id": `${siteUrl}#website` },
+  primaryImageOfPage: ARTICLE_IMAGE,
+  dateModified,
+};
+
 // ----- /calculadora-monotributo -----
+// WebApplication here is the public calculator module; sitewide `SoftwareApplication` is `#software` in JsonLd.
 
 const calculadoraWebAppSchema: Schema = {
   "@context": "https://schema.org",
@@ -206,6 +222,7 @@ const calculadoraWebAppSchema: Schema = {
   inLanguage: "es",
   author: PUBLISHER,
   publisher: ORGANIZATION,
+  isRelatedTo: { "@id": `${siteUrl}#software` },
 };
 
 const calculadoraFaqEntries: readonly FaqEntry[] = [
@@ -290,7 +307,7 @@ const monotributoHubArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo`),
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo`, buildArticleImage("monotributo")),
   inLanguage: "es-AR",
 };
 
@@ -365,8 +382,54 @@ const recategorizacionArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/recategorizacion`),
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/recategorizacion`,
+    buildArticleImage("recategorizacion"),
+  ),
   inLanguage: "es-AR",
+};
+
+const recategorizacionHowToSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Cómo hacer la recategorización del Monotributo en ARCA",
+  description:
+    "Pasos para completar la recategorización semestral del Monotributo en el portal de ARCA con CUIT y clave fiscal.",
+  inLanguage: "es-AR",
+  image: buildArticleImage("recategorizacion"),
+  totalTime: "PT20M",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Calculá tus ingresos de los últimos 12 meses",
+      text: "Sumá el total facturado (importe final de cada comprobante C emitido) de los últimos 12 meses. Incluí ventas de bienes, servicios y honorarios. En Monotributo no hay que restar IVA porque la factura C no lo discrimina: lo que se compara con el tope anual es el total bruto de los comprobantes.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "Ingresá a ARCA con CUIT y clave fiscal",
+      text: "Entrá a arca.gob.ar y autenticate con CUIT y clave fiscal (nivel 3 o superior). Desde el panel de servicios, abrí 'Monotributo'.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Seleccioná 'Recategorización'",
+      text: "Dentro de Monotributo buscá la opción de recategorización semestral. El sistema te muestra tu categoría actual y los parámetros del período.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 4,
+      name: "Completá los 4 parámetros",
+      text: "Cargá ingresos brutos, energía eléctrica (kWh anuales), superficie y alquileres devengados. El sistema sugiere automáticamente la categoría que corresponde.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 5,
+      name: "Confirmá la recategorización",
+      text: "Revisá que la categoría sugerida sea correcta y confirmá. Desde ese momento, la nueva cuota mensual se aplica al mes siguiente (febrero o agosto).",
+    },
+  ],
 };
 
 // ----- /monotributo/servicios-vs-bienes -----
@@ -445,7 +508,10 @@ const serviciosVsBienesArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/servicios-vs-bienes`),
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/servicios-vs-bienes`,
+    buildArticleImage("servicios-vs-bienes"),
+  ),
   inLanguage: "es-AR",
 };
 
@@ -525,7 +591,10 @@ const quePasaSiMePasoArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/que-pasa-si-me-paso`),
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/que-pasa-si-me-paso`,
+    buildArticleImage("que-pasa-si-me-paso"),
+  ),
   inLanguage: "es-AR",
 };
 
@@ -605,7 +674,10 @@ const vsResponsableInscriptoArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/vs-responsable-inscripto`),
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/vs-responsable-inscripto`,
+    buildArticleImage("vs-responsable-inscripto"),
+  ),
   inLanguage: "es-AR",
 };
 
@@ -675,7 +747,7 @@ const monotributo2026ArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/2026`),
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/2026`, buildArticleImage("monotributo-2026")),
   inLanguage: "es-AR",
 };
 
@@ -745,7 +817,7 @@ const arcaVsAfipArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/arca-vs-afip`),
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/arca-vs-afip`, buildArticleImage("arca-vs-afip")),
   inLanguage: "es-AR",
 };
 
@@ -815,7 +887,7 @@ const facturaCArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/factura-c`),
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/factura-c`, buildArticleImage("factura-c")),
   inLanguage: "es-AR",
 };
 
@@ -885,7 +957,7 @@ const facturaEArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/factura-e`),
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/factura-e`, buildArticleImage("factura-e")),
   inLanguage: "es-AR",
 };
 
@@ -960,7 +1032,10 @@ const facturaCvsEArticleSchema: Schema = {
   publisher: ORGANIZATION,
   datePublished: "2026-01-20",
   dateModified,
-  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/factura-c-vs-factura-e`),
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/factura-c-vs-factura-e`,
+    buildArticleImage("factura-c-vs-factura-e"),
+  ),
   inLanguage: "es-AR",
 };
 
@@ -1355,7 +1430,7 @@ export function getSchemasForPath(pathname: string): Schema[] {
 
   switch (clean) {
     case "/":
-      return [homeBreadcrumbSchema, buildFaqSchema(homeFaqEntries)];
+      return [homeBreadcrumbSchema, homeWebPageSchema, buildFaqSchema(homeFaqEntries)];
     case "/calculadora-monotributo":
       return [calculadoraWebAppSchema, buildFaqSchema(calculadoraFaqEntries), calculadoraBreadcrumbSchema];
     case "/monotributo":
@@ -1367,7 +1442,12 @@ export function getSchemasForPath(pathname: string): Schema[] {
     case "/guias":
       return [guiasBreadcrumbSchema, guiasCollectionPageSchema, buildFaqSchema(guiasFaqEntries)];
     case "/monotributo/recategorizacion":
-      return [recategorizacionBreadcrumbSchema, recategorizacionArticleSchema, buildFaqSchema(recategorizacionFaqEntries)];
+      return [
+        recategorizacionBreadcrumbSchema,
+        recategorizacionArticleSchema,
+        recategorizacionHowToSchema,
+        buildFaqSchema(recategorizacionFaqEntries),
+      ];
     case "/monotributo/servicios-vs-bienes":
       return [
         serviciosVsBienesBreadcrumbSchema,

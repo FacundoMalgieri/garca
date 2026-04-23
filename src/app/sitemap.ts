@@ -24,6 +24,9 @@ const guideLastMod = new Date(getGuideDateModified());
 export default function sitemap(): MetadataRoute.Sitemap {
   const buildDate = new Date();
 
+  /** Home landing: tie to editorial/data cadence instead of `new Date()` on every deploy. */
+  const homeLastMod = guideLastMod;
+
   const categoriaEntries: MetadataRoute.Sitemap = MONOTRIBUTO_DATA.categorias.map((cat) => ({
     url: `${siteUrl}/monotributo/categoria/${cat.categoria.toLowerCase()}`,
     lastModified: monotributoDataLastMod,
@@ -41,7 +44,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: siteUrl,
-      lastModified: buildDate,
+      lastModified: homeLastMod,
       changeFrequency: "weekly",
       priority: 1,
     },

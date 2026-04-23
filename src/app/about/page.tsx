@@ -35,12 +35,21 @@ export const metadata: Metadata = {
     type: "profile",
     url: `${siteUrl}/about`,
     siteName: "GARCA",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GARCA — herramienta open source para monotributistas",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sobre el autor — Quién está detrás de GARCA",
     description:
       "GARCA lo mantiene Facundo Malgieri, software engineer argentino. Open source, privado y sin afiliación con ARCA.",
+    images: ["/og-image.png"],
   },
 };
 
