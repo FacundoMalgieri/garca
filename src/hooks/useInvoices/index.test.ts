@@ -18,6 +18,20 @@ vi.mock("@/lib/crypto", () => ({
   }),
 }));
 
+vi.mock("@/lib/analytics/umami", () => ({
+  trackUmamiEvent: vi.fn(),
+  sanitizeErrorCode: (c: string | null | undefined) => c || "UNKNOWN",
+  UMAMI_EVENTS: {
+    ArcCompaniesOk: "funnel_arc_companies_ok",
+    ArcInvoicesOk: "funnel_arc_invoices_ok",
+    LandingDemoOpen: "funnel_landing_demo_open",
+    PanelExport: "funnel_panel_export",
+    ArcCompaniesFail: "funnel_arc_companies_fail",
+    ArcInvoicesFail: "funnel_arc_invoices_fail",
+    LandingCta: "funnel_landing_cta",
+  },
+}));
+
 describe("useInvoices", () => {
   beforeEach(() => {
     vi.clearAllMocks();

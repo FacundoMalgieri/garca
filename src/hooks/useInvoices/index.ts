@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
 import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 
@@ -376,6 +377,8 @@ export function useInvoices(): UseInvoicesReturn {
         // Process final result
         if (finalResult) {
           if (!finalResult.success) {
+            const failCode = (finalResult as { errorCode?: string }).errorCode;
+            trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(failCode) });
             setCompaniesState({
               companies: [],
               isLoading: false,
@@ -401,6 +404,8 @@ export function useInvoices(): UseInvoicesReturn {
             monotributoInfo: monotributo,
           });
 
+          const companyCount = (finalResult.companies || []).length;
+          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, { count: companyCount });
           return true;
         } else {
           throw new Error("No se recibió resultado del servidor");
@@ -410,6 +415,7 @@ export function useInvoices(): UseInvoicesReturn {
         const data = await response.json();
 
         if (!data.success) {
+          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(data.errorCode) });
           setCompaniesState({
             companies: [],
             isLoading: false,
@@ -435,6 +441,8 @@ export function useInvoices(): UseInvoicesReturn {
           monotributoInfo: monotributo,
         });
 
+        const companyCountJson = (data.companies || []).length;
+        trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, { count: companyCountJson });
         return true;
       }
     } catch (error) {
@@ -444,6 +452,11 @@ export function useInvoices(): UseInvoicesReturn {
       }
 
       const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      const clientCode =
+        error instanceof TypeError && /fetch|network|load failed/i.test(errorMessage)
+          ? "NETWORK"
+          : "CLIENT";
+      trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: clientCode });
       setCompaniesState({
         companies: [],
         isLoading: false,
@@ -580,6 +593,9 @@ export function useInvoices(): UseInvoicesReturn {
         // Process final result
         if (finalResult) {
           if (!finalResult.success) {
+            trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, {
+              code: sanitizeErrorCode(finalResult.errorCode),
+            });
             setState((prev) => ({
               ...prev,
               invoices: [],
@@ -614,6 +630,7 @@ export function useInvoices(): UseInvoicesReturn {
             isHydrated: true,
           });
 
+          trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
           clearCompanies();
         } else {
           throw new Error("No se recibió resultado del servidor");
@@ -623,6 +640,7 @@ export function useInvoices(): UseInvoicesReturn {
         const data = await response.json();
 
         if (!data.success) {
+          trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: sanitizeErrorCode(data.errorCode) });
           setState((prev) => ({
             ...prev,
             invoices: [],
@@ -657,6 +675,7 @@ export function useInvoices(): UseInvoicesReturn {
           isHydrated: true,
         });
 
+        trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
         clearCompanies();
       }
     } catch (error) {
@@ -666,6 +685,11 @@ export function useInvoices(): UseInvoicesReturn {
       }
 
       const errorMessage = error instanceof Error ? error.message : "Error desconocido al consultar facturas";
+      const clientCode =
+        error instanceof TypeError && /fetch|network|load failed/i.test(errorMessage)
+          ? "NETWORK"
+          : "CLIENT";
+      trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: clientCode });
 
       setState({
         invoices: [],
@@ -762,6 +786,7 @@ export function useInvoices(): UseInvoicesReturn {
     });
     setMonotributoInfo(info);
     saveMonotributoToStorage(info);
+    trackUmamiEvent(UMAMI_EVENTS.LandingDemoOpen, { count: invoices.length });
   };
 
   /**

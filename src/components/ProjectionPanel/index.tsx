@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { PdfReadySplash } from "@/components/ui/PdfReadySplash"
 import { useInvoiceContext } from "@/contexts/InvoiceContext"
 import { useProjection } from "@/hooks/useProjection"
+import { trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami"
 import { downloadPdfFile, sharePdfFile } from "@/lib/pdf-save"
 import { getMonthShortLabel, roundToNearest } from "@/lib/projection"
 import { cn } from "@/lib/utils"
@@ -148,6 +149,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   const handleExportPDF = async () => {
     try {
       const result = await exportProjectionToPDF(getExportData())
+      trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "projection", format: "pdf" })
       if (result.canShare) {
         setPdfReady(result.file)
       }
@@ -178,8 +180,14 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     setPdfReady(null)
   }, [])
 
-  const handleExportCSV = () => exportProjectionToCSV(getExportData())
-  const handleExportJSON = () => exportProjectionToJSON(getExportData())
+  const handleExportCSV = () => {
+    exportProjectionToCSV(getExportData())
+    trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "projection", format: "csv" })
+  }
+  const handleExportJSON = () => {
+    exportProjectionToJSON(getExportData())
+    trackUmamiEvent(UMAMI_EVENTS.PanelExport, { context: "projection", format: "json" })
+  }
 
   return (
     <>
