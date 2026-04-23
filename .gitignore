@@ -106,3 +106,6 @@ temp/
 
 # GSC: local tracker (not in repo; optional agent instructions on disk)
 docs/gsc-indexing-tracker.md
+
+# Local planning notes (not committed)
+docs/seo-improvement-plan.local.md

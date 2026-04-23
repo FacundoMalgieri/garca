@@ -164,8 +164,9 @@ const personSchema = {
 
 export async function JsonLd() {
   const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-pathname") ?? "/";
-  const pageSchemas = getSchemasForPath(pathname);
+  const pathname = requestHeaders.get("x-pathname");
+  // Without middleware's `x-pathname`, defaulting to "/" would inject the home FAQ/WebPage on every URL.
+  const pageSchemas = pathname != null && pathname !== "" ? getSchemasForPath(pathname) : [];
 
   return (
     <>
@@ -178,7 +179,6 @@ export async function JsonLd() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(personSchema) }} />
       {pageSchemas.map((schema, index) => (
         <script
-           
           key={index}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeSchema(schema) }}
