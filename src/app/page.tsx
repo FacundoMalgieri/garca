@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
@@ -67,6 +68,33 @@ export default function Home() {
               <SparklesIcon />
               <span>Probá con datos ficticios sin loguearte</span>
             </div>
+
+            <nav
+              className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 animate-hero-entry-5"
+              aria-label="Herramientas y guías frecuentes"
+            >
+              <Link
+                href="/calculadora-monotributo"
+                className="text-primary hover:underline font-medium"
+              >
+                Calculadora 2026
+              </Link>
+              <span className="text-slate-300 dark:text-slate-600" aria-hidden>
+                ·
+              </span>
+              <Link
+                href="/monotributo/arca-vs-afip"
+                className="text-primary hover:underline font-medium"
+              >
+                AFIP → ARCA: qué cambió
+              </Link>
+              <span className="text-slate-300 dark:text-slate-600" aria-hidden>
+                ·
+              </span>
+              <Link href="/monotributo" className="text-primary hover:underline font-medium">
+                Categorías y topes
+              </Link>
+            </nav>
           </div>
         </HeroParallax>
       </section>
