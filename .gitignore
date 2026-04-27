@@ -104,8 +104,5 @@ jspm_packages/
 tmp/
 temp/
 
-# GSC: local tracker (not in repo; optional agent instructions on disk)
-docs/gsc-indexing-tracker.md
-
-# Local planning notes (not committed)
-docs/seo-improvement-plan.local.md
+# Internal plans / GSC notes — keep out of the repo
+docs/
