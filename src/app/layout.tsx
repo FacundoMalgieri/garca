@@ -14,11 +14,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
+    default: "GARCA — comprobantes ARCA, calculadora y categorías (sin registro)",
     template: "%s | GARCA",
   },
   description:
-    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source, sin base de datos ni registro. No instalás nada.",
+    "GARCA: calculadora de Monotributo 2026, consulta de comprobantes ARCA (ex AFIP) y guías. Gratis, cifrado en el navegador, sin base de datos ni registro. Descubrí en segundos tu categoría y exportá a Excel.",
   keywords: [
     "AFIP",
     "ARCA",
@@ -66,23 +66,23 @@ export const metadata: Metadata = {
     locale: "es_AR",
     url: siteUrl,
     siteName: "GARCA",
-    title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
+    title: "GARCA — calculadora Monotributo 2026 y comprobantes ARCA, sin registro",
     description:
-      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source y sin base de datos.",
+      "Calculá tu categoría 2026, leé guías (ARCA/AFIP, facturas) y consultá comprobantes con cifrado en el navegador. Gratis y open source.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "GARCA - ARCA Monotributo: comprobantes, categorías y calculadora 2026",
+        alt: "GARCA: calculadora Monotributo 2026, comprobantes ARCA, sin registro",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
+    title: "GARCA — calculadora Monotributo 2026 y comprobantes ARCA, sin registro",
     description:
-      "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source y sin base de datos.",
+      "Calculá tu categoría 2026, guías y comprobantes ARCA. Gratis, cifrado en el navegador, sin registro ni instalación.",
     images: ["/og-image.png"],
   },
   alternates: {

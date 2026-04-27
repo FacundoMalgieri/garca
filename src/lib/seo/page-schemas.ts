@@ -809,9 +809,9 @@ const arcaVsAfipBreadcrumbSchema: Schema = {
 const arcaVsAfipArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "ARCA vs AFIP — Qué cambió para el monotributista (2026)",
+  headline: "¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en 2026",
   description:
-    "Transición de AFIP a ARCA (Agencia de Recaudación y Control Aduanero) por el Decreto 953/2024: qué cambió y qué sigue igual para el monotributista.",
+    "ARCA reemplazó a AFIP: decreto 953/2024, arca.gob.ar, mismas categorías y recategorización del monotributo, sin trámites extra.",
   image: buildArticleImage("arca-vs-afip"),
   author: PUBLISHER,
   publisher: ORGANIZATION,

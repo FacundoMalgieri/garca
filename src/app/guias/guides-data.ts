@@ -192,9 +192,9 @@ export const GUIDES: readonly Guide[] = [
   },
   {
     href: "/monotributo/arca-vs-afip",
-    title: "ARCA vs AFIP: qué cambió",
+    title: "AFIP ahora es ARCA (decreto 953)",
     description:
-      "AFIP pasó a llamarse ARCA por el Decreto 953/2024. Qué cambió en la práctica y qué sigue exactamente igual para el monotributista.",
+      "ARCA = sucesor de AFIP: arca.gob.ar, monotributo (categorías y fechas) igual. Resumen y qué solo cambió de nombre o portal.",
     category: "Fundamentos",
     readingTime: "4 min de lectura",
     accent: {

@@ -6,7 +6,7 @@ const pageUrl = `${siteUrl}/calculadora-monotributo`
 export const metadata: Metadata = {
   title: "Calculadora Monotributo 2026 - Categorías, Cuotas y Recategorización",
   description:
-    "Calculadora gratuita de Monotributo 2026. Ingresá tus ingresos y descubrí tu categoría, cuota mensual y margen disponible. Tabla completa de categorías ARCA actualizada.",
+    "Calculá gratis tu Monotributo 2026: categoría, cuota y tope. Sin registro ni base de datos; tabla y topes alineados con ARCA. Ideal antes de recategorizarte en enero o julio.",
   keywords: [
     "calculadora monotributo",
     "calculadora monotributo 2026",

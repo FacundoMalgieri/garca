@@ -20,9 +20,9 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "ARCA vs AFIP — Qué cambió para el monotributista (2026)",
+  title: "¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en 2026",
   description:
-    "Cómo AFIP pasó a llamarse ARCA (Agencia de Recaudación y Control Aduanero), qué cambió en la práctica para el monotributista y qué sigue exactamente igual.",
+    "Sí: ARCA reemplazó a AFIP. Guía clara con decreto 953, portal arca.gob.ar, mismas categorías y recategorización. Sin trámites extra para el monotributo.",
   keywords: [
     "arca vs afip",
     "arca ex afip",
@@ -34,9 +34,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${siteUrl}/monotributo/arca-vs-afip` },
   openGraph: {
-    title: "ARCA vs AFIP — Qué cambió para el monotributista",
+    title: "¿AFIP ahora es ARCA? (Dec. 953/2024) y el monotributo en 2026",
     description:
-      "AFIP pasó a llamarse ARCA a fines de 2024. Qué cambió en la práctica y qué sigue igual para el monotributista.",
+      "ARCA = sucesor de AFIP. Qué implica el decreto, el sitio arca.gob.ar y qué no cambia en el monotributo.",
     type: "article",
     url: `${siteUrl}/monotributo/arca-vs-afip`,
     siteName: "GARCA",
@@ -52,8 +52,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/arca-vs-afip.png"],
-    title: "ARCA vs AFIP — Qué cambió para el monotributista",
-    description: "De AFIP a ARCA: qué cambió y qué sigue igual en el día a día del monotributista.",
+    title: "AFIP ahora es ARCA (Dec. 953): el monotributo en 2026",
+    description: "Mismo organismo, nuevo portal. Categorías y cuotas igual. Guía con decreto 953/2024.",
   },
 };
 
@@ -68,6 +68,18 @@ export default function ArcaVsAfipPage() {
           { label: "ARCA vs AFIP" },
         ]}
       />
+
+      {/* Arriba del título: respuesta directa para búsquedas tipo "afip arca" / PAA */}
+      <p
+        id="respuesta-directa"
+        className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+      >
+        <strong className="text-foreground">Sí, AFIP pasó a llamarse ARCA</strong> (Agencia de
+        Recaudación y Control Aduanero) con el <strong className="text-foreground">Decreto
+        953/2024</strong>, portal en <strong className="text-foreground">arca.gob.ar</strong> en lugar de
+        afip.gob.ar, misma CUIT y clave fiscal, y <strong className="text-foreground">sin cambios en
+        monotributo: mismas 11 categorías, cuotas y fechas de recategorización</strong> que antes.
+      </p>
 
       <ArticleHero
         image="/og/arca-vs-afip.png"
