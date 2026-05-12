@@ -30,7 +30,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.2",
-    "next": "^16.2.4",
+    "next": "^16.2.6",
     "playwright": "^1.48.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
