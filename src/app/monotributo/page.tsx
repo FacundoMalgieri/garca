@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -62,7 +63,36 @@ export default function MonotributoIndexPage() {
           }
         />
 
-        <section className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Primary action — la calculadora se lleva el lugar principal porque
+            es el paso de menor fricción para quien llega desde buscadores. */}
+        <section className="mb-4">
+          <Link
+            href="/calculadora-monotributo"
+            className="group relative overflow-hidden block rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50/80 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/20 p-6 md:p-7 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all"
+          >
+            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/15 to-cyan-400/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mb-2">
+                  Calculadora 2026
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1">¿En qué categoría caés?</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                  Proyectá tu categoría mes a mes con tu facturación. Sin registro, datos solo en el navegador.
+                </p>
+              </div>
+              <span className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform shrink-0">
+                Calcular ahora
+                <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </span>
+            </div>
+          </Link>
+        </section>
+
+        {/* Secondary navigation — guía ARCA y el índice completo de guías. */}
+        <section className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link
             href="/monotributo/arca-vs-afip"
             className="group relative overflow-hidden block rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50/80 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-amber-950/20 p-5 md:p-6 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all"
@@ -84,54 +114,19 @@ export default function MonotributoIndexPage() {
             </div>
           </Link>
           <Link
-            href="/calculadora-monotributo"
-            className="group relative overflow-hidden block rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50/80 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/20 p-5 md:p-6 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all"
-          >
-            <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-emerald-400/15 to-cyan-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
-            <div className="relative flex flex-col h-full min-h-[7rem] md:min-h-0 md:flex-row md:items-center md:justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold text-foreground mb-1">Calculadora 2026</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Proyección y categoría: sin registro, datos solo en el navegador.
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300 group-hover:translate-x-0.5 transition-transform shrink-0">
-                Calcular
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </span>
-            </div>
-          </Link>
-        </section>
-
-        {/* Pointer to the full guides index, right under the hero so it is the
-            first thing visible after the intro — much higher discoverability. */}
-        <section className="mb-10">
-          <Link
             href="/guias"
             className="group relative overflow-hidden block rounded-2xl border border-indigo-200 dark:border-indigo-800/40 bg-gradient-to-br from-indigo-50 via-blue-50 to-violet-50 dark:from-indigo-950/30 dark:via-blue-950/20 dark:to-violet-950/30 p-5 md:p-6 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
-            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-sm shrink-0">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg md:text-xl font-bold text-foreground mb-1">
-                    Todas las guías de Monotributo
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                    Recategorización, exclusión del régimen, comparativa con Responsable Inscripto, servicios vs.
-                    venta de bienes y más. Índice completo en un solo lugar.
-                  </p>
-                </div>
+            <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-indigo-400/10 to-blue-400/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2" />
+            <div className="relative flex flex-col h-full min-h-[7rem] md:min-h-0 md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-foreground mb-1">Todas las guías de Monotributo</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Recategorización, exclusión, Responsable Inscripto, servicios vs. bienes y más.
+                </p>
               </div>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0">
-                Ver índice de guías
+                Ver índice
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -225,26 +220,42 @@ export default function MonotributoIndexPage() {
               Usá la calculadora gratuita de GARCA. Ingresás tu facturación mes a mes y te proyecta en qué
               categoría vas a caer en tu próxima recategorización. <strong className="text-slate-900 dark:text-white">Sin registro, sin datos guardados.</strong>
             </p>
-            <Link
-              href="/calculadora-monotributo"
-              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
-            >
-              Abrir calculadora
-              <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <Link
+                href="/calculadora-monotributo"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
+              >
+                Abrir calculadora
+                <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+              <TrackedLandingCtaLink
+                href="/ingresar"
+                target="ingresar"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300 dark:border-blue-700/50 bg-white/60 dark:bg-white/5 px-6 py-3 text-sm font-semibold text-blue-700 dark:text-blue-300 hover:bg-white dark:hover:bg-white/10 hover:scale-105 transition-all"
+              >
+                ¿No querés cargar a mano? Conectá tu ARCA
+                <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </TrackedLandingCtaLink>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 max-w-2xl">
+              Traé tus facturas reales automáticamente desde ARCA y mirá tu facturación acumulada en el panel.
+              Credenciales cifradas en tu navegador — nada se guarda en servidores.
+            </p>
           </div>
         </section>
-
-        <div className="mb-12">
-          <SupportBanner />
-        </div>
 
         <section className="mb-12">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
           <FaqAccordion items={monotributoHubFaqEntries} />
         </section>
+
+        <div className="mb-12">
+          <SupportBanner />
+        </div>
     </div>
   );
 }
