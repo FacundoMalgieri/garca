@@ -46,9 +46,15 @@ interface AdsterraBannerProps {
   className?: string;
   /** Hide the "Publicidad" label (default: shown). */
   hideLabel?: boolean;
+  /**
+   * iframe loading strategy. Default "lazy". Use "eager" for always-visible
+   * slots (e.g. the mobile sticky): Safari mishandles lazy iframes inside
+   * position:fixed containers and never triggers the load.
+   */
+  loading?: "lazy" | "eager";
 }
 
-export function AdsterraBanner({ format, className, hideLabel = false }: AdsterraBannerProps) {
+export function AdsterraBanner({ format, className, hideLabel = false, loading = "lazy" }: AdsterraBannerProps) {
   const unit = AD_UNITS[format];
   const src = `${ADS_ORIGIN}/ads/${unit.file}`;
 
@@ -75,7 +81,7 @@ export function AdsterraBanner({ format, className, hideLabel = false }: Adsterr
           // Cross-origin host already isolates from garca.app data; allow-same-origin
           // lets the ad use its OWN (ads.garca.app) cookies, which Adsterra requires.
           sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-          loading="lazy"
+          loading={loading}
           scrolling="no"
           style={{ border: 0, display: "block" }}
         />
