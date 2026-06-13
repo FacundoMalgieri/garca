@@ -1,28 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AdsterraBanner } from "./AdsterraBanner";
 
 /**
  * Sticky anchor ad for mobile — the 320×50 banner pinned to the bottom of the
- * viewport, where mobile ad viewability is highest (a footer ad in long content
- * is rarely scrolled to). Mobile-only (`md:hidden`) and dismissible.
+ * viewport, where mobile ad viewability is highest. Mobile-only and dismissible.
  *
- * Same isolation guarantees as AdsterraBanner: the ad runs in a cross-origin
- * iframe (ads.garca.app) and cannot read garca.app data. Mount ONLY on content
- * pages — never on /ingresar or /panel.
+ * iOS Safari note: WebKit does not reliably render an ad iframe inside a
+ * `position: fixed` container (it never fills), unlike Chrome. To avoid showing
+ * an empty bar, we detect iOS Safari and skip the sticky there — those users
+ * still get the in-flow rectangle ads. Android/Chrome keep the sticky.
+ *
+ * Same isolation as AdsterraBanner (cross-origin iframe on ads.garca.app). Mount
+ * ONLY on content pages — never on /ingresar or /panel.
  */
 export function MobileStickyAd() {
+  const [show, setShow] = useState(false);
   const [closed, setClosed] = useState(false);
-  if (closed) return null;
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIOSSafari =
+      /iP(hone|ad|od)/.test(ua) && /Safari/.test(ua) && !/(CriOS|FxiOS|EdgiOS|Chrome)/.test(ua);
+    // Render nothing on SSR and on iOS Safari (avoids an empty, never-filling bar).
+    setShow(!isIOSSafari);
+  }, []);
+
+  if (!show || closed) return null;
 
   return (
     <div
       className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-center justify-center border-t border-border bg-background py-1.5"
-      // Safari: backdrop-filter rompe el render de iframes anidados, y un
-      // contenedor sin altura puede medirse en 0 al cargar el ad. Fondo sólido
-      // + altura explícita (50 del banner + padding).
       style={{ minHeight: 62 }}
     >
       <button
