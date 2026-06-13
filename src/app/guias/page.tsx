@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -121,6 +122,10 @@ export default function GuiasPage() {
           </div>
         </div>
       </section>
+
+      <div className="mb-12">
+        <AdsterraBanner format="rectangle" />
+      </div>
 
       <div className="mb-12">
         <SupportBanner />
