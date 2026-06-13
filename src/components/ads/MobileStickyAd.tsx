@@ -18,7 +18,13 @@ export function MobileStickyAd() {
   if (closed) return null;
 
   return (
-    <div className="md:hidden fixed inset-x-0 bottom-0 z-40 flex justify-center border-t border-border bg-background/90 py-1.5 backdrop-blur-sm">
+    <div
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-center justify-center border-t border-border bg-background py-1.5"
+      // Safari: backdrop-filter rompe el render de iframes anidados, y un
+      // contenedor sin altura puede medirse en 0 al cargar el ad. Fondo sólido
+      // + altura explícita (50 del banner + padding).
+      style={{ minHeight: 62 }}
+    >
       <button
         type="button"
         onClick={() => setClosed(true)}
