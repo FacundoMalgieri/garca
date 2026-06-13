@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 const sectionUrl = `${siteUrl}/monotributo`;
 
@@ -52,5 +54,14 @@ export default function MonotributoSectionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {/* Ad de cierre — aplica al hub y a todas las guías de /monotributo/*.
+          Nunca en producto (/panel, /ingresar) ni en la calculadora. */}
+      <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
+        <AdsterraBanner format="rectangle" />
+      </div>
+    </>
+  );
 }
