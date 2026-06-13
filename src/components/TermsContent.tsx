@@ -118,14 +118,29 @@ export function TermsContent({ compact = false }: { compact?: boolean }) {
 
       <section>
         <h2 className={h2Class}>6. Privacidad y Datos</h2>
-        <p className="text-muted-foreground">
-          El uso del Servicio está sujeto a nuestra{" "}
-          <Link href="/privacidad" className="text-primary dark:text-primary-foreground underline underline-offset-2 hover:opacity-80 transition-opacity">
-            Política de Privacidad
-          </Link>
-          , que describe en detalle cómo se procesa, almacena y protege tu información.
-          La Política de Privacidad forma parte integral de estos Términos.
-        </p>
+        <div className="space-y-3">
+          <p className="text-muted-foreground">
+            El uso del Servicio está sujeto a nuestra{" "}
+            <Link href="/privacidad" className="text-primary dark:text-primary-foreground underline underline-offset-2 hover:opacity-80 transition-opacity">
+              Política de Privacidad
+            </Link>
+            , que describe en detalle cómo se procesa, almacena y protege tu información.
+            La Política de Privacidad forma parte integral de estos Términos.
+          </p>
+          <h3 className={h3Class}>6.1 Publicidad</h3>
+          <p className="text-muted-foreground">
+            El Servicio es gratuito y se financia parcialmente con publicidad de terceros
+            (<strong className="text-foreground">Adsterra</strong>), mostrada únicamente en las páginas de contenido
+            (inicio y guías), nunca en las páginas de inicio de sesión ni en el panel. Los anuncios se cargan de
+            forma aislada desde un <strong className="text-foreground">dominio separado</strong> (ads.garca.app) y,
+            por la política de mismo origen del navegador, <strong className="text-foreground">no pueden acceder</strong> a
+            tus credenciales, comprobantes ni datos locales. La publicidad se rige por las políticas de Adsterra; el
+            detalle figura en la sección 7.4 de la{" "}
+            <Link href="/privacidad" className="text-primary dark:text-primary-foreground underline underline-offset-2 hover:opacity-80 transition-opacity">
+              Política de Privacidad
+            </Link>.
+          </p>
+        </div>
       </section>
 
       <section>

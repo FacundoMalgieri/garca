@@ -56,6 +56,11 @@ export default function MonotributoSectionLayout({
 }) {
   return (
     <>
+      {/* Ad superior (leaderboard, solo desktop — el 728 no entra en mobile).
+          Aplica al hub y a todas las guías de /monotributo/*. */}
+      <div className="mx-auto hidden max-w-5xl px-4 pt-6 md:block">
+        <AdsterraBanner format="leaderboard" />
+      </div>
       {children}
       {/* Ad de cierre — aplica al hub y a todas las guías de /monotributo/*.
           Nunca en producto (/panel, /ingresar) ni en la calculadora. */}
