@@ -89,6 +89,11 @@ export default function GuiasPage() {
         }
       />
 
+      {/* Ad superior (leaderboard, solo desktop) */}
+      <div className="hidden md:block mb-8">
+        <AdsterraBanner format="leaderboard" />
+      </div>
+
       {/* Interactive category filter + guides grid */}
       <GuidesExplorer />
 

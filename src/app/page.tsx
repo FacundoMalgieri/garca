@@ -76,7 +76,7 @@ export default function Home() {
             >
               <Link
                 href="/calculadora-monotributo"
-                className="text-primary hover:underline font-medium"
+                className="text-primary dark:text-blue-400 hover:underline font-medium"
               >
                 Calculadora 2026
               </Link>
@@ -85,14 +85,14 @@ export default function Home() {
               </span>
               <Link
                 href="/monotributo/arca-vs-afip"
-                className="text-primary hover:underline font-medium"
+                className="text-primary dark:text-blue-400 hover:underline font-medium"
               >
                 AFIP → ARCA: qué cambió
               </Link>
               <span className="text-slate-300 dark:text-slate-600" aria-hidden>
                 ·
               </span>
-              <Link href="/monotributo" className="text-primary hover:underline font-medium">
+              <Link href="/monotributo" className="text-primary dark:text-blue-400 hover:underline font-medium">
                 Categorías y topes
               </Link>
             </nav>

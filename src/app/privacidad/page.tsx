@@ -4,7 +4,7 @@ export default function PrivacidadPage() {
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-bold text-foreground mb-2">Política de Privacidad</h1>
-      <p className="text-sm text-muted-foreground mb-8">Última actualización: Abril 2026</p>
+      <p className="text-sm text-muted-foreground mb-8">Última actualización: Junio 2026</p>
 
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mb-8">
         <p className="text-base font-medium text-primary dark:text-white leading-relaxed">
@@ -89,16 +89,20 @@ export default function PrivacidadPage() {
         </Section>
 
         <Section title="4. Información que NO Recopilamos">
-          <p className="text-muted-foreground mb-2">No recopilamos, almacenamos ni procesamos (salvo lo descrito de forma agregada en la sección 3.5):</p>
+          <p className="text-muted-foreground mb-2">
+            Ni GARCA ni nuestro dominio principal (garca.app) recopilan, almacenan ni procesan lo siguiente
+            (salvo la medición agregada de la sección 3.5 y la publicidad de terceros, en un dominio separado,
+            descrita en la sección 7.4):
+          </p>
           <ul className="space-y-1.5 text-muted-foreground">
             <li>&#10060; Contraseñas (se descartan después de cada consulta)</li>
             <li>&#10060; Datos personales identificables en nuestros servidores</li>
             <li>&#10060; Historial de navegación o actividad dentro del Servicio</li>
-            <li>&#10060; Cookies de seguimiento o marketing</li>
+            <li>&#10060; Cookies propias de seguimiento o marketing (en garca.app)</li>
             <li>&#10060; Información de ubicación o geolocalización</li>
             <li>&#10060; Contenido de tus comprobantes en nuestros servidores</li>
             <li>&#10060; Información financiera más allá de lo que devuelve ARCA</li>
-            <li>&#10060; Datos de dispositivo (modelo, sistema operativo, etc.)</li>
+            <li>&#10060; Datos de dispositivo recopilados por GARCA</li>
           </ul>
         </Section>
 
@@ -180,17 +184,59 @@ export default function PrivacidadPage() {
             <li>El proveedor puede registrar datos técnicos de acceso (dirección IP, user-agent, timestamps) según su propia política de privacidad.</li>
             <li>No tenemos control directo sobre estos logs del proveedor.</li>
           </ul>
+
+          <H3>7.4 Publicidad (Adsterra)</H3>
+          <p className="text-muted-foreground mb-2">
+            En las páginas de contenido (inicio, guías de Monotributo) mostramos anuncios de la red publicitaria
+            <strong className="text-foreground"> Adsterra</strong> para sostener el proyecto. Lo diseñamos para que
+            esto <strong className="text-foreground">no comprometa tus datos</strong>:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+            <li>
+              <strong className="text-foreground">Aislamiento por dominio:</strong> los anuncios se cargan dentro de
+              un <code className="text-foreground">iframe</code> servido desde un <strong className="text-foreground">dominio
+              separado</strong> (<code className="text-foreground">ads.garca.app</code>), distinto del dominio de la
+              aplicación. Por la <strong className="text-foreground">política de mismo origen</strong> del navegador,
+              el código publicitario <strong className="text-foreground">no puede leer</strong> el localStorage de
+              garca.app (tus comprobantes, CUIT, datos de empresa), ni el contenido de la página, ni tus credenciales.
+            </li>
+            <li>
+              <strong className="text-foreground">Nunca en el producto:</strong> los anuncios <strong className="text-foreground">no
+              se cargan</strong> en las páginas de inicio de sesión (<code className="text-foreground">/ingresar</code>)
+              ni en el panel (<code className="text-foreground">/panel</code>), donde se manejan credenciales y comprobantes.
+              Una Content-Security-Policy estricta bloquea cualquier script de terceros en esas rutas.
+            </li>
+            <li>
+              <strong className="text-foreground">Qué hace Adsterra:</strong> como toda red publicitaria, Adsterra puede
+              usar cookies propias y recopilar datos técnicos (IP, user-agent, interacción con el anuncio) <strong className="text-foreground">dentro
+              de su iframe</strong> para mostrar y medir publicidad. Esto se rige por su propia política, no por GARCA.
+            </li>
+            <li>
+              <strong className="text-foreground">Bloqueadores:</strong> si usás un bloqueador de anuncios, los avisos
+              simplemente no se cargan y el resto del Servicio funciona igual.
+            </li>
+            <li>
+              Más información:{" "}
+              <ExtLink href="https://adsterra.com/privacy-policy/">Política de Privacidad de Adsterra</ExtLink>
+            </li>
+          </ul>
         </Section>
 
         <Section title="8. Cookies y Tecnologías de Rastreo">
           <p className="text-muted-foreground mb-2">
-            GARCA <strong className="text-foreground">no utiliza cookies</strong> propias de ningún tipo (ni de sesión, ni persistentes, ni de tracking).
+            GARCA <strong className="text-foreground">no utiliza cookies propias</strong> de ningún tipo (ni de sesión, ni persistentes, ni de tracking) en su dominio de aplicación.
             El script de <strong className="text-foreground">Umami</strong> (sección 3.5) se sirve de nuestro propio host; en su configuración habitual de medición básica no añade cookies de seguimiento de publicidad o de terceros analíticos.
           </p>
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li>No usamos cookies de analytics de redes de terceros (p. ej. Google Analytics, Meta Pixel).</li>
-            <li>No usamos cookies de marketing o publicidad.</li>
-            <li>No usamos píxeles de seguimiento ni web beacons.</li>
+            <li>GARCA no usa cookies de marketing o publicidad propias.</li>
+            <li>No usamos píxeles de seguimiento ni web beacons propios.</li>
+            <li>
+              <strong className="text-foreground">Publicidad (Adsterra):</strong> los anuncios de terceros (sección 7.4) pueden
+              establecer sus propias cookies, pero <strong className="text-foreground">solo dentro de su iframe en el dominio
+              separado</strong> <code className="text-foreground">ads.garca.app</code>. Esas cookies no son accesibles desde
+              garca.app ni se asocian a tus comprobantes o credenciales.
+            </li>
             <li>Cloudflare Turnstile puede establecer cookies técnicas necesarias para su funcionamiento anti-bot, las cuales están sujetas a la{" "}
               <ExtLink href="https://www.cloudflare.com/cookie-policy/">Política de Cookies de Cloudflare</ExtLink>.
             </li>
