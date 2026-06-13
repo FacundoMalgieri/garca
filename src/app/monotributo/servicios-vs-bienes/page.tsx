@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
+import { NativeAd } from "@/components/ads/NativeAd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -188,10 +188,8 @@ export default function ServiciosVsBienesPage() {
           </p>
         </section>
 
-        {/* Ad mid-content (leaderboard, solo desktop) */}
-        <div className="hidden md:block my-12">
-          <AdsterraBanner format="leaderboard" />
-        </div>
+        {/* Ad mid-content (native, responsive) */}
+        <NativeAd className="my-12" />
 
         {/* ¿Cuál elegir? */}
         <section className="mb-12">
