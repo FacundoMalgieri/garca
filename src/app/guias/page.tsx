@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { MobileStickyAd } from "@/components/ads/MobileStickyAd";
+import { NativeAd } from "@/components/ads/NativeAd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -130,7 +130,7 @@ export default function GuiasPage() {
       </section>
 
       <div className="mb-12">
-        <AdsterraBanner format="rectangle" />
+        <NativeAd />
       </div>
 
       <div className="mb-12">
@@ -142,8 +142,6 @@ export default function GuiasPage() {
         <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes</h2>
         <FaqAccordion items={guiasFaqEntries} />
       </section>
-
-      <MobileStickyAd />
     </div>
   );
 }

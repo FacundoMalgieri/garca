@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <style>html,body{margin:0;padding:0;background:transparent}</style>
+  </head>
+  <body>
+    <script async data-cfasync="false" src="https://pl29735843.effectivecpmnetwork.com/e160bc254db5b4cb12432eae68797d84/invoke.js"></script>
+    <div id="container-e160bc254db5b4cb12432eae68797d84"></div>
+    <script>
+      // Native banner is variable-height; cross-origin iframes don't auto-resize.
+      // Post the measured height to the parent so it can size the iframe.
+      (function () {
+        function post() {
+          var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+          parent.postMessage({ type: "garca-ad-height", height: h }, "*");
+        }
+        if (window.ResizeObserver) new ResizeObserver(post).observe(document.body);
+        window.addEventListener("load", post);
+        // Fallback for late-injected ad content.
+        var n = 0, t = setInterval(function () { post(); if (++n > 20) clearInterval(t); }, 500);
+      })();
+    </script>
+  </body>
+</html>

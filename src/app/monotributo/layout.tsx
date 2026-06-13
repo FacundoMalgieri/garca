@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { MobileStickyAd } from "@/components/ads/MobileStickyAd";
+import { NativeAd } from "@/components/ads/NativeAd";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 const sectionUrl = `${siteUrl}/monotributo`;
@@ -63,13 +63,11 @@ export default function MonotributoSectionLayout({
         <AdsterraBanner format="leaderboard" />
       </div>
       {children}
-      {/* Ad de cierre — aplica al hub y a todas las guías de /monotributo/*.
+      {/* Ad de cierre (native, responsive) — hub y todas las guías.
           Nunca en producto (/panel, /ingresar) ni en la calculadora. */}
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
-        <AdsterraBanner format="rectangle" />
+        <NativeAd />
       </div>
-      {/* Sticky anchor 320×50 — alta visibilidad en mobile. */}
-      <MobileStickyAd />
     </>
   );
 }

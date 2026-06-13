@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { MobileStickyAd } from "@/components/ads/MobileStickyAd";
+import { NativeAd } from "@/components/ads/NativeAd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
@@ -103,12 +102,10 @@ export default function Home() {
 
       <HomeSections />
 
-      {/* Ad de cierre — al fondo de la landing, fuera del flujo de conversión. */}
+      {/* Ad de cierre (native, responsive) — al fondo, fuera del flujo de conversión. */}
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
-        <AdsterraBanner format="rectangle" />
+        <NativeAd />
       </div>
-
-      <MobileStickyAd />
     </div>
   );
 }
