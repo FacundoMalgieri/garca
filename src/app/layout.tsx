@@ -93,6 +93,9 @@ export const metadata: Metadata = {
     },
   },
   category: "technology",
+  other: {
+    "google-adsense-account": "ca-pub-5185590998414458",
+  },
 };
 
 export const viewport: Viewport = {
