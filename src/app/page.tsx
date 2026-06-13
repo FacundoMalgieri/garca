@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
+import { MobileStickyAd } from "@/components/ads/MobileStickyAd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
@@ -106,6 +107,8 @@ export default function Home() {
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
         <AdsterraBanner format="rectangle" />
       </div>
+
+      <MobileStickyAd />
     </div>
   );
 }
