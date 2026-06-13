@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -209,6 +210,11 @@ export default function FacturaCPage() {
           </table>
         </div>
       </section>
+
+      {/* Ad mid-content (leaderboard, solo desktop) */}
+      <div className="hidden md:block my-12">
+        <AdsterraBanner format="leaderboard" />
+      </div>
 
       {/* Datos obligatorios */}
       <section className="mb-12">

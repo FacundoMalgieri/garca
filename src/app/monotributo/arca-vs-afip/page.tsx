@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -157,6 +158,11 @@ export default function ArcaVsAfipPage() {
           estructura interna más compacta y un enfoque declarado en simplificación y digitalización.
         </p>
       </section>
+
+      {/* Ad mid-content (leaderboard, solo desktop) */}
+      <div className="hidden md:block my-12">
+        <AdsterraBanner format="leaderboard" />
+      </div>
 
       {/* Qué cambió y qué no */}
       <section className="mb-12">
