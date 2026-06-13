@@ -1,24 +1,34 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { buildCsp } from "@/lib/security/csp";
+
 /**
- * Middleware that exposes the current pathname to Server Components via the
- * `x-pathname` request header. Server Components read it with
- * `headers().get("x-pathname")` — used by the root layout to render
- * page-specific JSON-LD structured data in the initial `<head>`.
- *
- * This is required because in Next.js 16 + React 19, `<script type="application/ld+json">`
- * tags rendered inside page/child-layout components are serialized into the RSC
- * payload instead of the initial HTML. Placing them in the root layout's `<head>`
- * (driven by pathname) guarantees they appear in the server-rendered HTML.
+ * Middleware that:
+ * 1. Exposes the current pathname to Server Components via the `x-pathname`
+ *    request header. Server Components read it with `headers().get("x-pathname")`
+ *    — used by the root layout to render page-specific JSON-LD in the initial
+ *    `<head>` (in Next 16 + React 19, ld+json rendered inside page/child layouts
+ *    is serialized into the RSC payload instead of the server HTML).
+ * 2. Sets a per-route Content-Security-Policy. Content routes allow the Adsterra
+ *    banner loader; `/ingresar` and `/panel` stay strict and ad-free. See
+ *    `@/lib/security/csp`. (CSP lives here, not in next.config, because it must
+ *    vary by pathname — header config there is static.)
  */
 export function middleware(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  const { pathname } = request.nextUrl;
 
-  return NextResponse.next({
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
+  const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
+
+  const isDev = process.env.NODE_ENV === "development";
+  response.headers.set("Content-Security-Policy", buildCsp(pathname, isDev));
+
+  return response;
 }
 
 export const config = {

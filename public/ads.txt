@@ -1,0 +1,5 @@
+# ads.txt — Authorized Digital Sellers
+# Reemplazá la línea de abajo con la que te da Adsterra en tu dashboard
+# (Publisher → ads.txt). El formato es: <dominio>, <publisher-id>, DIRECT, <tag-id>
+# Ejemplo Adsterra:
+# highperformanceformat.com, REEMPLAZAR_PUB_ID, DIRECT
