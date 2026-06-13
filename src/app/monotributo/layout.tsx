@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
+import { MobileStickyAd } from "@/components/ads/MobileStickyAd";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 const sectionUrl = `${siteUrl}/monotributo`;
@@ -67,6 +68,8 @@ export default function MonotributoSectionLayout({
       <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
         <AdsterraBanner format="rectangle" />
       </div>
+      {/* Sticky anchor 320×50 — alta visibilidad en mobile. */}
+      <MobileStickyAd />
     </>
   );
 }
