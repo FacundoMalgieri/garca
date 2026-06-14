@@ -55,6 +55,7 @@ describe("useInvoices", () => {
         company: null,
         progress: null,
         isHydrated: true,
+        hasQueried: false,
       });
     });
 
@@ -820,6 +821,117 @@ describe("useInvoices", () => {
       expect(result.current.state.error).toBe("Unexpected failure");
       expect(result.current.state.errorCode).toBe("UNKNOWN");
       expect(result.current.state.invoices).toEqual([]);
+    });
+  });
+
+  describe("hasQueried flag (empty-but-successful fetch)", () => {
+    const createMockSSEResponse = (events: Array<{ type: string; message: string; data?: unknown }>) => {
+      const encoder = new TextEncoder();
+      const eventStrings = events.map((e) => `data: ${JSON.stringify(e)}\n\n`);
+      const chunks = eventStrings.map((s) => encoder.encode(s));
+      let chunkIndex = 0;
+      return {
+        ok: true,
+        headers: { get: (name: string) => (name === "content-type" ? "text/event-stream" : null) },
+        body: {
+          getReader: () => ({
+            read: async () => {
+              if (chunkIndex < chunks.length) return { done: false, value: chunks[chunkIndex++] };
+              return { done: true, value: undefined };
+            },
+          }),
+        },
+      };
+    };
+
+    it("should set hasQueried true on a successful fetch that returns zero invoices", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        { type: "result", message: "Proceso completado", data: { success: true, invoices: [] } },
+      ]);
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.invoices).toEqual([]);
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(result.current.state.error).toBeNull();
+    });
+
+    it("should persist an empty-but-queried result to localStorage", async () => {
+      vi.useFakeTimers();
+      const mockResponse = createMockSSEResponse([
+        { type: "result", message: "Proceso completado", data: { success: true, invoices: [] } },
+      ]);
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(localStorage.getItem("garca_invoices")).toBe("[]");
+      vi.useRealTimers();
+    });
+
+    it("should hydrate hasQueried true when an empty invoices array is stored", () => {
+      localStorage.setItem("garca_invoices", "[]");
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.invoices).toEqual([]);
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(result.current.state.isHydrated).toBe(true);
+    });
+
+    it("should keep hasQueried false when nothing is stored", () => {
+      const { result } = renderHook(() => useInvoices());
+      expect(result.current.state.hasQueried).toBe(false);
+    });
+
+    it("should keep hasQueried false on a failed fetch", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "result", message: "Error", data: { success: false, error: "Boom", errorCode: "X" } },
+      ]);
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.hasQueried).toBe(false);
+    });
+
+    it("should reset hasQueried to false on clearInvoices", () => {
+      localStorage.setItem("garca_invoices", "[]");
+      const { result } = renderHook(() => useInvoices());
+      expect(result.current.state.hasQueried).toBe(true);
+
+      act(() => {
+        result.current.clearInvoices();
+      });
+
+      expect(result.current.state.hasQueried).toBe(false);
     });
   });
 

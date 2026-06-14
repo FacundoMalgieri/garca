@@ -46,6 +46,12 @@ export interface InvoiceState {
   // and bounce to /ingresar → /panel → /ingresar in an infinite loop when
   // data is actually present in localStorage.
   isHydrated: boolean;
+  // True once a fetch has completed successfully, even when it returned zero
+  // invoices (e.g. a Monotributista with no billing in the period). Distinct
+  // from `invoices.length > 0`: a legitimate empty period must still route to
+  // /panel and survive a refresh, so navigation guards key on this flag rather
+  // than the invoice count to avoid the silent bounce back to /ingresar.
+  hasQueried: boolean;
 }
 
 /**
@@ -113,6 +119,7 @@ export function useInvoices(): UseInvoicesReturn {
     company: null,
     progress: null,
     isHydrated: false,
+    hasQueried: false,
   });
 
   const [companiesState, setCompaniesState] = useState<CompaniesState>({
@@ -173,7 +180,11 @@ export function useInvoices(): UseInvoicesReturn {
   const pendingSaveRef = useRef<{ invoices: AFIPInvoice[]; company: CompanyInfo | null } | null>(null);
 
   useEffect(() => {
-    if (state.invoices.length === 0) return;
+    // Gate on hasQueried, not invoice count: a successful empty query must be
+    // persisted (as "[]") so a refresh of /panel keeps showing the empty state.
+    // The initial pre-query state (hasQueried=false) is never written, so a
+    // fresh visit isn't mistaken for a completed query.
+    if (!state.hasQueried) return;
     pendingSaveRef.current = { invoices: state.invoices, company: state.company };
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
@@ -186,7 +197,7 @@ export function useInvoices(): UseInvoicesReturn {
     return () => {
       clearTimeout(saveTimeoutRef.current);
     };
-  }, [state.invoices, state.company]);
+  }, [state.invoices, state.company, state.hasQueried]);
 
   // Defensive: if the provider unmounts while a debounced save is pending
   // (e.g. during a fast route change), flush it synchronously so data isn't
@@ -222,10 +233,14 @@ export function useInvoices(): UseInvoicesReturn {
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
       const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
 
-      if (storedInvoices) {
+      if (storedInvoices !== null) {
+        // Presence of the key means a query completed and was persisted, even
+        // when it returned zero invoices. Parsing "[]" yields an empty array
+        // but still marks the session as queried so /panel renders the empty
+        // state instead of bouncing back to /ingresar.
         const invoices = JSON.parse(storedInvoices);
         const company = storedCompany ? JSON.parse(storedCompany) : extractCompanyInfo(invoices);
-        setState((prev) => ({ ...prev, invoices, company, isHydrated: true }));
+        setState((prev) => ({ ...prev, invoices, company, isHydrated: true, hasQueried: true }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true }));
       }
@@ -492,6 +507,7 @@ export function useInvoices(): UseInvoicesReturn {
       isLoading: true,
       error: null,
       errorCode: null,
+      hasQueried: false,
       progress: { message: "Iniciando...", progress: 0, type: "start" },
     }));
 
@@ -628,6 +644,7 @@ export function useInvoices(): UseInvoicesReturn {
             company,
             progress: null,
             isHydrated: true,
+            hasQueried: true,
           });
 
           trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
@@ -673,6 +690,7 @@ export function useInvoices(): UseInvoicesReturn {
           company,
           progress: null,
           isHydrated: true,
+          hasQueried: true,
         });
 
         trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
@@ -699,6 +717,7 @@ export function useInvoices(): UseInvoicesReturn {
         company: null,
         progress: null,
         isHydrated: true,
+        hasQueried: false,
       });
     }
   };
@@ -762,6 +781,7 @@ export function useInvoices(): UseInvoicesReturn {
       company: null,
       progress: null,
       isHydrated: true,
+      hasQueried: false,
     });
   };
 
@@ -783,6 +803,7 @@ export function useInvoices(): UseInvoicesReturn {
       company,
       progress: null,
       isHydrated: true,
+      hasQueried: true,
     });
     setMonotributoInfo(info);
     saveMonotributoToStorage(info);
