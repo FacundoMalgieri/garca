@@ -20,6 +20,7 @@ interface InvoiceState {
   company: CompanyInfo | null;
   progress: ScraperProgress | null;
   isHydrated: boolean;
+  hasQueried: boolean;
 }
 
 interface InvoiceContextType {

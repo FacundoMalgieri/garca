@@ -35,7 +35,7 @@ interface FxCurrencyInfo {
 
 export default function PanelPage() {
   const router = useRouter();
-  const { state, manualExchangeRates, setManualExchangeRate, clearInvoices } = useInvoiceContext();
+  const { state, monotributoInfo, manualExchangeRates, setManualExchangeRate, clearInvoices } = useInvoiceContext();
   const { registerTour } = useTourContext();
   const getSteps = useCallback(() => getPanelTourSteps(), []);
   const { startTour } = useTour({ tourKey: PANEL_TOUR_KEY, steps: getSteps });
@@ -88,15 +88,17 @@ export default function PanelPage() {
 
   const { data: monotributoData, tipoActividad } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
 
-  // Si no hay facturas, redirigir a /ingresar. Gate sobre isHydrated para
-  // evitar el loop /panel ↔ /ingresar en el primer render (antes de que
-  // loadFromStorage haya leído localStorage).
+  // Si no hubo ninguna consulta, redirigir a /ingresar. Se usa `!hasQueried`
+  // en vez de `invoices.length === 0`: una consulta válida sin facturación
+  // (0 facturas) debe quedarse en el panel mostrando el estado vacío + la
+  // categoría, no rebotar al login. Gate sobre isHydrated para evitar el loop
+  // /panel ↔ /ingresar en el primer render (antes de loadFromStorage).
   useEffect(() => {
     if (!state.isHydrated) return;
-    if (!state.isLoading && state.invoices.length === 0) {
+    if (!state.isLoading && !state.hasQueried) {
       router.push("/ingresar");
     }
-  }, [state.isHydrated, state.isLoading, state.invoices.length, router]);
+  }, [state.isHydrated, state.isLoading, state.hasQueried, router]);
 
   if (!state.isHydrated || state.isLoading) {
     return (
@@ -109,11 +111,17 @@ export default function PanelPage() {
     );
   }
 
-  if (state.invoices.length === 0) {
+  if (!state.hasQueried) {
     return null; // El useEffect redirigirá
   }
 
   const isDemo = state.company?.razonSocial?.includes("(Demo)") ?? false;
+  const isEmptyPeriod = state.invoices.length === 0;
+  // Sin facturación Y sin categoría de Monotributo: no tenemos nada que
+  // mostrar. Suele indicar que la persona no es monotributista activa (p. ej.
+  // se dio de baja al pasar a relación de dependencia). Si hay facturas no se
+  // muestra este aviso aunque falle la categoría: claramente está facturando.
+  const noMonotributoData = isEmptyPeriod && !monotributoInfo;
 
   return (
     <div className="w-full pt-4 pb-0 md:py-8 space-y-4 md:space-y-8 max-w-[1920px] mx-auto px-0 md:px-6">
@@ -130,6 +138,38 @@ export default function PanelPage() {
               limpiá los datos e ingresá con tu clave fiscal
             </button>.
           </span>
+        </div>
+      )}
+
+      {/* Empty-period banner: consulta válida sin facturación en el rango */}
+      {isEmptyPeriod && (
+        <div className="mx-4 md:mx-0 rounded-lg border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 flex flex-wrap items-center justify-between gap-2">
+          {noMonotributoData ? (
+            <span>
+              No registramos <strong>facturación</strong> en el período consultado y tampoco pudimos
+              encontrar los datos de tu <strong>categoría de Monotributo</strong>. Asegurate de ser
+              monotributista para usar este servicio, o{" "}
+              <button
+                type="button"
+                onClick={() => { clearInvoices(); router.push("/ingresar"); }}
+                className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
+              >
+                consultá otro período
+              </button>.
+            </span>
+          ) : (
+            <span>
+              No registramos <strong>facturación</strong> en el período consultado. Abajo verás tu
+              categoría de Monotributo y podés{" "}
+              <button
+                type="button"
+                onClick={() => { clearInvoices(); router.push("/ingresar"); }}
+                className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
+              >
+                consultar otro período
+              </button>.
+            </span>
+          )}
         </div>
       )}
 

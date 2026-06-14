@@ -44,14 +44,17 @@ export default function IngresoPage() {
     }
   }, [isPending]);
 
-  // Si ya hay facturas cargadas, redirigir al panel. Gate sobre isHydrated
-  // para evitar el loop /ingresar ↔ /panel en el primer render.
+  // Si una consulta se completó con éxito, redirigir al panel. Se usa
+  // `hasQueried` y no `invoices.length` para que un período sin facturación
+  // (0 facturas pero consulta válida) también vaya al panel en lugar de
+  // quedarse en el formulario (silent fail). Gate sobre isHydrated para
+  // evitar el loop /ingresar ↔ /panel en el primer render.
   useEffect(() => {
     if (!state.isHydrated) return;
-    if (!state.isLoading && state.invoices.length > 0 && !state.error) {
+    if (!state.isLoading && state.hasQueried && !state.error) {
       router.push("/panel");
     }
-  }, [state.isHydrated, state.isLoading, state.invoices.length, state.error, router]);
+  }, [state.isHydrated, state.isLoading, state.hasQueried, state.error, router]);
 
   const handleFetchCompanies = async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
     return await fetchCompanies(cuit, password, turnstileToken);
@@ -86,7 +89,7 @@ export default function IngresoPage() {
     !state.isHydrated ||
     companiesState.isLoading ||
     state.isLoading ||
-    state.invoices.length > 0;
+    (state.hasQueried && !state.error);
   
   // Use progress from whichever is loading
   const currentProgress = companiesState.isLoading ? companiesState.progress : state.progress;
