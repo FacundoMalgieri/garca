@@ -2,154 +2,43 @@
 /**
  * Updates the Monotributo categories static data file.
  *
- * This script scrapes the AFIP website and updates src/data/monotributo-categorias.ts
+ * Scrapes the ARCA website and rewrites src/data/monotributo-categorias.ts.
+ * All scraping/parsing/validation logic lives in the shared scraper module
+ * (src/lib/scrapers/monotributo) so the runtime API and this script stay in
+ * sync. This script only adds: loading the previous data (for drift checks)
+ * and writing the generated file.
+ *
+ * It exits non-zero on any failure — the GitHub Action turns that into an
+ * issue (see .github/workflows/update-monotributo.yml) and leaves the existing
+ * data untouched.
  *
  * Usage:
  *   npm run update-monotributo
- *
- * Or directly:
- *   npx tsx scripts/update-monotributo.ts
  */
 
-import { chromium } from "playwright";
 import * as fs from "fs";
 import * as path from "path";
 
-interface CategoriaMonotributo {
-  categoria: string;
-  ingresosBrutos: number;
-  superficieAfectada: string;
-  energiaElectrica: string;
-  alquileres: number;
-  precioUnitarioMax: number;
-  impuestoIntegrado: {
-    servicios: number;
-    venta: number;
-  };
-  aportesSIPA: number;
-  aportesObraSocial: number;
-  total: {
-    servicios: number;
-    venta: number;
-  };
-}
+import { scrapeMonotributoCategories } from "../src/lib/scrapers/monotributo";
+import type { MonotributoData } from "../src/types/monotributo";
 
-interface MonotributoData {
-  categorias: CategoriaMonotributo[];
-  fechaVigencia: string;
-  lastUpdated?: string;
-}
-
-const MONOTRIBUTO_URL = "https://www.arca.gob.ar/monotributo/categorias.asp";
 const OUTPUT_FILE = path.join(__dirname, "..", "src", "data", "monotributo-categorias.ts");
 
-/**
- * Extracts the vigencia date from the table caption.
- */
-function extractFechaVigencia(captionText: string | null): string {
-  if (!captionText) return "";
-  const match = captionText.match(/Vigente\s+a\s+partir\s+del?\s*:?\s*([\d\/]+)/i);
-  return match ? match[1] : "";
-}
-
-/**
- * Parses a monetary string from AFIP format to number.
- */
-function parseMonto(texto: string): number {
-  return (
-    parseFloat(
-      texto
-        .replace(/\$/g, "")
-        .replace(/\s/g, "")
-        .replace(/\./g, "")
-        .replace(/,/g, ".")
-        .trim()
-    ) || 0
-  );
-}
-
-/**
- * Scrapes Monotributo categories from AFIP website.
- */
-async function scrapeMonotributoCategories(): Promise<MonotributoData> {
-  console.log("[Update Monotributo] Starting scraper...");
-
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
+/** Loads the currently committed data, if any, for drift detection. */
+async function loadPreviousData(): Promise<MonotributoData | null> {
   try {
-    console.log("[Update Monotributo] Navigating to AFIP monotributo page...");
-    await page.goto(MONOTRIBUTO_URL, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000,
-    });
-
-    // Wait for table to load
-    await page.waitForSelector("table", { timeout: 10000 });
-
-    // Extract raw text from table cells (no functions inside evaluate to avoid esbuild __name issue)
-    console.log("[Update Monotributo] Extracting categories...");
-    const rawData = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll("table tbody tr"));
-      return rows.map((row) => {
-        const cells = row.querySelectorAll("td, th");
-        return Array.from(cells).map((cell) => cell.textContent?.trim() || "");
-      });
-    });
-
-    // Parse the raw data outside of page.evaluate
-    const categorias = rawData.map((cells) => ({
-      categoria: cells[0] || "",
-      ingresosBrutos: parseMonto(cells[1] || ""),
-      superficieAfectada: cells[2] || "",
-      energiaElectrica: cells[3] || "",
-      alquileres: parseMonto(cells[4] || ""),
-      precioUnitarioMax: parseMonto(cells[5] || ""),
-      impuestoIntegrado: {
-        servicios: parseMonto(cells[6] || ""),
-        venta: parseMonto(cells[7] || ""),
-      },
-      aportesSIPA: parseMonto(cells[8] || ""),
-      aportesObraSocial: parseMonto(cells[9] || ""),
-      total: {
-        servicios: parseMonto(cells[10] || ""),
-        venta: parseMonto(cells[11] || ""),
-      },
-    }));
-
-    // Extract effective date
-    const captionText = await page.evaluate(() => {
-      const caption = document.querySelector("table caption");
-      return caption?.textContent || null;
-    });
-
-    const fechaVigencia = extractFechaVigencia(captionText);
-
-    await browser.close();
-
-    const validCategorias = categorias.filter((c) => c.categoria && !isNaN(c.ingresosBrutos) && c.ingresosBrutos > 0);
-
-    console.log(`[Update Monotributo] Extracted ${validCategorias.length} categories`);
-    console.log(`[Update Monotributo] Vigencia: ${fechaVigencia}`);
-
-    return {
-      categorias: validCategorias,
-      fechaVigencia,
-      lastUpdated: new Date().toISOString().split("T")[0],
-    };
-  } catch (error) {
-    await browser.close();
-    console.error("[Update Monotributo] Error:", error);
-    throw new Error("Failed to scrape monotributo categories");
+    const mod = await import("../src/data/monotributo-categorias");
+    return mod.MONOTRIBUTO_DATA ?? null;
+  } catch {
+    console.warn("[Update Monotributo] No previous data found (skipping drift check)");
+    return null;
   }
 }
 
-/**
- * Generates the TypeScript file content.
- */
+/** Generates the TypeScript file content. */
 function generateFileContent(data: MonotributoData): string {
   const today = new Date().toISOString().split("T")[0];
+  const payload: MonotributoData = { ...data, lastUpdated: today };
 
   return `/**
  * Monotributo category data.
@@ -163,28 +52,20 @@ function generateFileContent(data: MonotributoData): string {
 
 import type { MonotributoData } from "@/types/monotributo";
 
-export const MONOTRIBUTO_DATA: MonotributoData = ${JSON.stringify(data, null, 2).replace(/"([^"]+)":/g, "$1:")};
+export const MONOTRIBUTO_DATA: MonotributoData = ${JSON.stringify(payload, null, 2).replace(/"([^"]+)":/g, "$1:")};
 `;
 }
 
-/**
- * Main function.
- */
 async function main() {
   try {
-    const data = await scrapeMonotributoCategories();
+    const previous = await loadPreviousData();
+    const data = await scrapeMonotributoCategories(previous);
 
-    if (data.categorias.length === 0) {
-      console.error("[Update Monotributo] No categories found. Aborting update.");
-      process.exit(1);
-    }
-
-    const content = generateFileContent(data);
-    fs.writeFileSync(OUTPUT_FILE, content, "utf-8");
+    fs.writeFileSync(OUTPUT_FILE, generateFileContent(data), "utf-8");
 
     console.log(`[Update Monotributo] Successfully updated ${OUTPUT_FILE}`);
     console.log(`[Update Monotributo] Categories: ${data.categorias.length}`);
-    console.log(`[Update Monotributo] Vigencia: ${data.fechaVigencia}`);
+    console.log(`[Update Monotributo] Vigencia: ${data.fechaVigencia || "(no detectada)"}`);
   } catch (error) {
     console.error("[Update Monotributo] Failed:", error);
     process.exit(1);
@@ -192,4 +73,3 @@ async function main() {
 }
 
 main();
-
