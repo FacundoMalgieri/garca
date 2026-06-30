@@ -116,7 +116,7 @@ export function HeroDemoButton({ widthClassName = "w-full sm:w-52" }: { widthCla
         ) : (
           <>
             <PlayIcon className="group-hover:scale-125 transition-transform duration-300" />
-            Ver demo
+            Ver cómo funciona
           </>
         )}
       </button>

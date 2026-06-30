@@ -36,9 +36,9 @@ export default function Home() {
               </h1>
 
               <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-5 leading-relaxed animate-hero-entry-3">
-                GARCA lee tus comprobantes de ARCA, calcula tu categoría de Monotributo 2026 y te
-                muestra cuánto te queda para no pasarte.{" "}
-                <span className="font-semibold text-slate-800 dark:text-white">Simple, privado y gratis.</span>
+                GARCA analiza automáticamente tus comprobantes de ARCA, calcula tu categoría de
+                Monotributo 2026 y te muestra cuánto te queda para no pasarte.{" "}
+                <span className="font-semibold text-slate-800 dark:text-white">Gratis, privado y sin instalar nada.</span>
               </p>
 
               <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4 animate-hero-entry-4">
