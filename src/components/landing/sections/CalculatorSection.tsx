@@ -34,7 +34,7 @@ export function CalculatorSection() {
             >
               Herramienta gratuita
             </span>
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white text-balance mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white text-balance mb-4">
               Calculadora de Monotributo {MONOTRIBUTO_YEAR}
             </h2>
             <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
