@@ -42,7 +42,7 @@ describe("performSecurityChecks", () => {
     vi.mocked(detectAutomation).mockReturnValue(false);
     vi.mocked(getTurnstileToken).mockReturnValue(null);
     vi.mocked(getClientIP).mockReturnValue("192.168.1.1");
-    vi.mocked(validateTurnstile).mockResolvedValue(true);
+    vi.mocked(validateTurnstile).mockResolvedValue({ success: true });
   });
 
   afterEach(() => {
@@ -82,7 +82,7 @@ describe("performSecurityChecks", () => {
       vi.mocked(rateLimit).mockReturnValue(true);
       vi.mocked(detectAutomation).mockReturnValue(false);
       vi.mocked(getTurnstileToken).mockReturnValue("test-token");
-      vi.mocked(validateTurnstile).mockResolvedValue(false);
+      vi.mocked(validateTurnstile).mockResolvedValue({ success: false });
 
       const result = await performSecurityChecks(mockRequest);
 
@@ -185,7 +185,7 @@ describe("performSecurityChecks", () => {
       it("should validate turnstile when token is present", async () => {
         vi.mocked(getTurnstileToken).mockReturnValue("test-token");
         vi.mocked(getClientIP).mockReturnValue("192.168.1.1");
-        vi.mocked(validateTurnstile).mockResolvedValue(true);
+        vi.mocked(validateTurnstile).mockResolvedValue({ success: true });
 
         const result = await performSecurityChecks(mockRequest);
 
@@ -193,9 +193,9 @@ describe("performSecurityChecks", () => {
         expect(validateTurnstile).toHaveBeenCalledWith("test-token", "192.168.1.1");
       });
 
-      it("should return 403 TURNSTILE_FAILED when validation fails", async () => {
+      it("should return 403 TURNSTILE_FAILED when validation fails without a reason", async () => {
         vi.mocked(getTurnstileToken).mockReturnValue("invalid-token");
-        vi.mocked(validateTurnstile).mockResolvedValue(false);
+        vi.mocked(validateTurnstile).mockResolvedValue({ success: false });
 
         const result = await performSecurityChecks(mockRequest);
 
@@ -206,9 +206,25 @@ describe("performSecurityChecks", () => {
         expect(body.errorCode).toBe("TURNSTILE_FAILED");
       });
 
+      it("should fold Cloudflare's reason into the errorCode when present", async () => {
+        vi.mocked(getTurnstileToken).mockReturnValue("expired-token");
+        vi.mocked(validateTurnstile).mockResolvedValue({
+          success: false,
+          errorCodes: ["timeout-or-duplicate"],
+        });
+
+        const result = await performSecurityChecks(mockRequest);
+
+        expect(result.allowed).toBe(false);
+        expect(result.response?.status).toBe(403);
+
+        const body = await result.response?.json();
+        expect(body.errorCode).toBe("TURNSTILE_FAILED_timeout-or-duplicate");
+      });
+
       it("should return allowed when token is valid", async () => {
         vi.mocked(getTurnstileToken).mockReturnValue("valid-token");
-        vi.mocked(validateTurnstile).mockResolvedValue(true);
+        vi.mocked(validateTurnstile).mockResolvedValue({ success: true });
 
         const result = await performSecurityChecks(mockRequest);
 
@@ -223,7 +239,7 @@ describe("performSecurityChecks", () => {
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
       process.env.TURNSTILE_SECRET_KEY = "test-secret-key";
       vi.mocked(getTurnstileToken).mockReturnValue("valid-token");
-      vi.mocked(validateTurnstile).mockResolvedValue(true);
+      vi.mocked(validateTurnstile).mockResolvedValue({ success: true });
 
       const result = await performSecurityChecks(mockRequest);
 

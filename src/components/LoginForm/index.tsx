@@ -74,6 +74,22 @@ export function LoginForm({
     setTurnstileToken(token);
   }, []);
 
+  // Turnstile tokens are single-use and expire after ~5 min. If the user lingers
+  // on the form the token goes stale; submitting it then bounces server-side as
+  // TURNSTILE_FAILED (timeout-or-duplicate). Drop the stale token and silently
+  // re-run the invisible challenge so a fresh one is ready by submit time.
+  const handleTurnstileExpired = useCallback(() => {
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+  }, []);
+
+  // A transient Cloudflare error leaves us without a token; clear it and try to
+  // re-arm so the user can recover without a manual page reload.
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+  }, []);
+
   // Load CUIT from localStorage on mount
   useState(() => {
     if (typeof window !== "undefined") {
@@ -191,7 +207,12 @@ export function LoginForm({
         )}
 
         {/* Turnstile widget for second request */}
-        <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
+        <TurnstileWidget
+          ref={turnstileRef}
+          onSuccess={handleTurnstileSuccess}
+          onExpired={handleTurnstileExpired}
+          onError={handleTurnstileError}
+        />
       </div>
     );
   }
@@ -289,7 +310,12 @@ export function LoginForm({
           <PrivacyBanner />
 
           {/* Invisible Turnstile widget for bot protection */}
-          <TurnstileWidget ref={turnstileRef} onSuccess={handleTurnstileSuccess} />
+          <TurnstileWidget
+            ref={turnstileRef}
+            onSuccess={handleTurnstileSuccess}
+            onExpired={handleTurnstileExpired}
+            onError={handleTurnstileError}
+          />
         </form>
 
         <TermsModal
