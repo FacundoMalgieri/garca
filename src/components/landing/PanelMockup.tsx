@@ -84,8 +84,8 @@ export function PanelMockup() {
         </div>
       </div>
 
-      {/* Filas de comprobantes */}
-      <div className="space-y-2">
+      {/* Filas de comprobantes (ocultas en mobile para no agrandar el hero) */}
+      <div className="hidden sm:block space-y-2">
         {MOCK_PANEL.comprobantes.map((row) => (
           <div
             key={`${row.fecha}-${row.detalle}`}
