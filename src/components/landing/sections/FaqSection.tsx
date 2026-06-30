@@ -11,7 +11,11 @@ export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section ref={ref} id="faq" className="relative py-24 md:py-32 overflow-hidden">
+    <section
+      ref={ref}
+      id="faq"
+      className="relative py-24 md:py-32 overflow-hidden bg-primary/5 dark:bg-white/[0.03] border-y border-slate-200 dark:border-white/10"
+    >
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium mb-4">
