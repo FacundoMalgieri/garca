@@ -20,6 +20,7 @@ const tocItems: readonly TocItem[] = [
   { id: "factura-e", label: "Factura E: el comprobante" },
   { id: "ingresar-las-divisas", label: "Cómo se ingresan los dólares (BCRA 2026)" },
   { id: "plataformas", label: "Plataformas para recibir USD" },
+  { id: "cuentas-usd-eeuu", label: "Cuentas en USD en EE.UU." },
   { id: "tope-monotributo", label: "Cómo impacta en el tope del Monotributo" },
   { id: "crs", label: "Qué cambió con CRS 2.0" },
 ];
@@ -398,6 +399,113 @@ export default function CobrarDelExteriorPage() {
             Enlace de afiliado: si abrís tu cuenta desde acá, GARCA puede ganar una comisión, sin costo extra para vos.
           </p>
         </div>
+      </section>
+
+      {/* Cuentas en USD en EE.UU. */}
+      <section className="mb-12">
+        <h2 id="cuentas-usd-eeuu" className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4">
+          Cuentas en USD en EE.UU. (GrabrFi y Utoppia)
+        </h2>
+        <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+          Además de Wise o Payoneer, hay una categoría aparte: las{" "}
+          <strong className="text-foreground">cuentas en dólares domiciliadas en Estados Unidos</strong> pensadas para
+          freelancers latinoamericanos. Te dan tu propio <strong className="text-foreground">número de cuenta y routing
+          de EE.UU.</strong> (como una cuenta local estadounidense) para recibir ACH/wire, una tarjeta para gastar en
+          USD y, en general, la opción de transferir a tu banco argentino. Las dos más conocidas en Argentina a junio de
+          2026 son <strong className="text-foreground">GrabrFi</strong> y <strong className="text-foreground">Utoppia</strong>;
+          ambas no son bancos en sí: la cuenta la provee <strong className="text-foreground">Regent Bank (miembro
+          FDIC)</strong>.
+        </p>
+
+        <div className="mb-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-background p-5">
+          <h3 className="text-base font-bold text-foreground mb-2">El matiz fiscal: FATCA, no CRS</h3>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            Por ser cuentas radicadas en EE.UU. caen bajo <strong className="text-foreground">FATCA</strong>, el régimen
+            estadounidense, y <strong className="text-foreground">no bajo el CRS de la OCDE</strong>. Estados Unidos no
+            participa del CRS y FATCA es, en la práctica, mayormente{" "}
+            <strong className="text-foreground">no recíproco</strong>: el IRS pide datos de cuentas de estadounidenses en
+            el exterior, pero EE.UU. casi no informa automáticamente sobre cuentas de extranjeros a sus países de
+            residencia. Por eso una cuenta en EE.UU. <strong className="text-foreground">no se reporta a ARCA por la vía
+            automática del CRS</strong> como sí puede pasar con una fintech europea o del Reino Unido.
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            Atención: esto es solo sobre el <em>reporte automático</em>, no sobre tu obligación. Si sos{" "}
+            <strong className="text-foreground">residente fiscal argentino</strong>, igual tenés que{" "}
+            <strong className="text-foreground">declarar tus cuentas e ingresos del exterior</strong> y, como
+            monotributista, facturar e ingresar las divisas en regla. Esto no es una vía para ocultar plata. Tenés el
+            detalle del intercambio de información en{" "}
+            <Link
+              href="/monotributo/crs-arca"
+              className="text-blue-700 dark:text-blue-300 hover:underline font-semibold underline-offset-2"
+            >
+              CRS 2.0 y ARCA
+            </Link>
+            .
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50/70 to-green-50/70 dark:from-emerald-950/20 dark:to-green-950/20 p-5">
+            <h3 className="text-lg font-bold text-foreground mb-2">GrabrFi</h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+              Wallet con cuenta de EE.UU. (routing + número de cuenta), tarjeta Mastercard en dólares y conversión a
+              stablecoins. Apuntada a freelancers que cobran de Upwork, Deel o Toptal por depósito directo.
+            </p>
+            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 mb-4">
+              <li>• Apertura y mantenimiento sin costo; se hace online con pasaporte o DNI, sin viajar a EE.UU.</li>
+              <li>• ACH entrante sin cargo; podés retirar a tu banco en Argentina (verificá la comisión vigente en el sitio oficial).</li>
+              <li>• Disponible para Argentina a junio 2026; la cuenta la provee Regent Bank (FDIC).</li>
+            </ul>
+            <a
+              href="https://app.grabrfi.com/sign-up?invite-code=1hWp7ogShTqm"
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+            >
+              Abrí tu cuenta en GrabrFi
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+          </div>
+
+          <div className="rounded-2xl border border-sky-200 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/70 to-cyan-50/70 dark:from-sky-950/20 dark:to-cyan-950/20 p-5">
+            <h3 className="text-lg font-bold text-foreground mb-2">Utoppia</h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+              Neobanco fundado por argentinos, con cuenta en dólares de EE.UU. a tu nombre, tarjeta Visa física y virtual,
+              stablecoins y pago de servicios. Disponible en Argentina y otros ~18 países.
+            </p>
+            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 mb-4">
+              <li>• Apertura y mantenimiento sin costo; recibís USD por ACH, ACH same-day, SWIFT y wire.</li>
+              <li>• Tarjeta Visa para comprar y extraer en el exterior (verificá comisiones de cambio/extracción en el sitio oficial).</li>
+              <li>• La cuenta la provee Regent Bank (FDIC), vía la plataforma Synctera.</li>
+            </ul>
+            <a
+              href="https://utoppia.page.link/JoinUtoppia"
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 transition-colors"
+            >
+              Abrí tu cuenta en Utoppia
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+            <p className="mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              Con el código <strong className="text-foreground">UTOPPIA-CHFV</strong> sumás un bono de USD 10 al abrir tu
+              cuenta.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-2 text-xs text-muted-foreground">
+          Enlace de afiliado: si abrís tu cuenta desde acá, GARCA puede ganar una comisión, sin costo extra para vos.
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          Datos a junio de 2026. Las comisiones y la disponibilidad por país cambian: confirmá siempre los costos
+          vigentes en el sitio oficial de cada plataforma antes de abrir tu cuenta. Esto es informativo, no
+          asesoramiento.
+        </p>
       </section>
 
       {/* Tope */}
