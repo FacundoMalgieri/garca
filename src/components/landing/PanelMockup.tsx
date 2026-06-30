@@ -61,17 +61,25 @@ export function PanelMockup() {
       {/* Mini-gráfico de barras del acumulado */}
       <div className="mb-6">
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Ingresos acumulados</p>
+        {/* Fila de barras con altura fija para que el % de cada barra resuelva */}
         <div className="flex items-end gap-1.5 h-20">
           {MOCK_PANEL.acumulado.map((p, i) => (
-            <div key={p.mes} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full rounded-t-md bg-gradient-to-t from-primary/70 to-cyan-400/70 transition-[height] duration-700 ease-out"
-                style={{
-                  height: animated ? `${(p.total / maxTotal) * 100}%` : "0%",
-                  transitionDelay: `${i * 60}ms`,
-                }}
-              />
-              <span className="text-[9px] text-slate-400">{p.mes}</span>
-            </div>
+            <div
+              key={p.mes}
+              className="flex-1 rounded-t-md bg-gradient-to-t from-primary/70 to-cyan-400/70 transition-[height] duration-700 ease-out"
+              style={{
+                height: animated ? `${(p.total / maxTotal) * 100}%` : "0%",
+                transitionDelay: `${i * 60}ms`,
+              }}
+            />
+          ))}
+        </div>
+        {/* Etiquetas de meses, alineadas a las barras */}
+        <div className="flex gap-1.5 mt-1">
+          {MOCK_PANEL.acumulado.map((p) => (
+            <span key={p.mes} className="flex-1 text-center text-[9px] text-slate-400">
+              {p.mes}
+            </span>
           ))}
         </div>
       </div>
