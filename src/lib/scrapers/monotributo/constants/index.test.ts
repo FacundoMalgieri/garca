@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { MONOTRIBUTO_URL, SELECTORS, TIMING } from "./index";
 
 describe("Monotributo Scraper Constants", () => {
-  it("should have valid AFIP monotributo URL", () => {
-    expect(MONOTRIBUTO_URL).toContain("afip.gob.ar");
+  it("should have valid ARCA monotributo URL", () => {
+    expect(MONOTRIBUTO_URL).toContain("arca.gob.ar");
     expect(MONOTRIBUTO_URL).toContain("monotributo");
   });
 

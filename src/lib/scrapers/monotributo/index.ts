@@ -1,112 +1,125 @@
 /**
  * Monotributo Categories Scraper.
  *
- * Scrapes the AFIP website to get current Monotributo category limits and costs.
+ * Scrapes the AFIP/ARCA website to get current Monotributo category limits and
+ * costs. Playwright is used ONLY to fetch raw text (table header, rows,
+ * caption); all parsing and validation happens in pure functions from
+ * `./utils`. This keeps `page.evaluate` free of helper functions (avoiding the
+ * esbuild `__name is not defined` error) and makes the logic unit-testable.
  */
 
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 
-import type { CategoriaMonotributo, MonotributoData } from "@/types/monotributo";
+import type { MonotributoData } from "@/types/monotributo";
 
-import { MONOTRIBUTO_URL, SELECTORS, TIMING } from "./constants";
-import { extractFechaVigencia } from "./utils";
+import { MAX_ATTEMPTS, MONOTRIBUTO_URL, RETRY_BACKOFF_MS, SELECTORS, TIMING } from "./constants";
+import {
+  extractFechaVigencia,
+  findMissingHeaderLabels,
+  parseCategorias,
+  validateMonotributoData,
+} from "./utils";
+
+export { parseMontoArgentino } from "./utils";
+
+interface RawTable {
+  header: string;
+  rows: string[][];
+  /** Full page text — the effective date lives in a <span> outside the table. */
+  pageText: string;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Scrapes Monotributo categories from AFIP website.
- * @returns MonotributoData with categories and effective date
+ * Pulls raw text out of the page: the table header (for a structural sanity
+ * check), every row as an array of cell strings, and the full page text (the
+ * effective date lives in a <span> outside the table, not in the caption). No
+ * parsing helpers run inside the browser context — only string extraction.
  */
-export async function scrapeMonotributoCategories(): Promise<MonotributoData> {
-  console.log("[Monotributo Scraper] Starting...");
+async function extractRawTable(page: Page): Promise<RawTable> {
+  return page.evaluate(
+    ({ headerSel, rowSel }) => {
+      const header = document.querySelector(headerSel)?.textContent || "";
+      const rows = Array.from(document.querySelectorAll(rowSel)).map((row) =>
+        Array.from(row.querySelectorAll("td, th")).map((cell) => cell.textContent || "")
+      );
+      const pageText = document.body?.textContent || "";
+      return { header, rows, pageText };
+    },
+    { headerSel: SELECTORS.TABLE_HEADER, rowSel: SELECTORS.TABLE_ROWS }
+  );
+}
 
+/** One navigation + extraction attempt. Throws on any failure. */
+async function scrapeOnce(): Promise<MonotributoData> {
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
   try {
-    // Navigate to the page
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
     console.log("[Monotributo Scraper] Navigating to AFIP monotributo page...");
     await page.goto(MONOTRIBUTO_URL, {
       waitUntil: "domcontentloaded",
       timeout: TIMING.NAVIGATION_TIMEOUT,
     });
-
-    // Wait for table to load
     await page.waitForSelector(SELECTORS.TABLE, { timeout: TIMING.TABLE_WAIT_TIMEOUT });
 
-    // Extract categories
-    console.log("[Monotributo Scraper] Extracting categories...");
-    const categorias = await extractCategories(page);
+    console.log("[Monotributo Scraper] Extracting table...");
+    const raw = await extractRawTable(page);
 
-    // Extract effective date
-    const captionText = await page.evaluate((selector) => {
-      const caption = document.querySelector(selector);
-      return caption?.textContent || null;
-    }, SELECTORS.TABLE_CAPTION);
+    const missing = findMissingHeaderLabels(raw.header);
+    if (missing.length > 0) {
+      throw new Error(
+        `La estructura de la tabla cambió: faltan columnas esperadas [${missing.join(", ")}]`
+      );
+    }
 
-    const fechaVigencia = extractFechaVigencia(captionText);
+    const categorias = parseCategorias(raw.rows);
+    // The date is only reliable when it carries a label; the whole page is too
+    // broad for a bare-date guess.
+    const fechaVigencia = extractFechaVigencia(raw.pageText, { allowBareDate: false });
 
-    console.log(`[Monotributo Scraper] Extracted ${categorias.length} categories`);
-    console.log(`[Monotributo Scraper] Vigencia: ${fechaVigencia}`);
-
+    return { categorias, fechaVigencia };
+  } finally {
     await browser.close();
-
-    return {
-      categorias: categorias.filter((c) => c.categoria && !isNaN(c.ingresosBrutos)),
-      fechaVigencia,
-    };
-  } catch (error) {
-    await browser.close();
-    console.error("[Monotributo Scraper] Error:", error);
-    throw new Error("Failed to scrape monotributo categories");
   }
 }
 
 /**
- * Extracts categories from the table using page.evaluate.
+ * Scrapes Monotributo categories with retries and validation.
+ * @param previous - last known data, used for drift detection.
+ * @returns MonotributoData with categories and effective date.
  */
-async function extractCategories(page: Awaited<ReturnType<typeof chromium.launch>>["newPage"] extends () => Promise<infer P> ? P : never): Promise<CategoriaMonotributo[]> {
-  return page.evaluate((rowSelector) => {
-    const rows = Array.from(document.querySelectorAll(rowSelector));
+export async function scrapeMonotributoCategories(
+  previous?: MonotributoData | null
+): Promise<MonotributoData> {
+  console.log("[Monotributo Scraper] Starting...");
 
-    // Helper function to parse Argentine money format (duplicated for browser context)
-    const parseMonto = (texto: string): number => {
-      return (
-        parseFloat(
-          texto
-            .replace(/\$/g, "")
-            .replace(/\s/g, "")
-            .replace(/\./g, "")
-            .replace(/,/g, ".")
-            .trim()
-        ) || 0
-      );
-    };
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const data = await scrapeOnce();
 
-    return rows.map((row) => {
-      const cells = row.querySelectorAll("td, th");
+      const { ok, errors, warnings } = validateMonotributoData(data, previous);
+      warnings.forEach((w) => console.warn(`[Monotributo Scraper] ⚠️  ${w}`));
+      if (!ok) {
+        throw new Error(`Validación falló:\n- ${errors.join("\n- ")}`);
+      }
 
-      return {
-        categoria: cells[0]?.textContent?.trim() || "",
-        ingresosBrutos: parseMonto(cells[1]?.textContent || ""),
-        superficieAfectada: cells[2]?.textContent?.trim() || "",
-        energiaElectrica: cells[3]?.textContent?.trim() || "",
-        alquileres: parseMonto(cells[4]?.textContent || ""),
-        precioUnitarioMax: parseMonto(cells[5]?.textContent || ""),
-        impuestoIntegrado: {
-          servicios: parseMonto(cells[6]?.textContent || ""),
-          venta: parseMonto(cells[7]?.textContent || ""),
-        },
-        aportesSIPA: parseMonto(cells[8]?.textContent || ""),
-        aportesObraSocial: parseMonto(cells[9]?.textContent || ""),
-        total: {
-          servicios: parseMonto(cells[10]?.textContent || ""),
-          venta: parseMonto(cells[11]?.textContent || ""),
-        },
-      };
-    });
-  }, SELECTORS.TABLE_ROWS);
+      console.log(`[Monotributo Scraper] Extracted ${data.categorias.length} categories`);
+      console.log(`[Monotributo Scraper] Vigencia: ${data.fechaVigencia || "(no detectada)"}`);
+      return data;
+    } catch (error) {
+      lastError = error;
+      console.error(`[Monotributo Scraper] Attempt ${attempt}/${MAX_ATTEMPTS} failed:`, error);
+      if (attempt < MAX_ATTEMPTS) await sleep(RETRY_BACKOFF_MS * attempt);
+    }
+  }
+
+  throw new Error(
+    `Failed to scrape monotributo categories after ${MAX_ATTEMPTS} attempts: ${
+      lastError instanceof Error ? lastError.message : String(lastError)
+    }`
+  );
 }
-
-// Re-export utilities for external use
-export { parseMontoArgentino } from "./utils";
-
