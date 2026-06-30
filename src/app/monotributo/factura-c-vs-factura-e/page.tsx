@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
@@ -67,6 +68,31 @@ export default function FacturaCvsEPage() {
           { label: "Factura C vs Factura E" },
         ]}
       />
+
+      {/* Respuesta directa para snippet / People Also Ask */}
+      <p
+        id="respuesta-directa"
+        className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+      >
+        Tanto la <strong className="text-foreground">factura C</strong> como la{" "}
+        <strong className="text-foreground">factura E</strong> son comprobantes electrónicos con CAE que
+        los monotributistas emiten desde ARCA. La diferencia clave es el{" "}
+        <strong className="text-foreground">destinatario</strong>:{" "}
+        <Link
+          href="/monotributo/factura-c"
+          className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          factura C
+        </Link>{" "}
+        para clientes en Argentina y{" "}
+        <Link
+          href="/monotributo/factura-e"
+          className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          factura E
+        </Link>{" "}
+        para clientes del exterior (exportación, exenta de IVA).
+      </p>
 
       <ArticleHero
         image="/og/factura-c-vs-factura-e.png"

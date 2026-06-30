@@ -72,6 +72,25 @@ export default function FacturaCPage() {
         ]}
       />
 
+      {/* Respuesta directa para snippet / People Also Ask */}
+      <p
+        id="respuesta-directa"
+        className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+      >
+        La <strong className="text-foreground">factura C</strong> es el comprobante que emiten{" "}
+        <strong className="text-foreground">monotributistas y responsables exentos o no alcanzados por
+        IVA</strong> para respaldar sus ventas en el mercado local. No discrimina IVA y se emite desde{" "}
+        <strong className="text-foreground">ARCA</strong> con CAE electrónico, en Comprobantes en Línea
+        con tu clave fiscal. Si tu cliente está en el exterior, en cambio, corresponde{" "}
+        <Link
+          href="/monotributo/factura-e"
+          className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          factura E
+        </Link>
+        .
+      </p>
+
       <ArticleHero
         image="/og/factura-c.png"
         imageAlt="Factura C del Monotributo"

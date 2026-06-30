@@ -73,6 +73,25 @@ export default function QuePasaSiMePasoPage() {
           ]}
         />
 
+        {/* Respuesta directa para snippet / People Also Ask */}
+        <p
+          id="respuesta-directa"
+          className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+        >
+          Si tu facturación de los últimos 12 meses superó el tope de tu categoría hay{" "}
+          <strong className="text-foreground">tres escenarios</strong>: recategorizás a una categoría más
+          alta del Monotributo, ARCA te recategoriza de oficio, o quedás excluido del régimen y pasás a{" "}
+          <strong className="text-foreground">Responsable Inscripto</strong>. Cuál te aplica depende de
+          cuánto superaste el tope.{" "}
+          <Link
+            href="/calculadora-monotributo"
+            className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            Calculá tu categoría
+          </Link>{" "}
+          para saber en qué situación estás.
+        </p>
+
         <ArticleHero
           image="/og/que-pasa-si-me-paso.png"
           imageAlt="¿Qué pasa si me paso del Monotributo?"

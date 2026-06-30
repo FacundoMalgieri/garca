@@ -72,6 +72,25 @@ export default function ServiciosVsBienesPage() {
           ]}
         />
 
+        {/* Respuesta directa para snippet / People Also Ask */}
+        <p
+          id="respuesta-directa"
+          className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+        >
+          En el <strong className="text-foreground">Monotributo</strong>, prestar{" "}
+          <strong className="text-foreground">servicios</strong> y{" "}
+          <strong className="text-foreground">vender bienes</strong> comparten los mismos topes de
+          facturación anual, pero la cuota mensual difiere: el impuesto integrado cambia según la
+          actividad. Por eso dos personas en la misma categoría pueden pagar cuotas distintas.{" "}
+          <Link
+            href="/calculadora-monotributo"
+            className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            Calculá tu cuota según tu actividad
+          </Link>
+          .
+        </p>
+
         <ArticleHero
           image="/og/servicios-vs-bienes.png"
           imageAlt="Monotributo servicios vs venta de bienes"

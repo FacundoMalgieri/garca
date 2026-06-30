@@ -72,6 +72,25 @@ export default function Monotributo2026Page() {
         ]}
       />
 
+      {/* Respuesta directa para snippet / People Also Ask */}
+      <p
+        id="respuesta-directa"
+        className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+      >
+        En 2026 el <strong className="text-foreground">Monotributo</strong> mantiene sus{" "}
+        <strong className="text-foreground">11 categorías</strong> (de la A a la K), cuota fija mensual y{" "}
+        <strong className="text-foreground">recategorización en enero y julio</strong>. El principal
+        cambio fue de marca: AFIP pasó a llamarse ARCA (portal en arca.gob.ar), sin cambios en las
+        obligaciones ni en las fechas. Podés{" "}
+        <Link
+          href="/calculadora-monotributo"
+          className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          calcular tu categoría 2026
+        </Link>{" "}
+        con los valores actualizados.
+      </p>
+
       <ArticleHero
         image="/og/monotributo-2026.png"
         imageAlt="Monotributo 2026 — guía completa del año"

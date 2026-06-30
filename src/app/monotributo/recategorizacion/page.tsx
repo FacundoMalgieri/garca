@@ -73,6 +73,24 @@ export default function RecategorizacionPage() {
           ]}
         />
 
+        {/* Respuesta directa para snippet / People Also Ask */}
+        <p
+          id="respuesta-directa"
+          className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+        >
+          La <strong className="text-foreground">recategorización del Monotributo</strong> es el trámite
+          semestral en el que actualizás tu categoría según tus ingresos de los últimos 12 meses. Se hace
+          en <strong className="text-foreground">enero y julio</strong> en el portal de ARCA; si tus
+          ingresos no te cambian de categoría, no necesitás hacer nada.{" "}
+          <Link
+            href="/calculadora-monotributo"
+            className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            Calculá qué categoría te toca
+          </Link>{" "}
+          antes de recategorizarte.
+        </p>
+
         <ArticleHero
           image="/og/recategorizacion.png"
           imageAlt="Recategorización del Monotributo"
