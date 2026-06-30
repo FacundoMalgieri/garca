@@ -13,9 +13,12 @@ import { ArrowRightIcon } from "@/components/ui/icons";
 // effects) are carved out into Client Components.
 export default function Home() {
   return (
-    <div className="relative overflow-x-hidden bg-background">
+    <div className="relative overflow-x-clip bg-background">
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
-      <section className="relative flex items-center overflow-hidden min-h-[calc(100svh-64px)]">
+      {/* En desktop el hero queda pegado (sticky) bajo el navbar y la sección
+          siguiente sube por encima tapándolo (overlap progresivo). overflow-x-clip
+          en el wrapper —no hidden— para no romper el sticky. */}
+      <section className="relative z-0 flex items-center overflow-hidden min-h-[calc(100svh-64px)] lg:sticky lg:top-16">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
         <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
@@ -29,8 +32,8 @@ export default function Home() {
         </div>
         <HeroParallax>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-stretch">
-            {/* Columna izquierda: copy + CTAs */}
-            <div className="text-center lg:text-left">
+            {/* Columna izquierda: copy + CTAs, centrada verticalmente vs. la derecha */}
+            <div className="flex flex-col justify-center text-center lg:text-left">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-balance mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
                 Monitoreá tu facturación{" "}
                 <span className="bg-gradient-to-r from-[#262F55] to-[#0f7d8c] dark:from-white dark:to-[#64D3DE] bg-clip-text text-transparent">
@@ -58,7 +61,7 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/ingresar"
                   target="ingresar"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 dark:border-white/15 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/60 hover:bg-primary/5 dark:hover:border-white/30 dark:hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e2540] px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-white shadow-sm hover:bg-slate-50 dark:hover:bg-[#262e4d] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 cursor-pointer"
                 >
                   <span>Ingresar con ARCA</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -81,11 +84,14 @@ export default function Home() {
         </HeroParallax>
       </section>
 
-      <HomeSections />
+      {/* Lámina opaca que sube por encima del hero sticky (overlap). */}
+      <div className="relative z-10 bg-background">
+        <HomeSections />
 
-      {/* Ad de cierre (native, responsive) — al fondo, fuera del flujo de conversión. */}
-      <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
-        <NativeAd />
+        {/* Ad de cierre (native, responsive) — al fondo, fuera del flujo de conversión. */}
+        <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
+          <NativeAd />
+        </div>
       </div>
     </div>
   );
