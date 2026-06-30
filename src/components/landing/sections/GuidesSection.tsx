@@ -44,7 +44,11 @@ export function GuidesSection() {
   const visible = useSectionVisible(ref, 0.15);
 
   return (
-    <section ref={ref} id="monotributo-guias" className="relative py-24 md:py-32 overflow-hidden">
+    <section
+      ref={ref}
+      id="monotributo-guias"
+      className="relative py-24 md:py-32 overflow-hidden bg-primary/5 dark:bg-white/[0.03] border-y border-slate-200 dark:border-white/10"
+    >
       <div className="relative max-w-5xl mx-auto px-6">
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-indigo-500/25">

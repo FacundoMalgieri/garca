@@ -28,7 +28,10 @@ export function PrivacySection() {
   const visible = useSectionVisible(ref, 0.25);
 
   return (
-    <section ref={ref} className="relative py-24 md:py-32 overflow-hidden bg-background">
+    <section
+      ref={ref}
+      className="relative py-24 md:py-32 overflow-hidden bg-primary/5 dark:bg-white/[0.03] border-y border-slate-200 dark:border-white/10"
+    >
       <div className="relative max-w-5xl mx-auto px-6">
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-sm font-semibold mb-4">
