@@ -66,7 +66,7 @@ export function CapabilitiesSection() {
             <SparklesIcon />
             Qué hace GARCA
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white text-balance mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white text-balance mb-4">
             De comprobantes dispersos a una foto clara
           </h2>
           <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">

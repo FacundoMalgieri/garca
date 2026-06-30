@@ -15,7 +15,7 @@ export function SupportSection() {
         <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-amber-500/25">
           Open Source
         </span>
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white text-balance mb-4">Apoyá el proyecto</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white text-balance mb-4">Apoyá el proyecto</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
           GARCA es gratis y open source. Si te ahorra tiempo, considerá apoyar el desarrollo.
         </p>
