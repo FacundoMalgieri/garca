@@ -34,7 +34,7 @@ export function CalculatorSection() {
             >
               Herramienta gratuita
             </span>
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white text-balance mb-4">
               Calculadora de Monotributo {MONOTRIBUTO_YEAR}
             </h2>
             <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
@@ -56,7 +56,7 @@ export function CalculatorSection() {
                 <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
               </TrackedLandingCtaLink>
             </div>
-            <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-600 dark:text-slate-400">
+            <div className="mt-6 flex w-fit sm:w-auto mx-auto flex-col items-start sm:flex-row sm:flex-wrap sm:justify-center sm:items-center gap-2 sm:gap-4 text-xs text-slate-600 dark:text-slate-400">
               {FEATURES.map((text) => (
                 <span key={text} className="flex items-center gap-1.5">
                   <svg className="h-3.5 w-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
