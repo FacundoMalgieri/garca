@@ -377,14 +377,25 @@ export default function CobrarDelExteriorPage() {
         <div className="mt-6 rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/70 dark:bg-blue-950/20 p-5">
           <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             ¿Buscás abrir una cuenta para recibir USD?{" "}
-            {/* TODO-AFILIADO: Wise/Payoneer/Deel — rel="sponsored" cuando esté el link */}
-            <Link
-              href="#"
+            <a
+              href="https://wise.com/invite/irhc/facundom58"
+              target="_blank"
+              rel="sponsored noopener noreferrer"
               className="text-blue-700 dark:text-blue-300 hover:underline font-semibold underline-offset-2"
             >
-              Mirá la plataforma que recomendamos
-            </Link>{" "}
-            y compará comisiones antes de decidir.
+              Abrí tu cuenta en Wise
+            </a>{" "}
+            o compará todas las opciones en{" "}
+            <Link
+              href="/monotributo/wise-vs-payoneer-vs-deel"
+              className="text-blue-700 dark:text-blue-300 hover:underline font-semibold underline-offset-2"
+            >
+              nuestra comparativa
+            </Link>
+            .
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Enlace de afiliado: si abrís tu cuenta desde acá, GARCA puede ganar una comisión, sin costo extra para vos.
           </p>
         </div>
       </section>

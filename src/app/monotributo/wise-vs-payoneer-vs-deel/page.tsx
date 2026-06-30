@@ -272,16 +272,18 @@ export default function WiseVsPayoneerVsDeelPage() {
           de Wise.
         </p>
         <div className="mt-5">
-          {/* TODO-AFILIADO: Wise — rel="sponsored" cuando esté el link */}
-          <Link
-            href="#"
+          <a
+            href="https://wise.com/invite/irhc/facundom58"
+            target="_blank"
+            rel="sponsored noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
           >
             Abrí tu cuenta Wise
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </a>
+          <p className="mt-2 text-xs text-muted-foreground">Enlace de afiliado.</p>
         </div>
       </section>
 
@@ -319,16 +321,18 @@ export default function WiseVsPayoneerVsDeelPage() {
           todo.
         </p>
         <div className="mt-5">
-          {/* TODO-AFILIADO: Payoneer — rel="sponsored" cuando esté el link */}
-          <Link
-            href="#"
+          <a
+            href="https://share.payoneer.com/nav/m5C98--q5ENFLBIjOApwgG1leO6ltaCApcfM2vRbthb7qziRTq8KmanfjEc0x9kcvxWdVat8y_bUYbQf2EHWXA2"
+            target="_blank"
+            rel="sponsored noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 transition-colors"
           >
             Abrí tu cuenta Payoneer
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </a>
+          <p className="mt-2 text-xs text-muted-foreground">Enlace de afiliado.</p>
         </div>
       </section>
 
@@ -373,16 +377,18 @@ export default function WiseVsPayoneerVsDeelPage() {
           de exportación de servicios.
         </p>
         <div className="mt-5">
-          {/* TODO-AFILIADO: Deel — rel="sponsored" cuando esté el link */}
-          <Link
-            href="#"
+          {/* TODO-AFILIADO: reemplazar por el link de PartnerStack cuando aprueben Deel */}
+          <a
+            href="https://www.deel.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-700 transition-colors"
           >
             Ver Deel
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </a>
         </div>
       </section>
 
