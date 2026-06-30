@@ -7,7 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, quePasaSiMePasoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -21,9 +21,9 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
 const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
-  title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+  title: `¿Qué pasa si me paso del Monotributo? — Guía ${MONOTRIBUTO_YEAR}`,
   description:
-    "Qué pasa si superás el tope del Monotributo en 2026: recategorización obligatoria, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
+    `Qué pasa si superás el tope del Monotributo en ${MONOTRIBUTO_YEAR}: recategorización obligatoria, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.`,
   keywords: [
     "me pase del monotributo",
     "superé el monotributo",
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     "exclusión monotributo",
     "recategorización de oficio",
     "pasar a responsable inscripto",
-    "monotributo 2026",
+    `monotributo ${MONOTRIBUTO_YEAR}`,
   ],
   alternates: { canonical: `${siteUrl}/monotributo/que-pasa-si-me-paso` },
   openGraph: {
-    title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+    title: `¿Qué pasa si me paso del Monotributo? — Guía ${MONOTRIBUTO_YEAR}`,
     description:
-      "Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto. Guía 2026 actualizada.",
+      `Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto. Guía ${MONOTRIBUTO_YEAR} actualizada.`,
     type: "article",
     url: `${siteUrl}/monotributo/que-pasa-si-me-paso`,
     siteName: "GARCA",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/que-pasa-si-me-paso.png"],
-    title: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+    title: `¿Qué pasa si me paso del Monotributo? — Guía ${MONOTRIBUTO_YEAR}`,
     description:
       "Recategorización, recategorización de oficio, exclusión y pase a Responsable Inscripto.",
   },

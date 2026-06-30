@@ -8,6 +8,7 @@ import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { facturaCvsEFaqEntries, getGuideDateModified } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -21,7 +22,7 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "Factura C vs Factura E — Cuándo usar cada una (Monotributo 2026)",
+  title: `Factura C vs Factura E — Cuándo usar cada una (Monotributo ${MONOTRIBUTO_YEAR})`,
   description:
     "Comparativa clara entre factura C y factura E: cuándo corresponde cada una, diferencias en IVA, impacto en el tope del Monotributo y ejemplos concretos.",
   keywords: [

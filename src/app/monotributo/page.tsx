@@ -6,7 +6,7 @@ import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, monotributoHubFaqEntries } from "@/lib/seo/page-schemas";
 
 const currencyFormatter = new Intl.NumberFormat("es-AR", {
@@ -41,13 +41,13 @@ export default function MonotributoIndexPage() {
         <ArticleHero
           image="/og/monotributo.png"
           imageAlt="Monotributo — categorías, cuotas y topes"
-          badgeLabel="Guía oficial 2026"
+          badgeLabel={`Guía oficial ${MONOTRIBUTO_YEAR}`}
           badgeIcon={
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           }
-          title="Monotributo 2026 — Categorías, Cuotas y Topes"
+          title={`Monotributo ${MONOTRIBUTO_YEAR} — Categorías, Cuotas y Topes`}
           description={
             <>
               Las <strong className="text-white">11 categorías vigentes del Monotributo</strong> en Argentina, de
@@ -74,7 +74,7 @@ export default function MonotributoIndexPage() {
             <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <span className="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mb-2">
-                  Calculadora 2026
+                  Calculadora {MONOTRIBUTO_YEAR}
                 </span>
                 <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1">¿En qué categoría caés?</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">

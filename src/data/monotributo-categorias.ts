@@ -214,3 +214,13 @@ export const MONOTRIBUTO_DATA: MonotributoData = {
   fechaVigencia: "",
   lastUpdated: "2026-01-20"
 };
+
+/**
+ * Año vigente del régimen, derivado de la data (no del reloj): cuando GitHub
+ * Actions actualiza `lastUpdated` al refrescar las categorías, este año se
+ * mueve solo y arrastra todos los labels/SEO que lo referencian. Usar esto en
+ * lugar de hardcodear el año en copy, títulos o metadata.
+ */
+export const MONOTRIBUTO_YEAR = Number(
+  (MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString()).slice(0, 4),
+);

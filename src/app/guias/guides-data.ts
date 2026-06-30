@@ -6,6 +6,8 @@
  * can import it without duplicating or crossing the server/client boundary.
  */
 
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
+
 export type Category = "Fundamentos" | "Trámites" | "Comparativas" | "Facturación";
 
 export type Guide = {
@@ -96,7 +98,7 @@ export const CATEGORIES: readonly CategoryDef[] = [
 export const GUIDES: readonly Guide[] = [
   {
     href: "/monotributo",
-    title: "Monotributo 2026: categorías, cuotas y topes",
+    title: `Monotributo ${MONOTRIBUTO_YEAR}: categorías, cuotas y topes`,
     description:
       "Punto de partida. Las 11 categorías vigentes de la A a la K con cuotas mensuales, topes de facturación anual y desglose de aportes, al día con los últimos valores de ARCA.",
     category: "Fundamentos",
@@ -146,7 +148,7 @@ export const GUIDES: readonly Guide[] = [
     href: "/monotributo/servicios-vs-bienes",
     title: "Servicios vs. Venta de bienes",
     description:
-      "Por qué los monotributistas que venden bienes pueden facturar más que los de servicios, con la tabla oficial 2026 comparada.",
+      `Por qué los monotributistas que venden bienes pueden facturar más que los de servicios, con la tabla oficial ${MONOTRIBUTO_YEAR} comparada.`,
     category: "Comparativas",
     readingTime: "4 min de lectura",
     accent: {
@@ -162,7 +164,7 @@ export const GUIDES: readonly Guide[] = [
     href: "/monotributo/vs-responsable-inscripto",
     title: "Monotributo vs. Responsable Inscripto",
     description:
-      "Comparativa 2026 entre regímenes: IVA, Ganancias, obligaciones formales y cuándo conviene dar el salto.",
+      `Comparativa ${MONOTRIBUTO_YEAR} entre regímenes: IVA, Ganancias, obligaciones formales y cuándo conviene dar el salto.`,
     category: "Comparativas",
     readingTime: "7 min de lectura",
     accent: {

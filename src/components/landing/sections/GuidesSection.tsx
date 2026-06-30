@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { useSectionVisible } from "@/components/landing/hooks/useScrollReveal";
 import { ArrowRightIcon } from "@/components/ui/icons";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 const MONOTRIBUTO_GUIDES = [
   {
@@ -55,7 +56,7 @@ export function GuidesSection() {
             Guías y recursos
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Todo sobre Monotributo 2026
+            Todo sobre Monotributo {MONOTRIBUTO_YEAR}
           </h2>
           <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             Artículos para entender el régimen, planificar tu año y resolver las dudas más comunes.
@@ -79,7 +80,7 @@ export function GuidesSection() {
                 Fundamentos
               </span>
               <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">
-                Monotributo 2026: categorías, cuotas y topes
+                Monotributo {MONOTRIBUTO_YEAR}: categorías, cuotas y topes
               </h3>
               <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl">
                 La referencia completa: las 11 categorías de la A a la K con cuotas mensuales, topes

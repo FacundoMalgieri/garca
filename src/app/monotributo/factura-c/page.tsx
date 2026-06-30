@@ -8,6 +8,7 @@ import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { facturaCFaqEntries, getGuideDateModified } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -23,7 +24,7 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "Factura C 2026 — Qué es, quién la emite y cómo hacerla en ARCA",
+  title: `Factura C ${MONOTRIBUTO_YEAR} — Qué es, quién la emite y cómo hacerla en ARCA`,
   description:
     "Guía completa de la factura C para monotributistas y responsables exentos: quién la emite, qué datos lleva, cómo emitirla en ARCA paso a paso y diferencias con A y B.",
   keywords: [
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${siteUrl}/monotributo/factura-c` },
   openGraph: {
-    title: "Factura C — Qué es, quién la emite y cómo hacerla (2026)",
+    title: `Factura C — Qué es, quién la emite y cómo hacerla (${MONOTRIBUTO_YEAR})`,
     description:
       "Todo sobre la factura C del Monotributo: datos obligatorios, paso a paso en Comprobantes en Línea y diferencias con A y B.",
     type: "article",
@@ -100,7 +101,7 @@ export default function FacturaCPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         }
-        title="Factura C: qué es y cómo emitirla en 2026"
+        title={`Factura C: qué es y cómo emitirla en ${MONOTRIBUTO_YEAR}`}
         description={
           <>
             La <strong className="text-white">factura C</strong> es el comprobante que emiten los{" "}
