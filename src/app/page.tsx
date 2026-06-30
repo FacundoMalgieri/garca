@@ -51,7 +51,7 @@ export default function Home() {
               </div>
 
               {/* Señal de privacidad (visible sin scroll) */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 leading-snug animate-hero-entry-5">
+              <div className="flex w-full justify-center sm:inline-flex sm:w-auto items-center gap-2 px-4 py-2.5 rounded-2xl sm:rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 leading-snug animate-hero-entry-5">
                 <ShieldCheckIcon />
                 <span className="sm:hidden">100% en tu navegador · AES-256 · nada se guarda</span>
                 <span className="hidden sm:inline">
