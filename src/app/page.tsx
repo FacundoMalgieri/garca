@@ -4,7 +4,7 @@ import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
 import { PanelMockup } from "@/components/landing/PanelMockup";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
-import { ArrowRightIcon, ShieldCheckIcon } from "@/components/ui/icons";
+import { ArrowRightIcon } from "@/components/ui/icons";
 
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <div className="relative overflow-x-hidden bg-background">
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
-      <section className="relative flex lg:items-center overflow-hidden lg:min-h-[calc(100vh-64px)]">
+      <section className="relative flex items-center overflow-hidden min-h-[calc(100svh-64px)]">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/70 via-transparent to-transparent dark:from-[#262F55]/40 dark:via-transparent dark:to-transparent" />
@@ -25,13 +25,9 @@ export default function Home() {
           <div className="absolute inset-0 text-slate-900 opacity-[0.04] dark:text-white dark:opacity-[0.07] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:46px_46px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
         </div>
         <HeroParallax>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-stretch">
-            {/* Columna izquierda: copy + CTAs + privacidad */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-stretch">
+            {/* Columna izquierda: copy + CTAs */}
             <div className="text-center lg:text-left">
-              <p className="mb-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0f7d8c] dark:text-[#64D3DE] animate-hero-entry">
-                Monotributo 2026
-              </p>
-
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-balance mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
                 Sabé en qué categoría estás{" "}
                 <span className="bg-gradient-to-r from-[#262F55] to-[#0f7d8c] dark:from-white dark:to-[#64D3DE] bg-clip-text text-transparent">
@@ -39,13 +35,13 @@ export default function Home() {
                 </span>
               </h1>
 
-              <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed animate-hero-entry-3">
+              <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed animate-hero-entry-3">
                 GARCA lee tus comprobantes de ARCA, calcula tu categoría de Monotributo 2026 y te
                 muestra cuánto te queda para no pasarte.{" "}
                 <span className="font-semibold text-slate-800 dark:text-white">Simple, privado y gratis.</span>
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-6 animate-hero-entry-4">
+              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4 animate-hero-entry-4">
                 <TrackedLandingCtaLink
                   href="/calculadora-monotributo"
                   target="calculadora"
@@ -65,19 +61,10 @@ export default function Home() {
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
                 </TrackedLandingCtaLink>
               </div>
-
-              {/* Señal de privacidad (visible sin scroll) */}
-              <div className="flex w-full justify-center sm:inline-flex sm:w-auto items-center gap-2 px-4 py-2.5 rounded-2xl sm:rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 leading-snug animate-hero-entry-5">
-                <ShieldCheckIcon />
-                <span className="sm:hidden">100% en tu navegador · AES-256 · nada se guarda</span>
-                <span className="hidden sm:inline">
-                  100% en tu navegador · credenciales cifradas AES-256 · nada se guarda
-                </span>
-              </div>
             </div>
 
             {/* Columna derecha: mockup del panel + CTA demo, misma altura que la izquierda */}
-            <div className="flex flex-col justify-center items-center lg:items-end gap-5 animate-hero-entry-3">
+            <div className="flex flex-col justify-center items-center lg:items-end gap-4 animate-hero-entry-3">
               <PanelMockup />
               <div className="w-full max-w-md">
                 <HeroDemoButton widthClassName="w-full" />
