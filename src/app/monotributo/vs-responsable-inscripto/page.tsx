@@ -106,6 +106,25 @@ export default function VsResponsableInscriptoPage() {
           ]}
         />
 
+        {/* Respuesta directa para snippet / People Also Ask */}
+        <p
+          id="respuesta-directa"
+          className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+        >
+          El <strong className="text-foreground">Monotributo</strong> es un régimen simplificado con una
+          cuota fija mensual que reemplaza IVA y Ganancias; el{" "}
+          <strong className="text-foreground">Responsable Inscripto</strong> es el régimen general, sin
+          tope de facturación pero con IVA, Ganancias y más obligaciones. En general conviene el
+          Monotributo mientras tu facturación entre en los topes de categoría. Para verlo,{" "}
+          <Link
+            href="/calculadora-monotributo"
+            className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            calculá tu categoría de Monotributo
+          </Link>
+          .
+        </p>
+
         <ArticleHero
           image="/og/vs-responsable-inscripto.png"
           imageAlt="Monotributo vs Responsable Inscripto"
