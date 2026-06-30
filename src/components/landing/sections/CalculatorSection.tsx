@@ -19,7 +19,12 @@ export function CalculatorSection() {
 
   return (
     <section ref={ref} className="relative py-24 md:py-32 overflow-hidden">
-      <div className="relative max-w-3xl mx-auto px-6">
+      {/* Backdrop: glow cyan detrás de la card */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/20 blur-[150px] dark:bg-[#64D3DE]/10"
+      />
+      <div className="relative z-10 max-w-3xl mx-auto px-6">
         <div className="relative rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-cyan-950/40 border border-blue-200 dark:border-blue-800/30 p-8 md:p-10 overflow-hidden shadow-[0_8px_40px_-8px_rgba(59,130,246,0.25)] dark:shadow-none">
           <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" aria-hidden />
           <div className="relative text-center">
