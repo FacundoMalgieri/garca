@@ -495,6 +495,11 @@ export default function CobrarDelExteriorPage() {
               Con el código <strong className="text-foreground">UTOPPIA-CHFV</strong> sumás un bono de USD 10 al abrir tu
               cuenta.
             </p>
+            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+              A tener en cuenta: en marzo de 2023 Utoppia recibió una orden de cese (<em>cease-and-desist</em>) de la
+              FDIC por declaraciones engañosas sobre el seguro de depósitos; posteriormente ajustó su comunicación.
+              Confirmá los términos de cobertura vigentes en su sitio.
+            </p>
           </div>
         </div>
 
