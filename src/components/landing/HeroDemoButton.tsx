@@ -32,7 +32,7 @@ const DEMO_MONOTRIBUTO_INFO: MonotributoAFIPInfo = {
   cuit: "20345678901",
 };
 
-export function HeroDemoButton() {
+export function HeroDemoButton({ widthClassName = "w-full sm:w-52" }: { widthClassName?: string } = {}) {
   const router = useRouter();
   const { state, loadDemoData } = useInvoiceContext();
   const hasInvoices = state.isHydrated && state.invoices.length > 0;
@@ -106,7 +106,7 @@ export function HeroDemoButton() {
       <button
         onClick={handleDemoClick}
         disabled={isLoadingDemo}
-        className="group w-full sm:w-52 inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-6 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+        className={`group ${widthClassName} inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-6 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105`}
       >
         {isLoadingDemo ? (
           <>
