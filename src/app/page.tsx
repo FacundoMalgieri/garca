@@ -18,11 +18,14 @@ export default function Home() {
       <section className="relative flex items-center overflow-hidden min-h-[calc(100svh-64px)]">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/70 via-transparent to-transparent dark:from-[#262F55]/40 dark:via-transparent dark:to-transparent" />
-          <div className="absolute -right-32 -top-28 h-[32rem] w-[32rem] rounded-full bg-[#64D3DE]/30 blur-[120px] dark:bg-[#64D3DE]/20" />
-          <div className="absolute -left-28 bottom-0 h-[26rem] w-[26rem] rounded-full bg-[#FF6B5C]/15 blur-[130px] dark:bg-[#FF6B5C]/12" />
-          <div className="absolute left-1/2 top-1/3 hidden h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#262F55]/50 blur-[150px] dark:block" />
-          <div className="absolute inset-0 text-slate-900 opacity-[0.04] dark:text-white dark:opacity-[0.07] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:46px_46px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
+          {/* Glow detrás del titular (izquierda) — mata el vacío negro en desktop */}
+          <div className="absolute -left-40 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/15 blur-[150px] dark:bg-[#2E3A66]/70" />
+          {/* Glow cyan arriba-derecha */}
+          <div className="absolute -right-24 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/30 blur-[140px] dark:bg-[#64D3DE]/22" />
+          {/* Glow coral abajo, hacia el centro */}
+          <div className="absolute bottom-[-12rem] left-1/3 h-[34rem] w-[34rem] rounded-full bg-[#FF6B5C]/12 blur-[150px] dark:bg-[#FF6B5C]/12" />
+          <div className="absolute inset-0 text-slate-900 opacity-[0.05] dark:text-white dark:opacity-[0.09] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:46px_46px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
         </div>
         <HeroParallax>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-stretch">
