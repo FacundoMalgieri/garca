@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 type FooterLink = { href: string; label: string; external?: boolean };
 
@@ -47,8 +49,29 @@ function FooterLinkGroup({ links }: { links: Array<FooterLink> }) {
 }
 
 export function Footer() {
+  const ref = useRef<HTMLElement>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
+
+  // El footer queda fijo abajo (siempre presente) y el contenido opaco (main,
+  // z-10) se despega hacia arriba revelándolo. El spacer reserva el alto del
+  // footer para que el efecto tenga recorrido. Es el hero sticky, al revés.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setFooterHeight(el.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <footer className="relative overflow-hidden bg-background border-t border-slate-200 dark:border-border shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none py-8">
+    <>
+      <div aria-hidden style={{ height: footerHeight }} />
+      <footer
+        ref={ref}
+        className="fixed inset-x-0 bottom-0 z-0 overflow-hidden bg-background border-t border-slate-200 dark:border-border shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none py-8"
+      >
       {/* Atmósfera de marca (misma del hero, sin grilla) anclada abajo */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
@@ -95,6 +118,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+      </footer>
+    </>
   );
 }
