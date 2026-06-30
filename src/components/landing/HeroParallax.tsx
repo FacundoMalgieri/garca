@@ -33,7 +33,6 @@ export function HeroParallax({ children }: { children: React.ReactNode }) {
         isDesktop
           ? {
               transform: `translateY(${scrollY * -0.8}px)`,
-              opacity: Math.max(0, 1 - scrollY / 800),
             }
           : undefined
       }

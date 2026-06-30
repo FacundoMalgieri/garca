@@ -70,7 +70,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-slate-200 dark:border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none">
+    <nav className="sticky top-0 z-50 bg-background/60 backdrop-blur-xl backdrop-saturate-150 border-b border-slate-200/70 dark:border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none">
       <div className="w-full max-w-[1920px] mx-auto px-6">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo — navega al home; si ya estás en el home, scroll al top */}
