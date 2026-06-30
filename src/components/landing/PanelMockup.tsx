@@ -25,7 +25,7 @@ export function PanelMockup() {
 
   return (
     <div
-      className="relative w-full max-w-md rounded-3xl border border-slate-200 dark:border-border bg-white/90 dark:bg-muted/70 backdrop-blur-sm shadow-2xl shadow-primary/10 p-5 md:p-6"
+      className="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#161b2e]/90 backdrop-blur-md shadow-2xl shadow-[#262F55]/25 ring-1 ring-black/[0.03] dark:ring-[#64D3DE]/10 p-5 md:p-6"
       aria-hidden
     >
       {/* Header empresa */}
@@ -49,7 +49,7 @@ export function PanelMockup() {
         </div>
         <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-500 transition-[width] duration-1000 ease-out"
+            className="h-full rounded-full bg-gradient-to-r from-[#262F55] to-[#64D3DE] transition-[width] duration-1000 ease-out"
             style={{ width: animated ? `${MOCK_PANEL.progresoTope}%` : "0%" }}
           />
         </div>
@@ -66,7 +66,7 @@ export function PanelMockup() {
           {MOCK_PANEL.acumulado.map((p, i) => (
             <div
               key={p.mes}
-              className="flex-1 rounded-t-md bg-gradient-to-t from-primary/70 to-cyan-400/70 transition-[height] duration-700 ease-out"
+              className="flex-1 rounded-t-md bg-gradient-to-t from-[#262F55] to-[#64D3DE] transition-[height] duration-700 ease-out"
               style={{
                 height: animated ? `${(p.total / maxTotal) * 100}%` : "0%",
                 transitionDelay: `${i * 60}ms`,
