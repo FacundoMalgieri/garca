@@ -28,7 +28,7 @@ export function HeroParallax({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="relative w-full max-w-6xl mx-auto px-6 py-8 sm:py-12 md:py-16"
+      className="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 sm:py-12 md:py-16"
       style={
         isDesktop
           ? {

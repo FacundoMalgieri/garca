@@ -17,7 +17,7 @@ export default function Home() {
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
       <section className="relative flex items-center overflow-hidden min-h-[calc(100svh-64px)]">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
           {/* Glow detrás del titular (izquierda) — mata el vacío negro en desktop */}
           <div className="absolute -left-40 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/15 blur-[150px] dark:bg-[#2E3A66]/70" />
