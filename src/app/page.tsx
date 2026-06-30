@@ -35,7 +35,7 @@ export default function Home() {
                 </span>
               </h1>
 
-              <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed animate-hero-entry-3">
+              <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-5 leading-relaxed animate-hero-entry-3">
                 GARCA lee tus comprobantes de ARCA, calcula tu categoría de Monotributo 2026 y te
                 muestra cuánto te queda para no pasarte.{" "}
                 <span className="font-semibold text-slate-800 dark:text-white">Simple, privado y gratis.</span>
@@ -57,10 +57,14 @@ export default function Home() {
                   target="ingresar"
                   className="group w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-2xl px-5 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors duration-300 cursor-pointer"
                 >
-                  <span>Ya uso ARCA, ingresar</span>
+                  <span>Ingresar</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
                 </TrackedLandingCtaLink>
               </div>
+
+              <p className="mt-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400 animate-hero-entry-5">
+                No esperes a que ARCA te avise cuando ya es tarde.
+              </p>
             </div>
 
             {/* Columna derecha: mockup del panel + CTA demo, misma altura que la izquierda */}
