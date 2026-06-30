@@ -140,6 +140,14 @@ export function TermsContent({ compact = false }: { compact?: boolean }) {
               Política de Privacidad
             </Link>.
           </p>
+          <h3 className={h3Class}>6.2 Enlaces de afiliado</h3>
+          <p className="text-muted-foreground">
+            Algunas guías incluyen <strong className="text-foreground">enlaces de afiliado</strong> a servicios de
+            terceros (por ejemplo, plataformas para cobrar del exterior). Si te registrás o contratás desde esos
+            enlaces, GARCA puede recibir una <strong className="text-foreground">comisión sin costo adicional para
+            vos</strong>. Usarlos es opcional y no altera el precio del tercero; las recomendaciones son editoriales
+            y cada servicio se rige por sus propios términos y política de privacidad.
+          </p>
         </div>
       </section>
 

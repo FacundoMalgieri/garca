@@ -220,6 +220,19 @@ export default function PrivacidadPage() {
               <ExtLink href="https://adsterra.com/privacy-policy/">Política de Privacidad de Adsterra</ExtLink>
             </li>
           </ul>
+
+          <H3>7.5 Enlaces de afiliado</H3>
+          <p className="text-muted-foreground mb-2">
+            Algunas guías de contenido incluyen <strong className="text-foreground">enlaces de afiliado</strong> a
+            servicios de terceros (por ejemplo, plataformas para cobrar del exterior). Si abrís una cuenta o
+            contratás un servicio desde esos enlaces, <strong className="text-foreground">GARCA puede recibir una
+            comisión, sin ningún costo adicional para vos</strong>.
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+            <li>Los enlaces de afiliado están señalizados como tales y usan el atributo <code className="text-foreground">rel=&quot;sponsored&quot;</code>.</li>
+            <li>Usarlos es <strong className="text-foreground">opcional</strong>: el contenido y las herramientas funcionan igual sin hacer clic.</li>
+            <li>Las recomendaciones son editoriales; la comisión no cambia lo que pagás en el tercero, y cada servicio se rige por su propia política de privacidad.</li>
+          </ul>
         </Section>
 
         <Section title="8. Cookies y Tecnologías de Rastreo">

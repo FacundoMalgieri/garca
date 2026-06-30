@@ -256,4 +256,68 @@ export const GUIDES: readonly Guide[] = [
       chipBg: "bg-indigo-100 dark:bg-indigo-900/40",
     },
   },
+  {
+    href: "/monotributo/cobrar-del-exterior",
+    title: "Cómo cobrar del exterior siendo monotributista",
+    description:
+      "Factura E, cómo ingresar los dólares según el BCRA, plataformas (Wise, Payoneer, Deel), cómo cuenta para el tope y qué cambió con CRS 2.0.",
+    category: "Facturación",
+    readingTime: "6 min de lectura",
+    accent: {
+      border: "border-emerald-200 dark:border-emerald-800/40",
+      bg: "from-emerald-50/70 to-green-50/70 dark:from-emerald-950/20 dark:to-green-950/20",
+      categoryText: "text-emerald-700 dark:text-emerald-300",
+      hoverShadow: "hover:shadow-emerald-500/10",
+      ctaText: "text-emerald-700 dark:text-emerald-300",
+      chipBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    },
+  },
+  {
+    href: "/monotributo/declarar-ingresos-exterior",
+    title: "Cómo declarar ingresos del exterior",
+    description:
+      "Por qué los cobros del exterior sí cuentan para el tope anual, cómo facturarlos con factura E, cómo se computan para la recategorización y qué pasa si te pasás.",
+    category: "Facturación",
+    readingTime: "6 min de lectura",
+    accent: {
+      border: "border-cyan-200 dark:border-cyan-800/40",
+      bg: "from-cyan-50/70 to-sky-50/70 dark:from-cyan-950/20 dark:to-sky-950/20",
+      categoryText: "text-cyan-700 dark:text-cyan-300",
+      hoverShadow: "hover:shadow-cyan-500/10",
+      ctaText: "text-cyan-700 dark:text-cyan-300",
+      chipBg: "bg-cyan-100 dark:bg-cyan-900/40",
+    },
+  },
+  {
+    href: "/monotributo/crs-arca",
+    title: "CRS 2.0 y ARCA: cuentas del exterior",
+    description:
+      "Qué es el CRS 2.0, qué datos de tus cuentas y billeteras del exterior recibe ARCA y desde cuándo. EE.UU. usa FATCA: que Wise o Payoneer reporten depende de la entidad legal.",
+    category: "Fundamentos",
+    readingTime: "7 min de lectura",
+    accent: {
+      border: "border-rose-200 dark:border-rose-800/40",
+      bg: "from-rose-50/70 to-red-50/70 dark:from-rose-950/20 dark:to-red-950/20",
+      categoryText: "text-rose-700 dark:text-rose-300",
+      hoverShadow: "hover:shadow-rose-500/10",
+      ctaText: "text-rose-700 dark:text-rose-300",
+      chipBg: "bg-rose-100 dark:bg-rose-900/40",
+    },
+  },
+  {
+    href: "/monotributo/wise-vs-payoneer-vs-deel",
+    title: "Wise vs Payoneer vs Deel",
+    description:
+      "Comparativa para monotributistas que cobran del exterior: comisiones, retiro a pesos, cuenta en USD y qué implica cada una bajo CRS para ARCA. Datos a junio 2026.",
+    category: "Comparativas",
+    readingTime: "6 min de lectura",
+    accent: {
+      border: "border-fuchsia-200 dark:border-fuchsia-800/40",
+      bg: "from-fuchsia-50/70 to-pink-50/70 dark:from-fuchsia-950/20 dark:to-pink-950/20",
+      categoryText: "text-fuchsia-700 dark:text-fuchsia-300",
+      hoverShadow: "hover:shadow-fuchsia-500/10",
+      ctaText: "text-fuchsia-700 dark:text-fuchsia-300",
+      chipBg: "bg-fuchsia-100 dark:bg-fuchsia-900/40",
+    },
+  },
 ];
