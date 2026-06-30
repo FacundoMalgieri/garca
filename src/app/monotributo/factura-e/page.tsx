@@ -72,6 +72,19 @@ export default function FacturaEPage() {
         ]}
       />
 
+      {/* Arriba del título: respuesta directa para búsquedas tipo "factura e" /
+          "como hacer factura e monotributo" / PAA (mismo patrón que arca-vs-afip) */}
+      <p
+        id="respuesta-directa"
+        className="text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mb-8 -mt-1"
+      >
+        La <strong className="text-foreground">factura E</strong> es el comprobante que un monotributista
+        emite cuando <strong className="text-foreground">exporta servicios o bienes a un cliente del
+        exterior</strong>. Se hace desde <strong className="text-foreground">Comprobantes en Línea</strong>{" "}
+        con clave fiscal, está <strong className="text-foreground">exenta de IVA</strong> y los importes{" "}
+        <strong className="text-foreground">sí computan</strong> para el tope anual de tu categoría.
+      </p>
+
       <ArticleHero
         image="/og/factura-e.png"
         imageAlt="Factura E — exportación de servicios desde Monotributo"
