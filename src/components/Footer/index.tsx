@@ -60,6 +60,7 @@ export function Footer() {
     if (!el) return;
     const update = () => setFooterHeight(el.offsetHeight);
     update();
+    if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
