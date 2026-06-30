@@ -107,3 +107,58 @@ Investigación: junio 2026. Cruzado 2-3 fuentes por afirmación. Sección "Cuent
 4. **Utoppia "fundada por argentinos"**: afirmado por iProfesional/RoadShow/MNews; razonablemente sólido pero proviene de prensa, no de registro societario.
 
 5. **Reseñas mixtas GrabrFi** (Trustpilot ~4,3; reportes de fondos bloqueados vía Regent Bank): existen reseñas negativas además de positivas. No lo incluí en el texto para mantenerlo neutral/breve, pero conviene tenerlo en cuenta.
+
+## Seguridad / FDIC (GrabrFi y Utoppia)
+
+Investigación: junio 2026. Tema sensible (seguridad del dinero). Cruzado contra páginas oficiales + FDIC.gov + prensa. Se priorizaron fuentes primarias.
+
+### S1. Son fintech, no bancos; la plata la tiene el banco socio — CONFIANZA ALTA
+- GrabrFi Help Center: "GrabrFi is not FDIC insured, however our partner US bank, Regent Bank, which holds the money in your checking account, is FDIC insured." / "When you add money to GrabrFi, it is placed directly at Regent Bank. GrabrFi does not hold or touch your money."
+  - https://help.grabrfi.com/en/content/is-grabrfi-fdic-insured
+- Utoppia: "Utoppia is a financial technology company, not a bank, and banking services are provided by ... Member FDIC."
+  - https://www.utoppia.com/faqs-categories/about-utoppia
+
+### S2. Banco socio actual (a junio 2026) — CONFIANZA MEDIA (Utoppia ambiguo)
+- GrabrFi: Regent Bank, miembro FDIC (consistente en su Help Center). CONFIANZA ALTA.
+  - https://help.grabrfi.com/en/content/is-grabrfi-fdic-insured
+- Utoppia: el sitio menciona en distintas partes **tanto Regent Bank como Lead Bank** (ambos Member FDIC); además cripto/stablecoin lo opera **BVNK (System Pay Services Inc)**, fuera de FDIC. No quedó claro cuál es el banco "vigente" único → en el texto se pide chequear en el sitio oficial.
+  - https://www.utoppia.com/faqs-categories/about-utoppia
+  - https://www.bankingdive.com/news/fdic-cease-desist-orders-neobank-utoppia-deposit-insurance-crypto/646155/
+  - https://bvnk.com/case-studies/dollars-without-delays-bvnk-utoppia
+- NOTA: GrabrFi y Utoppia ambos pasaron por la infraestructura **Synctera + Regent Bank**; comparten/compartieron ese stack, pero la situación exacta de cada uno a junio 2026 conviene confirmarla en cada sitio.
+
+### S3. FDIC pass-through NO es automático: requiere estructura de custodia + registros por beneficiario — CONFIANZA ALTA
+- FDIC.gov, requisitos del pass-through: (1) los fondos deben ser propiedad del principal y no del tercero; (2) los registros del banco deben indicar la naturaleza de agencia/custodia de la cuenta; (3) los registros (del banco, del tercero depositante u otro tercero en el curso normal de negocios) deben indicar la identidad de los principales y su interés en el depósito.
+  - https://www.fdic.gov/financial-institution-employees-guide-deposit-insurance/pass-through-deposit-insurance-coverage
+- Las propias plataformas advierten "certain conditions must be satisfied for pass-through FDIC deposit insurance to apply".
+
+### S4. El seguro cubre quiebra del banco, NO de la fintech/intermediario; stablecoins/cripto NO cubiertos — CONFIANZA ALTA
+- GrabrFi: "FDIC insurance only protects against the failure of depository institutions ... and certain conditions must be satisfied for pass-through FDIC deposit insurance to apply."
+  - https://help.grabrfi.com/en/content/is-grabrfi-fdic-insured
+- Utoppia: servicios de cripto/stablecoin/remesas "are NOT provided by Regent Bank and are not FDIC insured products."
+  - https://www.utoppia.com/faqs-categories/about-utoppia
+- Synapse mostró que la quiebra del intermediario BaaS NO está cubierta por FDIC.
+  - https://www.cnbc.com/2024/07/02/synapse-fintech-fdic-false-promise.html
+
+### S5. El "episodio de fondos" = colapso de Synapse (2024); GrabrFi migró fuera de Synapse con aviso previo y opción de retiro — CONFIANZA MEDIA-ALTA
+- Synapse (BaaS, no banco) colapsó en abril 2024; desde el 11-may-2024 más de 100.000 personas en EE.UU. (~USD 265M) quedaron sin acceso a sus fondos por descalces en cuentas FBO/omnibus; trustee identificó un faltante de USD 65-95M; solo parte de los fondos se recuperó.
+  - https://www.cnbc.com/2024/07/02/synapse-fintech-fdic-false-promise.html
+  - https://prospect.org/2024/05/23/2024-05-23-fintech-fight-frozen-bank-accounts-synapse/
+  - https://en.wikipedia.org/wiki/Synapse_Financial_Technologies
+- GrabrFi anunció que se separaba de Synapse y migraba a Regent Bank (Member FDIC) + Synctera; comunicado oficial (Medium, mar-2024). El Help Center describe la migración con aviso previo y la opción de retirar el saldo (ACH/wire) antes del cierre.
+  - https://medium.com/@grabrfi/grabrfi-is-parting-ways-with-synapse-and-migrating-to-a-new-sponsor-bank-partner-and-platform-6c31310240a7
+  - https://help.grabrfi.com/es/content/grabrfi-esta-migrando-a-un-nuevo-socio-de-plataforma-y-banco-patrocinador-en-ee-uu-esto-es-todo-lo-que-necesitas-saber
+
+### S6. FDIC cease-and-desist a Utoppia (2023) por afirmaciones engañosas sobre seguro — CONFIANZA ALTA
+- 27-mar-2023: la FDIC ordenó a Utoppia dejar de afirmar/insinuar que estaba "FDIC-insured" y que el seguro cubriría cripto; y por no identificar claramente la institución depositaria asegurada.
+  - https://www.fdic.gov/news/press-releases/2023/pr23024.html
+  - https://www.bankingdive.com/news/fdic-cease-desist-orders-neobank-utoppia-deposit-insurance-crypto/646155/
+- Se incorporó como contexto de prudencia (no en el cuerpo principal del texto, para mantenerlo balanceado pero presente vía "confirmá los términos").
+
+### ⚠️ NO VERIFICADO / PARA REVISIÓN DEL ENCARGO
+
+1. **Banco socio vigente de Utoppia a junio 2026**: el sitio oficial lista Regent Bank Y Lead Bank. NO confirmé cuál aplica hoy a cuentas argentinas. El texto pide explícitamente chequear en el sitio.
+2. **Que la cobertura sea verdaderamente per-usuario (pass-through real)**: NO se pudo confirmar de forma independiente que los registros de GrabrFi/Utoppia cumplan los 3 requisitos de la FDIC para cada usuario. El texto lo presenta como "en teoría / no automático" y manda a confirmar los términos. Esto es lo más importante que quedó SIN confirmar.
+3. **Que el episodio de GrabrFi NO haya implicado congelamiento de fondos**: hay reseñas (Trustpilot) que mencionan fondos bloqueados vía Regent Bank (ver punto 5 de la sección anterior). El comunicado oficial habla de migración ordenada con retiro previo, pero NO descarto incidentes individuales. El texto dice "no encontramos evidencia de congelamiento como en los casos graves de Synapse" — hedge deliberado.
+4. **Vínculo directo "mismo banco socio afectó a ambas"**: GrabrFi y Utoppia comparten/compartieron el stack Synctera+Regent, pero NO confirmé que un único incidente del MISMO banco haya afectado a ambas simultáneamente. El relato del encargo sobre eso queda SIN verificar; el texto no lo afirma.
+5. **Recuperación final de fondos Synapse / estado a junio 2026**: las cifras (64-75% recuperado, faltante USD 65-95M) son de 2024-2025; el estado final exacto a junio 2026 no se verificó al día.

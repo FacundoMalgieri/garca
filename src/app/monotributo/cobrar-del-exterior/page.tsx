@@ -506,6 +506,48 @@ export default function CobrarDelExteriorPage() {
           vigentes en el sitio oficial de cada plataforma antes de abrir tu cuenta. Esto es informativo, no
           asesoramiento.
         </p>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-background p-5">
+          <h3 className="text-base font-bold text-foreground mb-2">Seguridad y respaldo de los fondos</h3>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            Antes de mover plata, conviene entender qué estás usando. Ni GrabrFi ni Utoppia son bancos: son{" "}
+            <strong className="text-foreground">fintech que corren por encima de un banco socio</strong>. La plata no la
+            tienen ellas, sino el banco. Según las propias plataformas (a junio de 2026), GrabrFi declara que la cuenta
+            la provee <strong className="text-foreground">Regent Bank (miembro FDIC)</strong>; Utoppia menciona en
+            distintas partes de su sitio tanto a <strong className="text-foreground">Regent Bank</strong> como a{" "}
+            <strong className="text-foreground">Lead Bank</strong>, ambos miembros FDIC, así que conviene chequear en su
+            sitio cuál es el banco vigente para tu cuenta.
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            El seguro de la FDIC acá funciona por <strong className="text-foreground">&quot;pass-through&quot;</strong>{" "}
+            (traspaso): tus dólares se depositan a tu nombre en el banco socio y, en teoría, quedan cubiertos hasta{" "}
+            <strong className="text-foreground">USD 250.000 por titular</strong>. Pero ese traspaso{" "}
+            <strong className="text-foreground">no es automático</strong>: la FDIC exige que la cuenta esté estructurada
+            como custodia y que existan <strong className="text-foreground">registros que identifiquen a cada
+            beneficiario</strong> y su saldo. Si esos registros fallan, la cobertura individual puede no aplicar como se
+            espera. Además, el seguro <strong className="text-foreground">solo cubre la quiebra del banco</strong>, no
+            problemas de la fintech o del intermedio tecnológico, y en general{" "}
+            <strong className="text-foreground">no cubre saldos en stablecoins ni cripto</strong> (en Utoppia, lo cripto
+            lo opera un tercero, BVNK, fuera de la cobertura FDIC).
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            El riesgo real de este modelo es la <strong className="text-foreground">dependencia del banco y del
+            intermediario</strong>. El caso testigo es el colapso de <strong className="text-foreground">Synapse</strong>{" "}
+            en 2024: una plataforma BaaS quebró y más de 100.000 personas en EE.UU. quedaron sin acceso a sus fondos por
+            descalces entre los registros de la fintech y el banco; parte de esa plata tardó en aparecer. GrabrFi
+            justamente <strong className="text-foreground">era una de las fintech sobre Synapse y, según sus
+            comunicados, anunció con anticipación su migración a Regent Bank/Synctera y dio a los usuarios la opción de
+            retirar el saldo antes del cierre</strong>. No encontramos evidencia de que los fondos de GrabrFi quedaran
+            congelados como en los casos más graves de Synapse, pero el episodio muestra que el eslabón débil suele ser
+            el banco o el intermediario, no la fintech en sí.
+          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            En resumen, a junio de 2026: confirmá en el sitio oficial de cada plataforma quién es el banco socio y los
+            términos exactos de cobertura FDIC <em>antes</em> de depositar, y como regla práctica{" "}
+            <strong className="text-foreground">no tengas ahí más plata de la que necesitás para operar</strong>. Esto
+            es informativo, no asesoramiento financiero.
+          </p>
+        </div>
       </section>
 
       {/* Tope */}
