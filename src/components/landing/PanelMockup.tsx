@@ -62,7 +62,7 @@ export function PanelMockup() {
       <div className="mb-6">
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Ingresos acumulados</p>
         {/* Fila de barras con altura fija para que el % de cada barra resuelva */}
-        <div className="flex items-end gap-1.5 h-20">
+        <div className="flex items-end gap-1.5 h-16">
           {MOCK_PANEL.acumulado.map((p, i) => (
             <div
               key={p.mes}
