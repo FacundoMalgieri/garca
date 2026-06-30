@@ -1,12 +1,12 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
+import { PanelMockup } from "@/components/landing/PanelMockup";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
-import { ArrowRightIcon, SparklesIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, ShieldCheckIcon } from "@/components/ui/icons";
 
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
@@ -18,84 +18,69 @@ export default function Home() {
     <div className="relative overflow-x-hidden bg-background">
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
       <section
-        className="relative flex items-center justify-center overflow-hidden"
+        className="relative flex items-center overflow-hidden"
         style={{ minHeight: "calc(100vh - 64px)" }}
       >
         <HeroParallax>
-          <div className="text-center">
-            <div className="relative inline-block mb-8 animate-hero-entry">
-              <Image
-                src="/logo-full.svg"
-                alt="GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA"
-                width={144}
-                height={144}
-                priority
-                className="relative h-28 w-28 md:h-36 md:w-36"
-              />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+            {/* Columna izquierda: copy + CTAs + privacidad */}
+            <div className="text-center lg:text-left">
+              <div className="relative inline-block mb-6 animate-hero-entry">
+                <Image
+                  src="/logo-full.svg"
+                  alt="GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA"
+                  width={96}
+                  height={96}
+                  priority
+                  className="relative h-16 w-16 md:h-20 md:w-20"
+                />
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
+                Tus comprobantes de ARCA, claros en segundos
+              </h1>
+
+              <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed animate-hero-entry-3">
+                Visualizá tu facturación, calculá tu categoría de Monotributo 2026 y planificá para
+                no pasarte de tope. <span className="font-semibold text-slate-700 dark:text-slate-300">Simple, privado y gratis.</span>
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-6 animate-hero-entry-4">
+                <TrackedLandingCtaLink
+                  href="/calculadora-monotributo"
+                  target="calculadora"
+                  className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <span className="relative">Probar la calculadora</span>
+                  <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
+                </TrackedLandingCtaLink>
+
+                <TrackedLandingCtaLink
+                  href="/ingresar"
+                  target="ingresar"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-7 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
+                >
+                  <span>Ingresar con ARCA</span>
+                  <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
+                </TrackedLandingCtaLink>
+              </div>
+
+              {/* Señal de privacidad (visible sin scroll) */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-xs font-medium text-emerald-700 dark:text-emerald-300 animate-hero-entry-5">
+                <ShieldCheckIcon />
+                <span>100% en tu navegador · credenciales cifradas AES-256 · nada se guarda</span>
+              </div>
+
+              <div className="mt-5 animate-hero-entry-5">
+                <HeroDemoButton />
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
-              Bienvenido a GARCA
-            </h1>
-
-            <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-4 font-medium animate-hero-entry-2">
-              Gestor Automático de Recuperación de Comprobantes de ARCA
-            </p>
-
-            <p className="max-w-xl mx-auto text-sm md:text-base text-slate-600 dark:text-slate-400 mb-10 leading-relaxed animate-hero-entry-3">
-              La herramienta más{" "}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">simple</span> y{" "}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">segura</span>{" "}
-              para visualizar tus comprobantes de ARCA y calcular tu categoría de Monotributo
-              2026.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-hero-entry-4">
-              <TrackedLandingCtaLink
-                href="/ingresar"
-                target="ingresar"
-                className="group relative w-full sm:w-52 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-6 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_-20%,white,transparent_70%)]" />
-                <span className="relative">Comenzar ahora</span>
-                <ArrowRightIcon className="relative group-hover:translate-x-1 transition-transform duration-300" />
-              </TrackedLandingCtaLink>
-
-              <HeroDemoButton />
+            {/* Columna derecha: mockup del panel */}
+            <div className="flex justify-center lg:justify-end animate-hero-entry-3">
+              <PanelMockup />
             </div>
-
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100/80 dark:bg-muted/50 backdrop-blur-sm border border-slate-200 dark:border-border text-xs text-slate-600 dark:text-muted-foreground hover:scale-105 transition-transform duration-300 animate-hero-entry-5">
-              <SparklesIcon />
-              <span>Probá con datos ficticios sin loguearte</span>
-            </div>
-
-            <nav
-              className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 animate-hero-entry-5"
-              aria-label="Herramientas y guías frecuentes"
-            >
-              <Link
-                href="/calculadora-monotributo"
-                className="text-primary dark:text-blue-400 hover:underline font-medium"
-              >
-                Calculadora 2026
-              </Link>
-              <span className="text-slate-300 dark:text-slate-600" aria-hidden>
-                ·
-              </span>
-              <Link
-                href="/monotributo/arca-vs-afip"
-                className="text-primary dark:text-blue-400 hover:underline font-medium"
-              >
-                AFIP → ARCA: qué cambió
-              </Link>
-              <span className="text-slate-300 dark:text-slate-600" aria-hidden>
-                ·
-              </span>
-              <Link href="/monotributo" className="text-primary dark:text-blue-400 hover:underline font-medium">
-                Categorías y topes
-              </Link>
-            </nav>
           </div>
         </HeroParallax>
       </section>
