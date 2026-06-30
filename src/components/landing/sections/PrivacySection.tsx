@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 
-import { GridPattern } from "@/components/landing/GridPattern";
 import { useSectionVisible } from "@/components/landing/hooks/useScrollReveal";
 import { GitHubIcon, LockIcon, ShieldCheckIcon } from "@/components/ui/icons";
 
@@ -33,8 +32,7 @@ export function PrivacySection() {
       ref={ref}
       className="relative py-24 md:py-32 overflow-hidden bg-primary/5 dark:bg-white/[0.03] border-y border-slate-200 dark:border-white/10"
     >
-      {/* Backdrop: grilla + glow emerald/cyan (sección de confianza) */}
-      <GridPattern className="text-slate-900 opacity-[0.05] dark:text-white dark:opacity-[0.07] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+      {/* Backdrop: glow emerald (sección de confianza) */}
       <div
         aria-hidden
         className="pointer-events-none absolute -top-24 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-emerald-300/20 blur-[140px] dark:bg-emerald-500/10"
