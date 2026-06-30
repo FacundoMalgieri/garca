@@ -1039,6 +1039,305 @@ const facturaCvsEArticleSchema: Schema = {
   inLanguage: "es-AR",
 };
 
+// ----- /monotributo/cobrar-del-exterior -----
+
+export const cobrarExteriorFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Cómo cobro del exterior siendo monotributista?",
+    answer:
+      "Emitís una factura E por la exportación de servicios, recibís el pago en dólares (transferencia SWIFT, Wise, Payoneer, Deel, etc.) e ingresás las divisas al sistema financiero argentino dentro del plazo que fija el BCRA. A junio de 2026 no estás obligado a venderlas a pesos al dólar oficial: podés conservarlas en dólares.",
+  },
+  {
+    question: "¿Tengo que liquidar los dólares al tipo de cambio oficial?",
+    answer:
+      "A junio de 2026, no. El BCRA flexibilizó la obligación de liquidar al oficial para exportadores de servicios personas humanas; una vez ingresadas, podés conservar las divisas en dólares. Es una normativa que cambia seguido: confirmala antes de cada cobro.",
+  },
+  {
+    question: "¿Igual tengo que ingresar las divisas al país?",
+    answer:
+      "Sí. 'No liquidar' no es lo mismo que 'no ingresar': la obligación de ingresar las divisas al sistema financiero local sigue vigente, con un plazo en días hábiles desde el cobro. Lo que cambió es que ya no estás forzado a venderlas a pesos.",
+  },
+  {
+    question: "¿Los cobros del exterior cuentan para el tope del Monotributo?",
+    answer:
+      "Sí. Según ARCA, el monotributista puede exportar servicios sin superar los límites de facturación de su categoría máxima: esa facturación computa para el tope anual y para la recategorización. El monto que se compara es el total facturado convertido a pesos. Lo único que no sumás es IVA, porque la exportación está exenta.",
+  },
+  {
+    question: "¿Qué plataforma conviene para recibir dólares?",
+    answer:
+      "Las más usadas por freelancers argentinos en 2026 son la transferencia bancaria SWIFT, Wise, Payoneer y Deel. Ninguna te exime de facturar ni de ingresar las divisas: son el medio de cobro, no un atajo legal. Compará comisiones de retiro y conversión antes de elegir.",
+  },
+  {
+    question: "¿Necesito factura E o puedo usar factura C?",
+    answer:
+      "Si el cliente está en el exterior, corresponde factura E (exportación de servicios). La factura C es para clientes con domicilio en Argentina. Para emitir factura E necesitás habilitar un punto de venta específico de exportación en ARCA.",
+  },
+  {
+    question: "¿Qué cambió con CRS 2.0 para quien cobra del exterior?",
+    answer:
+      "Argentina adhirió al CRS 2.0 (OCDE), que amplía el intercambio automático de información financiera a fintech, billeteras del exterior y criptoactivos. La recolección de datos arranca a comienzos de 2026 y el intercambio efectivo llega después. En la práctica, los saldos en plataformas como Payoneer o Wise pueden volverse visibles para ARCA, así que conviene facturar e ingresar las divisas en regla.",
+  },
+];
+
+const cobrarExteriorBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Cobrar del exterior",
+      item: `${siteUrl}/monotributo/cobrar-del-exterior`,
+    },
+  ],
+};
+
+const cobrarExteriorArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Cómo cobrar del exterior siendo monotributista (2026)",
+  description:
+    "Guía 2026 para cobrar del exterior como monotributista en Argentina: factura E, cómo ingresar los dólares según el BCRA, plataformas (Wise, Payoneer, Deel), cómo cuenta para el tope y qué cambió con CRS 2.0.",
+  image: buildArticleImage("cobrar-del-exterior"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/cobrar-del-exterior`,
+    buildArticleImage("cobrar-del-exterior"),
+  ),
+  inLanguage: "es-AR",
+};
+
+// ----- /monotributo/crs-arca -----
+
+export const crsArcaFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Qué es el CRS 2.0?",
+    answer:
+      "El CRS (Common Reporting Standard) es el estándar multilateral de la OCDE por el que más de 100 países intercambian automáticamente datos de cuentas financieras de no residentes. El CRS 2.0 es su actualización: amplía la definición de 'cuenta financiera' para alcanzar billeteras digitales, dinero electrónico, monedas digitales de bancos centrales y ciertos cripto-activos. Argentina adhirió hacia mediados de 2025.",
+  },
+  {
+    question: "¿Desde cuándo ARCA recibe datos de mis cuentas del exterior por CRS 2.0?",
+    answer:
+      "No es retroactivo. La recolección de datos por parte de las plataformas arranca el 1 de enero de 2026, y el primer intercambio efectivo de esa información hacia ARCA recién ocurriría durante 2027 (con datos del período 2026). El saldo al 31 de diciembre de 2026 es uno de los datos típicos del primer reporte.",
+  },
+  {
+    question: "¿Wise, Payoneer o PayPal reportan a ARCA?",
+    answer:
+      "Depende de la entidad legal que figura en tu cuenta, no del nombre de la app. Si la entidad que te abrió la cuenta está en la UE o el Reino Unido (jurisdicciones CRS), esa cuenta puede reportarse a ARCA. Si la entidad es estadounidense, se rige por FATCA, que en general no manda saldos a Argentina. Revisá en tus Términos y Condiciones qué sociedad te contrató y en qué país está constituida.",
+  },
+  {
+    question: "¿Por qué EE.UU. no reporta mis cuentas a ARCA igual que otros países?",
+    answer:
+      "Porque Estados Unidos no participa del CRS de la OCDE. Usa su propio régimen, FATCA, mediante acuerdos bilaterales (IGA) que son en gran medida no recíprocos: EE.UU. está diseñado para recibir información del mundo sobre sus contribuyentes, pero por lo general no devuelve a otros países el mismo detalle sobre las cuentas de sus residentes en suelo estadounidense.",
+  },
+  {
+    question: "¿Qué le manda EE.UU. a Argentina entonces?",
+    answer:
+      "Argentina y EE.UU. firmaron un acuerdo FATCA (IGA Modelo 1) en diciembre de 2022, con primer intercambio efectivo en septiembre de 2024 (datos de 2023). Pero ese flujo es asimétrico: se limita esencialmente a rentas de fuente estadounidense sobre cierto umbral, y excluye saldos de cuenta, movimientos y detalle de transacciones.",
+  },
+  {
+    question: "¿El CRS 2.0 es lo mismo que el CARF de cripto?",
+    answer:
+      "No. El CRS 2.0 modifica el estándar de cuentas financieras. El CARF (Crypto-Asset Reporting Framework) es un marco separado de la OCDE, específico para que exchanges y proveedores de servicios cripto reporten cripto-activos. Suelen anunciarse juntos, pero los intercambios del CARF arrancan recién entre 2027 y 2029 según la jurisdicción.",
+  },
+  {
+    question: "¿Qué datos se reportan bajo CRS 2.0?",
+    answer:
+      "Identificación del titular (nombre, domicilio, residencia fiscal, CUIT/CUIL), identificación de la cuenta y la entidad que la mantiene, saldo al cierre del año fiscal y rentas o movimientos relevantes del período. Para cuentas nuevas de personas físicas el alcance es amplio.",
+  },
+  {
+    question: "Soy freelancer y cobro del exterior, ¿qué me conviene hacer?",
+    answer:
+      "No entrar en pánico: el CRS 2.0 no crea impuestos nuevos, hace más visible lo que ya tenés que declarar. Declarás bien tus ingresos (si exportás servicios suman al tope de tu categoría y se facturan con factura E), guardás los respaldos de cada cobro, sabés en qué entidad y país está cada billetera, y consultás con un contador si tenés saldos altos en el exterior o cripto. Esto es información general, no asesoramiento fiscal.",
+  },
+];
+
+const crsArcaBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    { "@type": "ListItem", position: 3, name: "CRS 2.0 y ARCA", item: `${siteUrl}/monotributo/crs-arca` },
+  ],
+};
+
+const crsArcaArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "CRS 2.0 y ARCA 2026: qué cuentas y billeteras del exterior se reportan",
+  description:
+    "Qué es el CRS 2.0, qué datos de tus cuentas y billeteras del exterior recibe ARCA y desde cuándo. EE.UU. usa FATCA (no CRS): que Wise, Payoneer o PayPal reporten depende de la entidad legal de tu cuenta.",
+  image: buildArticleImage("crs-arca"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(`${siteUrl}/monotributo/crs-arca`, buildArticleImage("crs-arca")),
+  inLanguage: "es-AR",
+};
+
+// ----- /monotributo/declarar-ingresos-exterior -----
+
+export const declararExteriorFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Los ingresos del exterior cuentan para el tope del Monotributo?",
+    answer:
+      "Sí. Según el criterio oficial de ARCA, los cobros de clientes del exterior (exportación de servicios facturados con factura E) computan para el tope anual de ingresos brutos de tu categoría, igual que la facturación local. No existe una liberación del tope del Monotributo por exportar: el monotributista puede exportar siempre que el total facturado no supere el límite de la categoría máxima.",
+  },
+  {
+    question: "¿Cómo declaro un cobro del exterior siendo monotributista?",
+    answer:
+      "Emitís factura E desde Comprobantes en Línea de ARCA, con un punto de venta habilitado para exportación, informando el país de destino, la moneda y la cotización del día. La factura E está exenta de IVA. Ese comprobante es la forma de declarar el ingreso del exterior.",
+  },
+  {
+    question: "¿Tengo que usar factura C o factura E para un cliente del exterior?",
+    answer:
+      "Factura E. La factura C es para clientes en Argentina; si el cliente no es residente, corresponde factura E aunque te pague en pesos.",
+  },
+  {
+    question: "¿En qué moneda se computa el ingreso del exterior para el tope?",
+    answer:
+      "En pesos. Cuando emitís la factura E en dólares, ARCA calcula el equivalente en pesos según la cotización del día de la factura. Ese monto en pesos es el que suma al tope, no los dólares originales.",
+  },
+  {
+    question: "¿Qué pasa si los ingresos del exterior me pasan del tope del Monotributo?",
+    answer:
+      "Pasa lo mismo que con cualquier otro ingreso: si superás el tope de tu categoría tenés que recategorizarte; si no lo hacés en término, ARCA puede recategorizarte de oficio; y si superás el tope de la categoría máxima, quedás excluido y pasás a Responsable Inscripto.",
+  },
+  {
+    question: "¿La liberación de divisas del BCRA me exime del tope del Monotributo?",
+    answer:
+      "No. El régimen de divisas del BCRA es independiente del tope impositivo del Monotributo que controla ARCA. A junio 2026 las reglas de divisas para exportadores de servicios se flexibilizaron, pero eso no cambia que el ingreso compute para el tope.",
+  },
+  {
+    question: "¿Cuándo se computan los ingresos del exterior para recategorizar?",
+    answer:
+      "En las dos recategorizaciones anuales (ventanas de enero y julio). En cada una se suman todas las facturas C y E de los últimos 12 meses corridos y se compara el total en pesos con el tope de tu categoría.",
+  },
+  {
+    question: "¿Cómo pruebo que el cliente está realmente en el exterior?",
+    answer:
+      "Con la factura E (datos del cliente extranjero), el contrato o acuerdo de servicios y el comprobante del cobro internacional (transferencia, Payoneer, Wise, etc.). Conviene guardar esa documentación por el plazo de prescripción fiscal.",
+  },
+];
+
+const declararExteriorBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Declarar ingresos del exterior",
+      item: `${siteUrl}/monotributo/declarar-ingresos-exterior`,
+    },
+  ],
+};
+
+const declararExteriorArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Cómo declarar ingresos del exterior en el Monotributo (2026)",
+  description:
+    "Cómo declarar ingresos del exterior siendo monotributista en 2026: por qué los cobros del exterior sí cuentan para el tope anual, cómo facturarlos con factura E, cómo se computan para la recategorización y qué pasa si te pasás.",
+  image: buildArticleImage("declarar-ingresos-exterior"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/declarar-ingresos-exterior`,
+    buildArticleImage("declarar-ingresos-exterior"),
+  ),
+  inLanguage: "es-AR",
+};
+
+// ----- /monotributo/wise-vs-payoneer-vs-deel -----
+
+export const wisePayoneerDeelFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Cuál es la mejor forma de cobrar del exterior siendo monotributista en 2026?",
+    answer:
+      "No hay una sola: depende de tu caso. A junio 2026, Wise suele ser la más barata para recibir y convertir USD; Payoneer es la más integrada con marketplaces (Upwork, Fiverr) y te da tarjeta y retiro a banco local; y Deel conviene cuando una empresa del exterior te contrata como contractor. En los tres casos, si el cliente está afuera, emitís factura E.",
+  },
+  {
+    question: "¿Conviene Payoneer o Wise para un monotributista?",
+    answer:
+      "Si tu prioridad es minimizar comisiones al recibir y convertir dólares, Wise suele ganar. Si cobrás por marketplaces o querés tarjeta y retiro directo a un banco argentino, Payoneer es más cómodo, aunque con comisiones algo más altas. Datos a junio 2026; verificá las tarifas vigentes en cada sitio.",
+  },
+  {
+    question: "¿Puedo retirar a pesos en un banco argentino con estas plataformas?",
+    answer:
+      "Sí, las tres permiten llegar a un banco argentino, pero con matices en tipo de cambio y comisiones. El detalle conviene confirmarlo en tu cuenta, porque cambia según la plataforma y el momento.",
+  },
+  {
+    question: "¿Tengo que emitir factura E si cobro por Wise, Payoneer o Deel?",
+    answer:
+      "Sí. Lo que define el comprobante es dónde está el cliente, no la plataforma de cobro. Si el cliente está en el exterior, corresponde factura E, uses la vía que uses.",
+  },
+  {
+    question: "¿Los ingresos cobrados por estas plataformas cuentan para el tope del Monotributo?",
+    answer:
+      "Sí. Todo ingreso facturado, incluida la exportación de servicios cobrada por estas plataformas, suma al tope anual de tu categoría, convertido a pesos según la cotización del día de la factura.",
+  },
+  {
+    question: "¿ARCA se entera de lo que cobro en Wise, Payoneer o Deel?",
+    answer:
+      "Depende de qué entidad y en qué jurisdicción esté tu saldo. Las jurisdicciones adheridas al CRS (UE, Reino Unido) reportan cuentas de residentes argentinos, y esa información llega a ARCA. Estados Unidos no participa del CRS (usa FATCA, no recíproco). En cualquier caso, como residente fiscal argentino tus saldos en el exterior se declaran igual.",
+  },
+  {
+    question: "¿Cuál es más barata: Wise, Payoneer o Deel?",
+    answer:
+      "A junio 2026, Wise suele ser la más económica para recibir y convertir. Payoneer cobra alrededor de 1% al recibir por ciertos métodos y rangos más altos al retirar con conversión. En Deel el plan de contractor es gratis y el costo está en el método de retiro y el margen de conversión. Son rangos: el porcentaje exacto depende del par de monedas y del momento.",
+  },
+  {
+    question: "¿Necesito que mi cliente use Deel para cobrar por ahí?",
+    answer:
+      "No es obligatorio, pero Deel rinde más cuando el cliente ya usa la plataforma. También podés usarlo en modo standalone creando el contrato e invitando al cliente. Si no, Wise o Payoneer suelen ser más simples.",
+  },
+];
+
+const wisePayoneerDeelBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Wise vs Payoneer vs Deel",
+      item: `${siteUrl}/monotributo/wise-vs-payoneer-vs-deel`,
+    },
+  ],
+};
+
+const wisePayoneerDeelArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Wise vs Payoneer vs Deel para cobrar del exterior (Monotributo 2026)",
+  description:
+    "Comparativa de Wise, Payoneer y Deel para monotributistas que cobran del exterior: comisiones, retiro a pesos, cuenta en USD y qué implica cada una bajo CRS para ARCA. Datos a junio 2026.",
+  image: buildArticleImage("wise-vs-payoneer-vs-deel"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/wise-vs-payoneer-vs-deel`,
+    buildArticleImage("wise-vs-payoneer-vs-deel"),
+  ),
+  inLanguage: "es-AR",
+};
+
 // ----- /about -----
 
 const aboutBreadcrumbSchema: Schema = {
@@ -1414,6 +1713,30 @@ const guiasCollectionPageSchema: Schema = {
         url: `${siteUrl}/monotributo/factura-c-vs-factura-e`,
         name: "Factura C vs Factura E",
       },
+      {
+        "@type": "ListItem",
+        position: 11,
+        url: `${siteUrl}/monotributo/cobrar-del-exterior`,
+        name: "Cómo cobrar del exterior siendo monotributista",
+      },
+      {
+        "@type": "ListItem",
+        position: 12,
+        url: `${siteUrl}/monotributo/declarar-ingresos-exterior`,
+        name: "Cómo declarar ingresos del exterior en el Monotributo",
+      },
+      {
+        "@type": "ListItem",
+        position: 13,
+        url: `${siteUrl}/monotributo/crs-arca`,
+        name: "CRS 2.0 y ARCA — qué cuentas del exterior se reportan",
+      },
+      {
+        "@type": "ListItem",
+        position: 14,
+        url: `${siteUrl}/monotributo/wise-vs-payoneer-vs-deel`,
+        name: "Wise vs Payoneer vs Deel para cobrar del exterior",
+      },
     ],
   },
 };
@@ -1483,6 +1806,26 @@ export function getSchemasForPath(pathname: string): Schema[] {
         facturaCvsEBreadcrumbSchema,
         facturaCvsEArticleSchema,
         buildFaqSchema(facturaCvsEFaqEntries),
+      ];
+    case "/monotributo/cobrar-del-exterior":
+      return [
+        cobrarExteriorBreadcrumbSchema,
+        cobrarExteriorArticleSchema,
+        buildFaqSchema(cobrarExteriorFaqEntries),
+      ];
+    case "/monotributo/crs-arca":
+      return [crsArcaBreadcrumbSchema, crsArcaArticleSchema, buildFaqSchema(crsArcaFaqEntries)];
+    case "/monotributo/declarar-ingresos-exterior":
+      return [
+        declararExteriorBreadcrumbSchema,
+        declararExteriorArticleSchema,
+        buildFaqSchema(declararExteriorFaqEntries),
+      ];
+    case "/monotributo/wise-vs-payoneer-vs-deel":
+      return [
+        wisePayoneerDeelBreadcrumbSchema,
+        wisePayoneerDeelArticleSchema,
+        buildFaqSchema(wisePayoneerDeelFaqEntries),
       ];
     case "/about":
       return [aboutBreadcrumbSchema, aboutPageSchema];
