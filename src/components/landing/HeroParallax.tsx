@@ -17,7 +17,7 @@ export function HeroParallax({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="relative w-full max-w-4xl mx-auto px-6 py-12 md:py-16"
+      className="relative w-full max-w-6xl mx-auto px-6 py-12 md:py-16"
       style={{
         transform: `translateY(${scrollY * -0.8}px)`,
         opacity: Math.max(0, 1 - scrollY / 800),
