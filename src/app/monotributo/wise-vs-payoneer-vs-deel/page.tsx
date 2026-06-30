@@ -19,6 +19,7 @@ const tocItems: readonly TocItem[] = [
   { id: "wise", label: "Wise en detalle" },
   { id: "payoneer", label: "Payoneer en detalle" },
   { id: "deel", label: "Deel en detalle" },
+  { id: "grabrfi-utoppia", label: "GrabrFi y Utoppia: cuentas en USD en EE.UU." },
   { id: "compliance-crs", label: "Compliance: CRS y ARCA" },
   { id: "cual-te-conviene", label: "Cuál te conviene según tu caso" },
 ];
@@ -116,7 +117,7 @@ export default function WiseVsPayoneerVsDeelPage() {
           </>
         }
         dateModified={dateModified}
-        readingTime="11 min de lectura"
+        readingTime="13 min de lectura"
       />
 
       <TableOfContents items={tocItems} className="mb-10" />
@@ -231,6 +232,75 @@ export default function WiseVsPayoneerVsDeelPage() {
         <p className="text-xs text-muted-foreground mt-3">
           Cifras a junio 2026. Las comisiones de conversión son rangos: el porcentaje exacto depende del par de monedas
           y del momento. Confirmá en el sitio oficial.
+        </p>
+
+        {/* Tabla secundaria: cuentas en USD en EE.UU. */}
+        <h3 className="text-lg md:text-xl font-bold text-foreground mt-8 mb-1">
+          Otras opciones: cuentas en USD en EE.UU.
+        </h3>
+        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4 max-w-3xl">
+          Una categoría aparte: te dan tu propio <strong className="text-foreground">número de cuenta y routing de
+          EE.UU.</strong> para recibir como una cuenta local estadounidense. Las dos más usadas en Argentina a junio 2026
+          son GrabrFi y Utoppia. Las detallamos{" "}
+          <a
+            href="#grabrfi-utoppia"
+            className="text-blue-700 dark:text-blue-300 hover:underline font-semibold underline-offset-2"
+          >
+            más abajo
+          </a>
+          .
+        </p>
+        <div className="rounded-2xl border border-border bg-white dark:bg-background overflow-x-auto shadow-sm">
+          <table className="w-full text-sm min-w-[560px]">
+            <thead className="bg-gradient-to-r from-sky-50 to-cyan-50 dark:from-sky-950/30 dark:to-cyan-950/30">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Aspecto</th>
+                <th className="text-left px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-300">GrabrFi</th>
+                <th className="text-left px-4 py-3 font-semibold text-sky-700 dark:text-sky-300">Utoppia</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border [&_td]:px-4 [&_td]:py-3 [&_td]:align-top [&_td]:text-slate-700 dark:[&_td]:text-slate-300">
+              <tr>
+                <td className="font-semibold text-foreground">Disponible en Argentina</td>
+                <td>Sí, a junio 2026</td>
+                <td>Sí, a junio 2026 (~18 países)</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Recibir USD</td>
+                <td>Cuenta y routing de EE.UU.; ACH entrante sin cargo</td>
+                <td>Cuenta de EE.UU.; ACH, ACH same-day, SWIFT y wire</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Retiro a banco argentino</td>
+                <td>Sí (verificá comisión)</td>
+                <td>Sí (verificá comisión)</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Tarjeta</td>
+                <td>Mastercard en USD</td>
+                <td>Visa física y virtual</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Costo de apertura</td>
+                <td>Sin costo de apertura ni mantenimiento</td>
+                <td>Sin costo de apertura ni mantenimiento</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Cripto / stablecoins</td>
+                <td>Sí (swap a stablecoins)</td>
+                <td>Sí (cripto vía BVNK, fuera de FDIC)</td>
+              </tr>
+              <tr>
+                <td className="font-semibold text-foreground">Respaldo / FDIC</td>
+                <td>Fintech, no banco; cuenta en Regent Bank (FDIC), pass-through</td>
+                <td>Fintech, no banco; Regent/Lead Bank (FDIC), pass-through</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Datos a junio 2026. No son bancos: son fintech sobre un banco socio, y el seguro FDIC por &ldquo;pass-through&rdquo;{" "}
+          <strong className="text-foreground">no es automático</strong>. Confirmá comisiones y términos en cada sitio oficial.
         </p>
       </section>
 
@@ -392,6 +462,105 @@ export default function WiseVsPayoneerVsDeelPage() {
         </div>
       </section>
 
+      {/* GrabrFi y Utoppia */}
+      <section className="mb-12">
+        <h2 id="grabrfi-utoppia" className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4">
+          GrabrFi y Utoppia: cuentas en USD en EE.UU.
+        </h2>
+        <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
+          Más allá de las tres grandes, hay una <strong className="text-foreground">categoría aparte</strong>: cuentas en
+          dólares domiciliadas en Estados Unidos, pensadas para freelancers latinoamericanos. Te dan tu propio{" "}
+          <strong className="text-foreground">número de cuenta y routing de EE.UU.</strong> (como una cuenta local
+          estadounidense) para recibir ACH/wire, una tarjeta para gastar en USD y la opción de transferir a tu banco
+          argentino. Las dos más usadas en Argentina a junio 2026 son GrabrFi y Utoppia; ninguna es un banco en sí: la
+          cuenta la provee <strong className="text-foreground">Regent Bank (miembro FDIC)</strong>.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50/70 to-green-50/70 dark:from-emerald-950/20 dark:to-green-950/20 p-5">
+            <h3 className="text-lg font-bold text-foreground mb-2">GrabrFi</h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+              Wallet con cuenta de EE.UU. (routing + número de cuenta), tarjeta Mastercard en dólares y conversión a
+              stablecoins. Apuntada a freelancers que cobran de Upwork, Deel o Toptal por depósito directo.
+            </p>
+            <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-1.5 list-disc list-inside mb-4">
+              <li>A favor: apertura y mantenimiento sin costo, 100% online con pasaporte o DNI; ACH entrante sin cargo.</li>
+              <li>A favor: disponible en Argentina a junio 2026; retiro a tu banco local (verificá la comisión vigente).</li>
+              <li>En contra: es fintech, no banco; el saldo lo tiene Regent Bank y la cobertura FDIC depende del pass-through.</li>
+            </ul>
+            <a
+              href="https://app.grabrfi.com/sign-up?invite-code=1hWp7ogShTqm"
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+            >
+              Abrí tu cuenta en GrabrFi
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+            <p className="mt-2 text-xs text-muted-foreground">Enlace de afiliado.</p>
+          </div>
+
+          <div className="rounded-2xl border border-sky-200 dark:border-sky-800/40 bg-gradient-to-br from-sky-50/70 to-cyan-50/70 dark:from-sky-950/20 dark:to-cyan-950/20 p-5">
+            <h3 className="text-lg font-bold text-foreground mb-2">Utoppia</h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+              Neobanco fundado por argentinos, con cuenta en dólares de EE.UU. a tu nombre, tarjeta Visa física y virtual,
+              stablecoins y pago de servicios. Disponible en Argentina y otros ~18 países.
+            </p>
+            <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-1.5 list-disc list-inside mb-4">
+              <li>A favor: apertura y mantenimiento sin costo; recibís USD por ACH, ACH same-day, SWIFT y wire.</li>
+              <li>A favor: tarjeta Visa para comprar y extraer en el exterior (verificá comisiones de cambio/extracción).</li>
+              <li>En contra: la cuenta la provee Regent Bank (también menciona Lead Bank), vía Synctera; lo cripto lo opera BVNK, fuera de FDIC.</li>
+            </ul>
+            <a
+              href="https://utoppia.page.link/JoinUtoppia"
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 transition-colors"
+            >
+              Abrí tu cuenta en Utoppia
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+            <p className="mt-2 text-xs text-muted-foreground">Enlace de afiliado.</p>
+            <p className="mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              Con el código <strong className="text-foreground">UTOPPIA-CHFV</strong> sumás un bono de USD 10 al abrir tu
+              cuenta.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+              A tener en cuenta: en marzo de 2023 Utoppia recibió una orden de cese (<em>cease-and-desist</em>) de la
+              FDIC por declaraciones engañosas sobre el seguro de depósitos; posteriormente ajustó su comunicación.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+          <strong className="font-semibold">Seguridad, en corto.</strong> Ni GrabrFi ni Utoppia son bancos: son fintech
+          sobre un banco socio. El seguro FDIC funciona por <strong className="font-semibold">&ldquo;pass-through&rdquo;</strong>{" "}
+          y <strong className="font-semibold">no es automático</strong> (requiere registros que identifiquen a cada
+          beneficiario), cubre la quiebra del banco —no la de la fintech— y no cubre stablecoins ni cripto. Por ser cuentas
+          en EE.UU. caen bajo <strong className="font-semibold">FATCA, no bajo el CRS</strong>, pero igual tenés que
+          declarar tus cuentas e ingresos del exterior ante ARCA. Regla práctica: no tengas ahí más plata de la que
+          necesitás para operar. Tenés el detalle completo en{" "}
+          <Link
+            href="/monotributo/cobrar-del-exterior#cuentas-usd-eeuu"
+            className="font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            cuentas en USD en EE.UU.
+          </Link>{" "}
+          y en{" "}
+          <Link
+            href="/monotributo/crs-arca"
+            className="font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            CRS 2.0 y ARCA
+          </Link>
+          .
+        </div>
+      </section>
+
       {/* Compliance CRS */}
       <section className="mb-12">
         <h2 id="compliance-crs" className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mb-4">
@@ -471,6 +640,12 @@ export default function WiseVsPayoneerVsDeelPage() {
               body: "Wise o Payoneer para mantener el saldo en USD; el paso a pesos lo hacés cuando te conviene (banco, cripto/stablecoins o P2P), comparando el tipo de cambio.",
               answer: "Wise o Payoneer",
               answerColor: "text-sky-700 dark:text-sky-300",
+            },
+            {
+              title: "Querés una cuenta y routing propios de EE.UU. para cobrar de plataformas US",
+              body: "Si te pagan por depósito directo (ACH) desde plataformas estadounidenses y querés número de cuenta + routing de EE.UU. y tarjeta en USD, mirá GrabrFi o Utoppia. Recordá: son fintech sobre un banco socio (FDIC por pass-through, no automático) y no tengas ahí más de lo que necesitás.",
+              answer: "GrabrFi o Utoppia",
+              answerColor: "text-cyan-700 dark:text-cyan-300",
             },
           ].map((item) => (
             <div
