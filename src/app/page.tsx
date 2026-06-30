@@ -22,7 +22,7 @@ export default function Home() {
         style={{ minHeight: "calc(100vh - 64px)" }}
       >
         <HeroParallax>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-stretch">
             {/* Columna izquierda: copy + CTAs + privacidad */}
             <div className="text-center lg:text-left">
               <div className="relative inline-block mb-6 animate-hero-entry">
@@ -71,15 +71,14 @@ export default function Home() {
                 <ShieldCheckIcon />
                 <span>100% en tu navegador · credenciales cifradas AES-256 · nada se guarda</span>
               </div>
-
-              <div className="mt-5 animate-hero-entry-5">
-                <HeroDemoButton />
-              </div>
             </div>
 
-            {/* Columna derecha: mockup del panel */}
-            <div className="flex justify-center lg:justify-end animate-hero-entry-3">
+            {/* Columna derecha: mockup del panel + CTA demo, misma altura que la izquierda */}
+            <div className="flex flex-col justify-center items-center lg:items-end gap-5 animate-hero-entry-3">
               <PanelMockup />
+              <div className="w-full max-w-md">
+                <HeroDemoButton widthClassName="w-full" />
+              </div>
             </div>
           </div>
         </HeroParallax>
