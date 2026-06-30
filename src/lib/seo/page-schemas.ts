@@ -1303,6 +1303,16 @@ export const wisePayoneerDeelFaqEntries: readonly FaqEntry[] = [
     answer:
       "No es obligatorio, pero Deel rinde más cuando el cliente ya usa la plataforma. También podés usarlo en modo standalone creando el contrato e invitando al cliente. Si no, Wise o Payoneer suelen ser más simples.",
   },
+  {
+    question: "¿GrabrFi o Utoppia son mejores que Wise o Payoneer para cobrar del exterior?",
+    answer:
+      "No es \"mejor o peor\", es distinto. GrabrFi y Utoppia te dan una cuenta y routing propios de Estados Unidos, ideal si cobrás por depósito directo (ACH) de plataformas estadounidenses y querés tarjeta en USD. Wise suele ser más barata para recibir y convertir, y Payoneer está más integrada con marketplaces. Ojo: GrabrFi y Utoppia son fintech sobre un banco socio (la cuenta la provee Regent Bank, miembro FDIC), no bancos en sí. Datos a junio 2026.",
+  },
+  {
+    question: "Una cuenta en EE.UU. de GrabrFi o Utoppia, ¿se reporta a ARCA?",
+    answer:
+      "Por la vía automática del CRS, no: Estados Unidos no participa del CRS y usa FATCA, que en la práctica es mayormente no recíproco. Pero eso es solo sobre el reporte automático: si sos residente fiscal argentino igual tenés que declarar tus cuentas e ingresos del exterior ante ARCA. No es una vía para ocultar plata. Tenés el detalle en la guía de CRS 2.0 y ARCA.",
+  },
 ];
 
 const wisePayoneerDeelBreadcrumbSchema: Schema = {
