@@ -33,7 +33,7 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/calculadora-monotributo"
                   target="calculadora"
-                  className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
+                  className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 cursor-pointer overflow-hidden hover:scale-105"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <span className="relative">Probar la calculadora</span>
@@ -43,7 +43,7 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/ingresar"
                   target="ingresar"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-7 py-4 text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
                 >
                   <span>Ingresar con ARCA</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -51,7 +51,7 @@ export default function Home() {
               </div>
 
               {/* Señal de privacidad (visible sin scroll) */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-xs font-medium text-emerald-700 dark:text-emerald-300 animate-hero-entry-5">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl sm:rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 leading-snug animate-hero-entry-5">
                 <ShieldCheckIcon />
                 <span>100% en tu navegador · credenciales cifradas AES-256 · nada se guarda</span>
               </div>
