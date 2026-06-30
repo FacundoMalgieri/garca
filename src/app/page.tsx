@@ -55,9 +55,9 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/ingresar"
                   target="ingresar"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 dark:border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 cursor-pointer hover:scale-105"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-2xl px-5 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors duration-300 cursor-pointer"
                 >
-                  <span>Ingresar con ARCA</span>
+                  <span>Ya uso ARCA, ingresar</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
                 </TrackedLandingCtaLink>
               </div>

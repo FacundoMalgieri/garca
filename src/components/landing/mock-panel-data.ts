@@ -26,7 +26,7 @@ export interface MockPanel {
 }
 
 const TOPE_G = 44_000_000;
-const ACUMULADO = 31_240_000;
+const ACUMULADO = 38_720_000;
 
 export const MOCK_PANEL: MockPanel = {
   categoria: "G",
@@ -34,13 +34,13 @@ export const MOCK_PANEL: MockPanel = {
   acumuladoAnual: ACUMULADO,
   progresoTope: Math.round((ACUMULADO / TOPE_G) * 100),
   acumulado: [
-    { mes: "Ene", total: 3_800_000 },
-    { mes: "Feb", total: 8_100_000 },
-    { mes: "Mar", total: 12_600_000 },
-    { mes: "Abr", total: 17_900_000 },
-    { mes: "May", total: 23_400_000 },
-    { mes: "Jun", total: 27_700_000 },
-    { mes: "Jul", total: 31_240_000 },
+    { mes: "Ene", total: 4_600_000 },
+    { mes: "Feb", total: 9_800_000 },
+    { mes: "Mar", total: 15_200_000 },
+    { mes: "Abr", total: 21_000_000 },
+    { mes: "May", total: 27_500_000 },
+    { mes: "Jun", total: 33_400_000 },
+    { mes: "Jul", total: 38_720_000 },
   ],
   comprobantes: [
     { fecha: "08/07", detalle: "Factura E · Servicios", moneda: "USD", monto: 1_240_000 },

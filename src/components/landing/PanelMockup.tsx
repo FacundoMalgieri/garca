@@ -54,7 +54,8 @@ export function PanelMockup() {
           />
         </div>
         <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-          {MOCK_PANEL.progresoTope}% del tope · margen para no recategorizar
+          <span className="font-semibold text-amber-600 dark:text-amber-400">{MOCK_PANEL.progresoTope}% del tope</span>{" "}
+          · te quedan {ARS.format(MOCK_PANEL.topeAnual - MOCK_PANEL.acumuladoAnual)}
         </p>
       </div>
 
