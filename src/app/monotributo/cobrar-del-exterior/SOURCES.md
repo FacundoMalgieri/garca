@@ -61,3 +61,49 @@ Investigación: junio 2026. Tema sensible (impositivo/cambiario). Cruzado 2-3 fu
 4. **Cronograma CRS 2.0 (intercambio efectivo en 2027)**: las fuentes lo mencionan pero las fechas pueden variar; lo dejé vago ("llega después") en el texto a propósito.
 
 5. El texto del repo (factura-e) menciona que "a 2026 el monotributista exportador suele tener flexibilidad para mantener parte de los cobros en moneda extranjera" — mi guía es más fuerte (puede conservar TODO en USD, sin tope), lo cual está respaldado por 8330/8417. Hay leve tensión de redacción entre ambas guías; quizá quieras alinear factura-e luego.
+
+## GrabrFi y Utoppia
+
+Investigación: junio 2026. Cruzado 2-3 fuentes por afirmación. Sección "Cuentas en USD en EE.UU." con dos CTAs de afiliado.
+
+### A. Categoría: cuentas USD domiciliadas en EE.UU. (no son bancos; backing Regent Bank, FDIC) — CONFIANZA ALTA
+- Tanto GrabrFi como Utoppia entregan routing + número de cuenta de EE.UU., son fintech (no bancos) y la cuenta la provee **Regent Bank, miembro FDIC**. Utoppia además menciona la plataforma **Synctera** como infra.
+- Fuentes:
+  - GrabrFi: https://www.grabrfi.com/en/freelancers ("Regent Bank, Member FDIC"; "your own US checking account with routing and account numbers"; "GrabrFi is a fintech, not a bank")
+  - Utoppia: https://www.utoppia.com/ ("Banking services are provided by Regent Bank, Member FDIC")
+  - Forbes Argentina (GrabrFi): https://www.forbesargentina.com/innovacion/grabrfi-asi-funciona-app-permite-abrir-una-cuenta-tarjeta-ee-uu-manera-virtual-costo-n30286
+  - iProfesional (Utoppia): https://www.iprofesional.com/actualidad/427566-utoppia-elimina-barreras-y-permite-a-extranjeros-operar-con-cuentas-en-dolares-en-eeuu
+
+### B. Disponibilidad en Argentina (a junio 2026) — CONFIANZA ALTA
+- GrabrFi: lanzó en Argentina; Argentina aparece como destino de retiro en su web. Fuentes: web oficial /freelancers (lista AR entre destinos), Revista Mercado, Totalmedios, Forbes AR.
+- Utoppia: disponible en ~18-19 países incl. Argentina desde oct-2025. Fuentes: web oficial ("Available in: ... Argentina ..."), iProfesional, AméricaEconomía, RoadShow.
+
+### C. Apertura/mantenimiento sin costo, 100% online (pasaporte/ID, sin viajar) — CONFIANZA ALTA
+- GrabrFi: "Open a US checking account... No US residency required"; apertura gratis, sin costo mensual. Fuentes: web /freelancers, Forbes AR.
+- Utoppia: "cuenta en dólares gratuita y sin costos de apertura ni mantenimiento". Fuentes: web oficial, iProfesional, paytaler.com/utoppia, americaeconomia.
+
+### D. Capacidades (recibir USD ACH/wire, tarjeta, retiro a banco AR, stablecoins) — CONFIANZA ALTA
+- GrabrFi: ACH entrante $0; tarjeta Mastercard USD; retiro a banco local en 20+ países incl. AR; swap a stablecoins. Fuente: web /freelancers.
+- Utoppia: ACH, ACH same-day, SWIFT y wire; tarjeta Visa física + virtual; stablecoins; pago de servicios. Fuentes: web oficial, iProfesional, búsqueda Google ("tarjeta VISA internacional ... física y virtual"; "ACH, ACH same-day, SWIFT y Wire").
+
+### E. EE.UU. usa FATCA y NO participa del CRS; FATCA mayormente NO recíproco — CONFIANZA ALTA
+- EE.UU. decidió conscientemente no unirse al CRS de la OCDE (cuando se diseñó en 2014); usa FATCA, que es para la mayoría de los fines no recíproco (el IRS recibe más info de la que EE.UU. comparte).
+- A junio 2026 no hay cambio en la postura de EE.UU. (sigue fuera del CRS).
+- Fuentes:
+  - IRS FATCA: https://www.irs.gov/businesses/corporations/foreign-account-tax-compliance-act-fatca
+  - Wikipedia FATCA: https://en.wikipedia.org/wiki/Foreign_Account_Tax_Compliance_Act ("FATCA is for most purposes non-reciprocal")
+  - Wikipedia CRS / OECD CRS-by-jurisdiction (EE.UU. ausente): https://en.wikipedia.org/wiki/Common_Reporting_Standard ; https://www.oecd.org/en/networks/global-forum-tax-transparency/resources/aeoi-implementation-portal/crs-by-jurisdiction.html
+  - taxesforexpats, BearGuard (us-warn), digitalizeglobal — coinciden.
+- NOTA REDACCIÓN: en la sección se enfatiza que esto es solo sobre el reporte AUTOMÁTICO y que el residente fiscal argentino igual DEBE declarar cuentas/ingresos del exterior. No se presenta como vía para ocultar plata.
+
+## ⚠️ CLAIMS GrabrFi/Utoppia QUE NO PUDE VERIFICAR DEL TODO / PARA TU REVISIÓN
+
+1. **Comisiones exactas**: GrabrFi muestra en su web tabla con wire doméstico $5, wire internacional $20, retiro local AR $5, stablecoins 1% + $1, ACH $0, mantenimiento $0 (fuente: grabrfi.com/freelancers). NO las puse como cifras duras en el texto (cambian seguido) — escribí "verificá la comisión vigente en el sitio oficial". Utoppia: no encontré tabla de comisiones de cambio/extracción confiable; dejé "verificá en el sitio oficial". CONFIRMAR antes de citar cualquier número.
+
+2. **Bono Utoppia USD 10 con código UTOPPIA-CHFV**: dato provisto por el encargo, NO verificado de forma independiente en fuente pública. Confirmar que el código y el monto del bono siguen vigentes.
+
+3. **Links de afiliado** (GrabrFi invite-code=1hWp7ogShTqm; utoppia.page.link/JoinUtoppia): provistos por el encargo; no verifiqué que resuelvan/atribuyan correctamente. Probar el flujo de alta.
+
+4. **Utoppia "fundada por argentinos"**: afirmado por iProfesional/RoadShow/MNews; razonablemente sólido pero proviene de prensa, no de registro societario.
+
+5. **Reseñas mixtas GrabrFi** (Trustpilot ~4,3; reportes de fondos bloqueados vía Regent Bank): existen reseñas negativas además de positivas. No lo incluí en el texto para mantenerlo neutral/breve, pero conviene tenerlo en cuenta.
