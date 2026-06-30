@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { NativeAd } from "@/components/ads/NativeAd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
@@ -17,25 +15,11 @@ export default function Home() {
   return (
     <div className="relative overflow-x-hidden bg-background">
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
-      <section
-        className="relative flex items-center overflow-hidden"
-        style={{ minHeight: "calc(100vh - 64px)" }}
-      >
+      <section className="relative flex lg:items-center overflow-hidden lg:min-h-[calc(100vh-64px)]">
         <HeroParallax>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-stretch">
             {/* Columna izquierda: copy + CTAs + privacidad */}
             <div className="text-center lg:text-left">
-              <div className="relative inline-block mb-6 animate-hero-entry">
-                <Image
-                  src="/logo-full.svg"
-                  alt="GARCA - Gestor Automático de Recuperación de Comprobantes de ARCA"
-                  width={96}
-                  height={96}
-                  priority
-                  className="relative h-16 w-16 md:h-20 md:w-20"
-                />
-              </div>
-
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-balance mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
                 Tus comprobantes de ARCA, claros en segundos
               </h1>
