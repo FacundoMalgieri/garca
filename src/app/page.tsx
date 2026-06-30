@@ -5,7 +5,6 @@ import { HomeSections } from "@/components/landing/HomeSections";
 import { PanelMockup } from "@/components/landing/PanelMockup";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
@@ -30,15 +29,15 @@ export default function Home() {
             {/* Columna izquierda: copy + CTAs */}
             <div className="text-center lg:text-left">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-balance mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
-                Sabé en qué categoría estás{" "}
+                Monitoreá tu facturación{" "}
                 <span className="bg-gradient-to-r from-[#262F55] to-[#0f7d8c] dark:from-white dark:to-[#64D3DE] bg-clip-text text-transparent">
-                  antes que ARCA
+                  sin esfuerzo
                 </span>
               </h1>
 
               <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-5 leading-relaxed animate-hero-entry-3">
-                GARCA analiza automáticamente tus comprobantes de ARCA, calcula tu categoría de
-                Monotributo {MONOTRIBUTO_YEAR} y te muestra cuánto te queda para no pasarte.{" "}
+                Conocé tu categoría, cuánto llevás facturado y cuánto te falta para alcanzar el
+                límite.{" "}
                 <span className="font-semibold text-slate-800 dark:text-white">Gratis, privado y sin instalar nada.</span>
               </p>
 
@@ -56,7 +55,7 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/ingresar"
                   target="ingresar"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-2xl px-5 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors duration-300 cursor-pointer"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 dark:border-white/15 px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <span>Ingresar</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
