@@ -120,6 +120,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.75,
     },
+    {
+      url: `${siteUrl}/monotributo/cobrar-del-exterior`,
+      lastModified: guideLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/monotributo/declarar-ingresos-exterior`,
+      lastModified: guideLastMod,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${siteUrl}/monotributo/crs-arca`,
+      lastModified: guideLastMod,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${siteUrl}/monotributo/wise-vs-payoneer-vs-deel`,
+      lastModified: guideLastMod,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
     ...categoriaEntries,
     ...cuantoFacturarEntries,
     {
