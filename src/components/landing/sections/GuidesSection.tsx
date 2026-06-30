@@ -50,7 +50,12 @@ export function GuidesSection() {
       id="monotributo-guias"
       className="relative py-24 md:py-32 overflow-hidden bg-primary/5 dark:bg-white/[0.03] border-y border-slate-200 dark:border-white/10"
     >
-      <div className="relative max-w-5xl mx-auto px-6">
+      {/* Backdrop: glow indigo/navy suave (sin grilla, para variar) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-20 right-0 h-[32rem] w-[32rem] rounded-full bg-indigo-300/20 blur-[150px] dark:bg-[#2E3A66]/55"
+      />
+      <div className="relative z-10 max-w-5xl mx-auto px-6">
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-indigo-500/25">
             Guías y recursos

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 
+import { GridPattern } from "@/components/landing/GridPattern";
 import { useSectionVisible } from "@/components/landing/hooks/useScrollReveal";
 import { SparklesIcon } from "@/components/ui/icons";
 import {
@@ -60,7 +61,9 @@ export function CapabilitiesSection() {
 
   return (
     <section ref={ref} className="relative py-24 md:py-32 overflow-hidden">
-      <div className="relative max-w-6xl mx-auto px-6">
+      {/* Backdrop: solo grilla sutil (textura), fondo sólido */}
+      <GridPattern className="text-slate-900 opacity-[0.04] dark:text-white dark:opacity-[0.06] [mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)]" />
+      <div className="relative z-10 max-w-6xl mx-auto px-6">
         <div className="text-center mb-14">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold mb-4 shadow-lg shadow-blue-500/25">
             <SparklesIcon />
