@@ -34,6 +34,7 @@ export function FaqSection() {
                 }}
               >
                 <button
+                  type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   className="w-full flex items-center justify-between gap-4 px-6 py-5 cursor-pointer font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
                 >
