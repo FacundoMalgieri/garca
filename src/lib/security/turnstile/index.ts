@@ -8,27 +8,39 @@ interface TurnstileVerifyResponse {
 }
 
 /**
+ * Result of a Turnstile validation.
+ *
+ * `errorCodes` carries Cloudflare's own `error-codes` (e.g. `timeout-or-duplicate`,
+ * `invalid-input-response`) so callers can surface *why* verification failed —
+ * useful for telling an expired/reused token apart from a genuine bot.
+ */
+export interface TurnstileResult {
+  success: boolean;
+  errorCodes?: string[];
+}
+
+/**
  * Validates a Turnstile token against Cloudflare's API.
- * 
+ *
  * SECURITY: This function fails closed - missing keys or tokens result in rejection.
  *
  * @param token - The token received from the frontend widget
  * @param ip - Optional IP address of the user for additional validation
- * @returns true if the token is valid, false otherwise
+ * @returns A result with `success` and, on failure, Cloudflare's `errorCodes`.
  */
-export async function validateTurnstile(token: string, ip?: string): Promise<boolean> {
+export async function validateTurnstile(token: string, ip?: string): Promise<TurnstileResult> {
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
   // FAIL CLOSED: Reject if no secret key configured
   if (!secretKey) {
     console.error("[Security] TURNSTILE_SECRET_KEY not configured - rejecting request");
-    return false;
+    return { success: false, errorCodes: ["not-configured"] };
   }
 
   // FAIL CLOSED: Reject if no token provided
   if (!token) {
     console.error("[Security] Turnstile token missing but required");
-    return false;
+    return { success: false, errorCodes: ["missing-input-response"] };
   }
 
   try {
@@ -50,20 +62,20 @@ export async function validateTurnstile(token: string, ip?: string): Promise<boo
 
     if (!response.ok) {
       console.error("[Turnstile] Verification request failed:", response.status);
-      return false;
+      return { success: false, errorCodes: ["http-error"] };
     }
 
     const data: TurnstileVerifyResponse = await response.json();
 
     if (!data.success) {
       console.warn("[Turnstile] Verification failed:", data["error-codes"]);
-      return false;
+      return { success: false, errorCodes: data["error-codes"] ?? ["unknown"] };
     }
 
-    return true;
+    return { success: true };
   } catch (error) {
     console.error("[Turnstile] Verification error:", error);
-    return false;
+    return { success: false, errorCodes: ["request-error"] };
   }
 }
 

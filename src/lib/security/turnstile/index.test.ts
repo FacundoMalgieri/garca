@@ -20,22 +20,22 @@ describe("validateTurnstile", () => {
     it("should reject when no secret key is configured (fail closed)", async () => {
       process.env.TURNSTILE_SECRET_KEY = "";
       const result = await validateTurnstile("test-token");
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
     });
 
     it("should reject when secret key is missing (fail closed)", async () => {
       delete process.env.TURNSTILE_SECRET_KEY;
       const result = await validateTurnstile("test-token");
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
     });
 
     it("should reject empty token (fail closed)", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
       const result = await validateTurnstile("");
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
     });
 
-    it("should return true for valid token", async () => {
+    it("should return success for valid token", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
 
       const mockFetch = vi.fn().mockResolvedValue({
@@ -48,7 +48,7 @@ describe("validateTurnstile", () => {
       const { validateTurnstile: validate } = await import("./index");
       const result = await validate("valid-token");
 
-      expect(result).toBe(true);
+      expect(result.success).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         expect.objectContaining({
@@ -58,22 +58,23 @@ describe("validateTurnstile", () => {
       );
     });
 
-    it("should return false for invalid token", async () => {
+    it("should fail and surface Cloudflare error-codes for an invalid token", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ success: false, "error-codes": ["invalid-input-response"] }),
+        json: () => Promise.resolve({ success: false, "error-codes": ["timeout-or-duplicate"] }),
       });
       vi.stubGlobal("fetch", mockFetch);
 
       const { validateTurnstile: validate } = await import("./index");
       const result = await validate("invalid-token");
 
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
+      expect(result.errorCodes).toEqual(["timeout-or-duplicate"]);
     });
 
-    it("should return false on fetch error", async () => {
+    it("should fail on fetch error", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
 
       const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
@@ -82,10 +83,10 @@ describe("validateTurnstile", () => {
       const { validateTurnstile: validate } = await import("./index");
       const result = await validate("test-token");
 
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
     });
 
-    it("should return false on non-ok response", async () => {
+    it("should fail on non-ok response", async () => {
       process.env.TURNSTILE_SECRET_KEY = "test-secret";
 
       const mockFetch = vi.fn().mockResolvedValue({
@@ -97,7 +98,7 @@ describe("validateTurnstile", () => {
       const { validateTurnstile: validate } = await import("./index");
       const result = await validate("test-token");
 
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
     });
 
     it("should include IP in request when provided", async () => {
@@ -110,8 +111,9 @@ describe("validateTurnstile", () => {
       vi.stubGlobal("fetch", mockFetch);
 
       const { validateTurnstile: validate } = await import("./index");
-      await validate("test-token", "192.168.1.1");
+      const result = await validate("test-token", "192.168.1.1");
 
+      expect(result.success).toBe(true);
       const callBody = mockFetch.mock.calls[0][1].body;
       expect(callBody).toContain("remoteip=192.168.1.1");
     });

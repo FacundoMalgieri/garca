@@ -94,15 +94,20 @@ export async function performSecurityChecks(request: Request): Promise<SecurityC
     };
   }
 
-  const isValid = await validateTurnstile(token, ip);
-  if (!isValid) {
+  const turnstileResult = await validateTurnstile(token, ip);
+  if (!turnstileResult.success) {
+    // Fold Cloudflare's reason into the code (e.g. TURNSTILE_FAILED_timeout-or-duplicate)
+    // so the failure metric tells an expired/reused token apart from a real bot.
+    // The user-facing `error` message stays generic.
+    const reason = turnstileResult.errorCodes?.[0];
+    const errorCode = reason ? `TURNSTILE_FAILED_${reason}` : "TURNSTILE_FAILED";
     return {
       allowed: false,
       response: NextResponse.json(
         {
           success: false,
           error: "Verificación de seguridad fallida. Por favor, recargá la página e intentá nuevamente.",
-          errorCode: "TURNSTILE_FAILED",
+          errorCode,
         },
         { status: 403 }
       ),
