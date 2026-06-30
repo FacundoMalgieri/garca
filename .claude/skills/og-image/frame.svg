@@ -1,0 +1,26 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- GARCA OG shared frame. Keep bg/glow/dots identical across the set;
+       replace the ILLUSTRATION SLOT with a flat-vector subject for the topic.
+       Tokens: navy #262F55/#2E3A66->#222B4D, cyan #64D3DE, coral #FF6B5C, fills #F5F8FF. -->
+  <defs>
+    <radialGradient id="bg" cx="60%" cy="42%" r="80%">
+      <stop offset="0%" stop-color="#2E3A66"/>
+      <stop offset="100%" stop-color="#222B4D"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#64D3DE" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#64D3DE" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#64D3DE" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <ellipse cx="690" cy="315" rx="330" ry="270" fill="url(#glow)"/>
+
+  <!-- ILLUSTRATION SLOT: flat-vector subject, centered ~cx690 cy315.
+       Include a soft ground-shadow ellipse (dark navy, low opacity) under it. -->
+
+  <!-- accent dots -->
+  <circle cx="455" cy="235" r="9" fill="#FF6B5C"/>
+  <circle cx="940" cy="395" r="7.5" fill="#64D3DE"/>
+  <circle cx="505" cy="430" r="5" fill="#64D3DE" opacity="0.7"/>
+</svg>
