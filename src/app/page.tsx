@@ -18,10 +18,12 @@ export default function Home() {
       {/* En desktop el hero queda pegado (sticky) bajo el navbar y la sección
           siguiente sube por encima tapándolo (overlap progresivo). overflow-x-clip
           en el wrapper —no hidden— para no romper el sticky. */}
-      <section className="relative z-0 flex items-center overflow-hidden min-h-[calc(100svh-64px)] sticky top-16">
+      <section className="relative z-0 flex items-center overflow-hidden min-h-[100svh] sticky top-0">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
         <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
+          {/* Glow ancho arriba-centro: le da color al frosted del navbar sobre el hero */}
+          <div className="absolute -top-40 left-1/2 h-[30rem] w-[70rem] -translate-x-1/2 rounded-full bg-[#64D3DE]/15 blur-[130px] dark:bg-[#2E3A66]/70" />
           {/* Glow detrás del titular (izquierda) — mata el vacío negro en desktop */}
           <div className="absolute -left-40 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/15 blur-[150px] dark:bg-[#2E3A66]/70" />
           {/* Glow cyan arriba-derecha */}
@@ -61,7 +63,7 @@ export default function Home() {
                 <TrackedLandingCtaLink
                   href="/ingresar"
                   target="ingresar"
-                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1e2540] px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-white shadow-sm hover:bg-slate-50 dark:hover:bg-[#262e4d] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 cursor-pointer"
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 dark:border-white/15 bg-white/60 dark:bg-white/10 backdrop-blur-md px-6 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-white shadow-sm hover:bg-white/80 dark:hover:bg-white/20 hover:border-slate-300 dark:hover:border-white/25 transition-all duration-300 cursor-pointer"
                 >
                   <span>Ingresar con ARCA</span>
                   <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
