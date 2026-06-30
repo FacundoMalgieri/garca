@@ -7,6 +7,7 @@ import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, guiasFaqEntries } from "@/lib/seo/page-schemas";
 
 import { GUIDES } from "./guides-data";
@@ -25,13 +26,13 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 export const metadata: Metadata = {
   title: "Guías — Monotributo, ARCA y facturación en Argentina",
   description:
-    "Índice de guías sobre Monotributo en Argentina 2026: recategorización, exclusión del régimen, Monotributo vs Responsable Inscripto, servicios vs. venta de bienes y facturación. Datos oficiales de ARCA.",
+    `Índice de guías sobre Monotributo en Argentina ${MONOTRIBUTO_YEAR}: recategorización, exclusión del régimen, Monotributo vs Responsable Inscripto, servicios vs. venta de bienes y facturación. Datos oficiales de ARCA.`,
   keywords: [
     "guias monotributo",
     "guias arca",
     "monotributo argentina",
     "recategorizacion monotributo",
-    "monotributo 2026",
+    `monotributo ${MONOTRIBUTO_YEAR}`,
     "ARCA monotributo",
     "arca afip monotributo",
   ],

@@ -7,7 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, serviciosVsBienesFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -21,22 +21,22 @@ const currencyFormatter = new Intl.NumberFormat("es-AR", {
 const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
-  title: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
+  title: `Monotributo: Servicios vs Venta de Bienes ${MONOTRIBUTO_YEAR} — Diferencias de cuota`,
   description:
-    "Diferencias entre prestación de servicios y venta de bienes en el Monotributo 2026: cuotas, impuesto integrado por categoría y cuándo conviene cada uno. Tabla oficial.",
+    `Diferencias entre prestación de servicios y venta de bienes en el Monotributo ${MONOTRIBUTO_YEAR}: cuotas, impuesto integrado por categoría y cuándo conviene cada uno. Tabla oficial.`,
   keywords: [
     "monotributo servicios vs bienes",
     "monotributo venta de bienes",
     "monotributo prestación de servicios",
     "impuesto integrado monotributo",
     "diferencia servicios y bienes monotributo",
-    "monotributo 2026",
+    `monotributo ${MONOTRIBUTO_YEAR}`,
   ],
   alternates: { canonical: `${siteUrl}/monotributo/servicios-vs-bienes` },
   openGraph: {
-    title: "Monotributo: Servicios vs Venta de Bienes 2026",
+    title: `Monotributo: Servicios vs Venta de Bienes ${MONOTRIBUTO_YEAR}`,
     description:
-      "Tabla comparativa oficial 2026 con cuotas de servicios y venta de bienes por categoría. Cuándo conviene cada uno.",
+      `Tabla comparativa oficial ${MONOTRIBUTO_YEAR} con cuotas de servicios y venta de bienes por categoría. Cuándo conviene cada uno.`,
     type: "article",
     url: `${siteUrl}/monotributo/servicios-vs-bienes`,
     siteName: "GARCA",
@@ -52,9 +52,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/servicios-vs-bienes.png"],
-    title: "Monotributo: Servicios vs Venta de Bienes 2026",
+    title: `Monotributo: Servicios vs Venta de Bienes ${MONOTRIBUTO_YEAR}`,
     description:
-      "Tabla comparativa oficial 2026. Diferencias de cuota e impuesto integrado por categoría.",
+      `Tabla comparativa oficial ${MONOTRIBUTO_YEAR}. Diferencias de cuota e impuesto integrado por categoría.`,
   },
 };
 
@@ -94,8 +94,8 @@ export default function ServiciosVsBienesPage() {
         <ArticleHero
           image="/og/servicios-vs-bienes.png"
           imageAlt="Monotributo servicios vs venta de bienes"
-          badgeLabel="Comparativa 2026"
-          title="Monotributo: Servicios vs Venta de Bienes 2026"
+          badgeLabel={`Comparativa ${MONOTRIBUTO_YEAR}`}
+          title={`Monotributo: Servicios vs Venta de Bienes ${MONOTRIBUTO_YEAR}`}
           description={
             <>
               La distinción entre <strong className="text-white">prestación de servicios</strong> y{" "}
@@ -148,7 +148,7 @@ export default function ServiciosVsBienesPage() {
 
         {/* Comparative table */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Tabla comparativa 2026</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Tabla comparativa {MONOTRIBUTO_YEAR}</h2>
           <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
             Cuota mensual total (impuesto integrado + SIPA + obra social) por categoría para ambos rubros. El tope
             anual de facturación es el mismo.

@@ -8,6 +8,7 @@ import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, recategorizacionFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -23,12 +24,12 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "Recategorización del Monotributo 2026 — Guía paso a paso",
+  title: `Recategorización del Monotributo ${MONOTRIBUTO_YEAR} — Guía paso a paso`,
   description:
-    "Cuándo y cómo recategorizarte en el Monotributo en 2026: fechas de enero y julio, qué datos evalúa ARCA, recategorización de oficio y qué pasa si no la hacés.",
+    `Cuándo y cómo recategorizarte en el Monotributo en ${MONOTRIBUTO_YEAR}: fechas de enero y julio, qué datos evalúa ARCA, recategorización de oficio y qué pasa si no la hacés.`,
   keywords: [
     "recategorización monotributo",
-    "recategorización monotributo 2026",
+    `recategorización monotributo ${MONOTRIBUTO_YEAR}`,
     "cuándo recategorizarse monotributo",
     "cómo recategorizarse monotributo",
     "recategorización de oficio monotributo",
@@ -37,9 +38,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${siteUrl}/monotributo/recategorizacion` },
   openGraph: {
-    title: "Recategorización del Monotributo 2026 — Guía paso a paso",
+    title: `Recategorización del Monotributo ${MONOTRIBUTO_YEAR} — Guía paso a paso`,
     description:
-      "Cuándo y cómo recategorizarte, qué evalúa ARCA y qué pasa si no te recategorizás. Guía oficial actualizada a 2026.",
+      `Cuándo y cómo recategorizarte, qué evalúa ARCA y qué pasa si no te recategorizás. Guía oficial actualizada a ${MONOTRIBUTO_YEAR}.`,
     type: "article",
     url: `${siteUrl}/monotributo/recategorizacion`,
     siteName: "GARCA",
@@ -55,9 +56,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/recategorizacion.png"],
-    title: "Recategorización del Monotributo 2026 — Guía paso a paso",
+    title: `Recategorización del Monotributo ${MONOTRIBUTO_YEAR} — Guía paso a paso`,
     description:
-      "Cuándo y cómo recategorizarte, qué evalúa ARCA y qué pasa si no te recategorizás. Guía oficial 2026.",
+      `Cuándo y cómo recategorizarte, qué evalúa ARCA y qué pasa si no te recategorizás. Guía oficial ${MONOTRIBUTO_YEAR}.`,
   },
 };
 
@@ -94,13 +95,13 @@ export default function RecategorizacionPage() {
         <ArticleHero
           image="/og/recategorizacion.png"
           imageAlt="Recategorización del Monotributo"
-          badgeLabel="Guía oficial 2026"
+          badgeLabel={`Guía oficial ${MONOTRIBUTO_YEAR}`}
           badgeIcon={
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           }
-          title="Recategorización del Monotributo 2026"
+          title={`Recategorización del Monotributo ${MONOTRIBUTO_YEAR}`}
           description={
             <>
               La <strong className="text-white">recategorización del Monotributo</strong> es el trámite semestral

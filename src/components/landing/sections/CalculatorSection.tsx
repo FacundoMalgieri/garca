@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { useSectionVisible } from "@/components/landing/hooks/useScrollReveal";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { ArrowRightIcon } from "@/components/ui/icons";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 const FEATURES = [
   "Tabla de categorías actualizada",
@@ -29,7 +30,7 @@ export function CalculatorSection() {
               Herramienta gratuita
             </span>
             <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Calculadora de Monotributo 2026
+              Calculadora de Monotributo {MONOTRIBUTO_YEAR}
             </h2>
             <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
               Ingresá tu facturación mes a mes y descubrí en qué categoría vas a quedar. Planificá

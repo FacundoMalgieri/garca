@@ -8,6 +8,7 @@ import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { facturaEFaqEntries, getGuideDateModified } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -22,9 +23,9 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "Factura E 2026 — Exportación de servicios para monotributistas",
+  title: `Factura E ${MONOTRIBUTO_YEAR} — Exportación de servicios para monotributistas`,
   description:
-    "Cómo emitir factura E como monotributista en 2026: requisitos, paso a paso en ARCA, impacto en el tope anual y uso para exportación de servicios a clientes del exterior.",
+    `Cómo emitir factura E como monotributista en ${MONOTRIBUTO_YEAR}: requisitos, paso a paso en ARCA, impacto en el tope anual y uso para exportación de servicios a clientes del exterior.`,
   keywords: [
     "factura e",
     "factura e monotributo",

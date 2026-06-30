@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { InvoiceProvider } from "@/contexts/InvoiceContext";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { TourProvider } from "@/contexts/TourContext";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 import "./globals.css";
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | GARCA",
   },
   description:
-    "GARCA: calculadora de Monotributo 2026, consulta de comprobantes ARCA (ex AFIP) y guías. Gratis, cifrado en el navegador, sin base de datos ni registro. Descubrí en segundos tu categoría y exportá a Excel.",
+    `GARCA: calculadora de Monotributo ${MONOTRIBUTO_YEAR}, consulta de comprobantes ARCA (ex AFIP) y guías. Gratis, cifrado en el navegador, sin base de datos ni registro. Descubrí en segundos tu categoría y exportá a Excel.`,
   keywords: [
     "AFIP",
     "ARCA",
@@ -66,23 +67,23 @@ export const metadata: Metadata = {
     locale: "es_AR",
     url: siteUrl,
     siteName: "GARCA",
-    title: "GARCA — calculadora Monotributo 2026 y comprobantes ARCA, sin registro",
+    title: `GARCA — calculadora Monotributo ${MONOTRIBUTO_YEAR} y comprobantes ARCA, sin registro`,
     description:
-      "Calculá tu categoría 2026, leé guías (ARCA/AFIP, facturas) y consultá comprobantes con cifrado en el navegador. Gratis y open source.",
+      `Calculá tu categoría ${MONOTRIBUTO_YEAR}, leé guías (ARCA/AFIP, facturas) y consultá comprobantes con cifrado en el navegador. Gratis y open source.`,
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "GARCA: calculadora Monotributo 2026, comprobantes ARCA, sin registro",
+        alt: `GARCA: calculadora Monotributo ${MONOTRIBUTO_YEAR}, comprobantes ARCA, sin registro`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GARCA — calculadora Monotributo 2026 y comprobantes ARCA, sin registro",
+    title: `GARCA — calculadora Monotributo ${MONOTRIBUTO_YEAR} y comprobantes ARCA, sin registro`,
     description:
-      "Calculá tu categoría 2026, guías y comprobantes ARCA. Gratis, cifrado en el navegador, sin registro ni instalación.",
+      `Calculá tu categoría ${MONOTRIBUTO_YEAR}, guías y comprobantes ARCA. Gratis, cifrado en el navegador, sin registro ni instalación.`,
     images: ["/og-image.png"],
   },
   alternates: {

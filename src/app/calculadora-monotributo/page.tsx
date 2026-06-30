@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { SupportBanner } from "@/components/ui/SupportBanner"
 import { useTourContext } from "@/contexts/TourContext"
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias"
 import { useTour } from "@/hooks/useTour"
 import {
   calculateProjection,
@@ -188,7 +188,7 @@ export default function CalculadoraMonotributoPage() {
       <section className="bg-gradient-to-b from-blue-500/10 via-background to-background pt-12 pb-8 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-            Calculadora de <span className="text-blue-600 dark:text-blue-400">Monotributo 2026</span>
+            Calculadora de <span className="text-blue-600 dark:text-blue-400">Monotributo {MONOTRIBUTO_YEAR}</span>
           </h1>
           <p className="text-sm sm:text-lg text-muted-foreground">
             Ingresá tu facturación mes a mes y proyectá en qué categoría vas a quedar en tu próxima recategorización.
@@ -487,7 +487,7 @@ export default function CalculadoraMonotributoPage() {
       <section id="calc-categories" className="px-4 py-12 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-2">
-            Tabla de Categorías Monotributo 2026
+            Tabla de Categorías Monotributo {MONOTRIBUTO_YEAR}
           </h2>
           <p className="text-center text-muted-foreground mb-8">
             Valores actualizados vigentes. Incluye impuesto integrado, aportes jubilatorios (SIPA) y obra social.

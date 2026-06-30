@@ -7,6 +7,7 @@ import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { TableOfContents, type TocItem } from "@/components/ui/TableOfContents";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { arcaVsAfipFaqEntries, getGuideDateModified } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -21,7 +22,7 @@ const tocItems: readonly TocItem[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en 2026",
+  title: `¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en ${MONOTRIBUTO_YEAR}`,
   description:
     "Sí: ARCA reemplazó a AFIP. Guía clara con decreto 953, portal arca.gob.ar, mismas categorías y recategorización. Sin trámites extra para el monotributo.",
   keywords: [
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${siteUrl}/monotributo/arca-vs-afip` },
   openGraph: {
-    title: "¿AFIP ahora es ARCA? (Dec. 953/2024) y el monotributo en 2026",
+    title: `¿AFIP ahora es ARCA? (Dec. 953/2024) y el monotributo en ${MONOTRIBUTO_YEAR}`,
     description:
       "ARCA = sucesor de AFIP. Qué implica el decreto, el sitio arca.gob.ar y qué no cambia en el monotributo.",
     type: "article",
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/arca-vs-afip.png"],
-    title: "AFIP ahora es ARCA (Dec. 953): el monotributo en 2026",
+    title: `AFIP ahora es ARCA (Dec. 953): el monotributo en ${MONOTRIBUTO_YEAR}`,
     description: "Mismo organismo, nuevo portal. Categorías y cuotas igual. Guía con decreto 953/2024.",
   },
 };

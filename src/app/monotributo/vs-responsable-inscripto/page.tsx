@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getGuideDateModified, vsResponsableInscriptoFaqEntries } from "@/lib/seo/page-schemas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -14,19 +15,19 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
 const dateModified = getGuideDateModified();
 
 export const metadata: Metadata = {
-  title: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
+  title: `Monotributo vs Responsable Inscripto ${MONOTRIBUTO_YEAR} — Diferencias y cuándo conviene cada uno`,
   description:
-    "Diferencias entre Monotributo y Responsable Inscripto en Argentina 2026: IVA, Ganancias, facturación, retenciones y cuándo conviene cada régimen. Tabla comparativa.",
+    `Diferencias entre Monotributo y Responsable Inscripto en Argentina ${MONOTRIBUTO_YEAR}: IVA, Ganancias, facturación, retenciones y cuándo conviene cada régimen. Tabla comparativa.`,
   keywords: [
     "monotributo vs responsable inscripto",
     "diferencia monotributo responsable inscripto",
     "pasar de monotributo a responsable inscripto",
-    "responsable inscripto 2026",
+    `responsable inscripto ${MONOTRIBUTO_YEAR}`,
     "qué conviene monotributo o responsable inscripto",
   ],
   alternates: { canonical: `${siteUrl}/monotributo/vs-responsable-inscripto` },
   openGraph: {
-    title: "Monotributo vs Responsable Inscripto 2026",
+    title: `Monotributo vs Responsable Inscripto ${MONOTRIBUTO_YEAR}`,
     description:
       "Diferencias clave: IVA, Ganancias, facturación, retenciones y cuándo conviene cada régimen.",
     type: "article",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     images: ["/og/vs-responsable-inscripto.png"],
-    title: "Monotributo vs Responsable Inscripto 2026",
+    title: `Monotributo vs Responsable Inscripto ${MONOTRIBUTO_YEAR}`,
     description:
       "Diferencias clave: IVA, Ganancias, facturación, retenciones y cuándo conviene cada régimen.",
   },
@@ -128,8 +129,8 @@ export default function VsResponsableInscriptoPage() {
         <ArticleHero
           image="/og/vs-responsable-inscripto.png"
           imageAlt="Monotributo vs Responsable Inscripto"
-          badgeLabel="Comparativa 2026"
-          title="Monotributo vs Responsable Inscripto 2026"
+          badgeLabel={`Comparativa ${MONOTRIBUTO_YEAR}`}
+          title={`Monotributo vs Responsable Inscripto ${MONOTRIBUTO_YEAR}`}
           description={
             <>
               Son los dos regímenes impositivos más comunes en Argentina para quienes facturan por cuenta propia.

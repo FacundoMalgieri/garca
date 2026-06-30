@@ -20,7 +20,7 @@
  * a single source of truth for every schema + visible FAQ.
  */
 
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -196,9 +196,8 @@ const homeWebPageSchema: Schema = {
   "@type": "WebPage",
   "@id": siteUrl,
   url: siteUrl,
-  name: "GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora 2026",
-  description:
-    "Consultá comprobantes de ARCA, calculá tu categoría de Monotributo 2026 y proyectá tu facturación. Gratis, open source, sin base de datos ni registro. No instalás nada.",
+  name: `GARCA — ARCA Monotributo: Comprobantes, Categorías y Calculadora ${MONOTRIBUTO_YEAR}`,
+  description: `Consultá comprobantes de ARCA, calculá tu categoría de Monotributo ${MONOTRIBUTO_YEAR} y proyectá tu facturación. Gratis, open source, sin base de datos ni registro. No instalás nada.`,
   inLanguage: "es-AR",
   isPartOf: { "@id": `${siteUrl}#website` },
   primaryImageOfPage: ARTICLE_IMAGE,
@@ -211,7 +210,7 @@ const homeWebPageSchema: Schema = {
 const calculadoraWebAppSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Calculadora de Monotributo 2026",
+  name: `Calculadora de Monotributo ${MONOTRIBUTO_YEAR}`,
   description:
     "Calculadora gratuita para determinar tu categoría de Monotributo según tus ingresos brutos anuales. Incluye tabla de categorías actualizada de ARCA.",
   url: `${siteUrl}/calculadora-monotributo`,
@@ -266,9 +265,8 @@ const calculadoraBreadcrumbSchema: Schema = {
 
 export const monotributoHubFaqEntries: readonly FaqEntry[] = [
   {
-    question: "¿Cuántas categorías de Monotributo hay en 2026?",
-    answer:
-      "En 2026 el Monotributo tiene 11 categorías, de la A a la K. Cada una tiene un tope de facturación anual y una cuota mensual distinta. La categoría más baja es la A y la más alta es la K.",
+    question: `¿Cuántas categorías de Monotributo hay en ${MONOTRIBUTO_YEAR}?`,
+    answer: `En ${MONOTRIBUTO_YEAR} el Monotributo tiene 11 categorías, de la A a la K. Cada una tiene un tope de facturación anual y una cuota mensual distinta. La categoría más baja es la A y la más alta es la K.`,
   },
   {
     question: "¿Cómo sé en qué categoría de Monotributo estoy?",
@@ -299,9 +297,8 @@ const monotributoHubBreadcrumbSchema: Schema = {
 const monotributoHubArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Monotributo 2026 — Categorías, Cuotas y Topes de Facturación",
-  description:
-    "Guía completa del Monotributo 2026 en Argentina: las 11 categorías de la A a la K, con cuotas mensuales, topes de facturación y desglose de aportes. Datos oficiales de ARCA.",
+  headline: `Monotributo ${MONOTRIBUTO_YEAR} — Categorías, Cuotas y Topes de Facturación`,
+  description: `Guía completa del Monotributo ${MONOTRIBUTO_YEAR} en Argentina: las 11 categorías de la A a la K, con cuotas mensuales, topes de facturación y desglose de aportes. Datos oficiales de ARCA.`,
   image: buildArticleImage("monotributo"),
   author: PUBLISHER,
   publisher: ORGANIZATION,
@@ -374,9 +371,8 @@ const recategorizacionBreadcrumbSchema: Schema = {
 const recategorizacionArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Recategorización del Monotributo 2026 — Guía paso a paso",
-  description:
-    "Cuándo y cómo recategorizarte en el Monotributo en 2026: fechas, datos que evalúa ARCA, recategorización de oficio y consecuencias de no hacerla.",
+  headline: `Recategorización del Monotributo ${MONOTRIBUTO_YEAR} — Guía paso a paso`,
+  description: `Cuándo y cómo recategorizarte en el Monotributo en ${MONOTRIBUTO_YEAR}: fechas, datos que evalúa ARCA, recategorización de oficio y consecuencias de no hacerla.`,
   image: buildArticleImage("recategorizacion"),
   author: PUBLISHER,
   publisher: ORGANIZATION,
@@ -500,9 +496,8 @@ const serviciosVsBienesBreadcrumbSchema: Schema = {
 const serviciosVsBienesArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Monotributo: Servicios vs Venta de Bienes 2026 — Diferencias de cuota",
-  description:
-    "Comparativa oficial de cuotas entre prestación de servicios y venta de bienes en el Monotributo 2026, categoría por categoría.",
+  headline: `Monotributo: Servicios vs Venta de Bienes ${MONOTRIBUTO_YEAR} — Diferencias de cuota`,
+  description: `Comparativa oficial de cuotas entre prestación de servicios y venta de bienes en el Monotributo ${MONOTRIBUTO_YEAR}, categoría por categoría.`,
   image: buildArticleImage("servicios-vs-bienes"),
   author: PUBLISHER,
   publisher: ORGANIZATION,
@@ -583,7 +578,7 @@ const quePasaSiMePasoBreadcrumbSchema: Schema = {
 const quePasaSiMePasoArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "¿Qué pasa si me paso del Monotributo? — Guía 2026",
+  headline: `¿Qué pasa si me paso del Monotributo? — Guía ${MONOTRIBUTO_YEAR}`,
   description:
     "Qué sucede cuando superás el tope del Monotributo: recategorización, recategorización de oficio, exclusión del régimen y pase a Responsable Inscripto.",
   image: buildArticleImage("que-pasa-si-me-paso"),
@@ -666,7 +661,7 @@ const vsResponsableInscriptoBreadcrumbSchema: Schema = {
 const vsResponsableInscriptoArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Monotributo vs Responsable Inscripto 2026 — Diferencias y cuándo conviene cada uno",
+  headline: `Monotributo vs Responsable Inscripto ${MONOTRIBUTO_YEAR} — Diferencias y cuándo conviene cada uno`,
   description:
     "Comparativa entre Monotributo y Responsable Inscripto en Argentina: IVA, Ganancias, facturación, retenciones y recomendaciones.",
   image: buildArticleImage("vs-responsable-inscripto"),
@@ -809,7 +804,7 @@ const arcaVsAfipBreadcrumbSchema: Schema = {
 const arcaVsAfipArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en 2026",
+  headline: `¿AFIP ahora es ARCA? Dec. 953/2024: qué cambia y el monotributo en ${MONOTRIBUTO_YEAR}`,
   description:
     "ARCA reemplazó a AFIP: decreto 953/2024, arca.gob.ar, mismas categorías y recategorización del monotributo, sin trámites extra.",
   image: buildArticleImage("arca-vs-afip"),
@@ -879,7 +874,7 @@ const facturaCBreadcrumbSchema: Schema = {
 const facturaCArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Factura C 2026 — Qué es, quién la emite y cómo hacerla en ARCA",
+  headline: `Factura C ${MONOTRIBUTO_YEAR} — Qué es, quién la emite y cómo hacerla en ARCA`,
   description:
     "Guía de la factura C para monotributistas y responsables exentos: datos obligatorios, paso a paso en Comprobantes en Línea, diferencias con A y B y cómo impacta en el tope.",
   image: buildArticleImage("factura-c"),
@@ -949,9 +944,8 @@ const facturaEBreadcrumbSchema: Schema = {
 const facturaEArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Factura E 2026 — Exportación de servicios para monotributistas",
-  description:
-    "Cómo emitir factura E como monotributista en 2026: requisitos, paso a paso en ARCA, impacto en el tope anual y uso para exportación de servicios a clientes del exterior.",
+  headline: `Factura E ${MONOTRIBUTO_YEAR} — Exportación de servicios para monotributistas`,
+  description: `Cómo emitir factura E como monotributista en ${MONOTRIBUTO_YEAR}: requisitos, paso a paso en ARCA, impacto en el tope anual y uso para exportación de servicios a clientes del exterior.`,
   image: buildArticleImage("factura-e"),
   author: PUBLISHER,
   publisher: ORGANIZATION,
@@ -1024,7 +1018,7 @@ const facturaCvsEBreadcrumbSchema: Schema = {
 const facturaCvsEArticleSchema: Schema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Factura C vs Factura E — Cuándo usar cada una (Monotributo 2026)",
+  headline: `Factura C vs Factura E — Cuándo usar cada una (Monotributo ${MONOTRIBUTO_YEAR})`,
   description:
     "Comparativa entre factura C (mercado local) y factura E (exportación) para monotributistas: diferencias clave, ejemplos prácticos e impacto en el tope anual.",
   image: buildArticleImage("factura-c-vs-factura-e"),
@@ -1111,7 +1105,7 @@ export function buildCategoriaFaqEntries(letra: string): FaqEntry[] {
 
   return [
     {
-      question: `¿Cuánto se paga por la categoría ${upper} del Monotributo en 2026?`,
+      question: `¿Cuánto se paga por la categoría ${upper} del Monotributo en ${MONOTRIBUTO_YEAR}?`,
       answer: `La cuota mensual de la categoría ${upper} es de ${currencyFormatter.format(
         categoria.total.servicios,
       )} para servicios y ${currencyFormatter.format(
@@ -1177,8 +1171,8 @@ function buildCategoriaSchemas(letra: string): Schema[] {
   const article: Schema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `Monotributo Categoría ${upper} 2026 — Cuánto Pago y Cuánto Puedo Facturar`,
-    description: `Categoría ${upper} del Monotributo 2026: cuota mensual de ${currencyFormatter.format(
+    headline: `Monotributo Categoría ${upper} ${MONOTRIBUTO_YEAR} — Cuánto Pago y Cuánto Puedo Facturar`,
+    description: `Categoría ${upper} del Monotributo ${MONOTRIBUTO_YEAR}: cuota mensual de ${currencyFormatter.format(
       categoria.total.servicios,
     )}, tope anual de facturación de ${currencyFormatter.format(
       categoria.ingresosBrutos,
@@ -1291,7 +1285,7 @@ function buildCuantoFacturarSchemas(letra: string): Schema[] {
   const article: Schema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `¿Cuánto puedo facturar por mes en la categoría ${upper} del Monotributo 2026?`,
+    headline: `¿Cuánto puedo facturar por mes en la categoría ${upper} del Monotributo ${MONOTRIBUTO_YEAR}?`,
     description: `En la categoría ${upper} del Monotributo podés facturar en promedio hasta ${currencyFormatter.format(
       topeMensual,
     )} por mes (${currencyFormatter.format(topeAnual)} al año). Desglose mensual, semanal, diario y qué pasa si te pasás.`,
@@ -1358,7 +1352,7 @@ const guiasCollectionPageSchema: Schema = {
         "@type": "ListItem",
         position: 1,
         url: `${siteUrl}/monotributo`,
-        name: "Monotributo 2026 — Categorías, cuotas y topes",
+        name: `Monotributo ${MONOTRIBUTO_YEAR} — Categorías, cuotas y topes`,
       },
       {
         "@type": "ListItem",

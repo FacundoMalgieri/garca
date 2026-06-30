@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
 import { buildCuantoFacturarFaqEntries } from "@/lib/seo/page-schemas";
 
@@ -66,7 +66,7 @@ export async function generateMetadata({
       `cuanto se puede facturar monotributo ${upper.toLowerCase()}`,
       `maximo mensual categoria ${upper.toLowerCase()} monotributo`,
       `monotributo ${upper.toLowerCase()} facturacion mensual`,
-      "monotributo 2026",
+      `monotributo ${MONOTRIBUTO_YEAR}`,
       "ARCA monotributo",
     ],
     alternates: { canonical: pageUrl },
@@ -89,7 +89,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: `Cuánto facturar por mes — Categoría ${upper}`,
-      description: `${topeMensualStr} / mes en la categoría ${upper} del Monotributo 2026.`,
+      description: `${topeMensualStr} / mes en la categoría ${upper} del Monotributo ${MONOTRIBUTO_YEAR}.`,
       images: ["/og-image.png"],
     },
   };
@@ -150,7 +150,7 @@ export default async function CuantoFacturarPorMesPage({
                 Tope de facturación · Categoría {upper}
               </span>
               <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
-                ¿Cuánto puedo facturar por mes en la categoría {upper} del Monotributo 2026?
+                ¿Cuánto puedo facturar por mes en la categoría {upper} del Monotributo {MONOTRIBUTO_YEAR}?
               </h1>
               <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 max-w-3xl mb-3">
                 En la categoría {upper} podés facturar en promedio hasta{" "}

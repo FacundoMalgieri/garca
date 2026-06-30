@@ -6,7 +6,7 @@ import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
-import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
+import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
 import { buildCategoriaFaqEntries } from "@/lib/seo/page-schemas";
 
@@ -57,15 +57,15 @@ export async function generateMetadata({
   const topeStr = currencyFormatter.format(categoria.ingresosBrutos);
 
   return {
-    title: `Monotributo Categoría ${upper} 2026 — Cuota ${cuotaStr} / mes`,
-    description: `Categoría ${upper} del Monotributo 2026: cuota mensual de ${cuotaStr}, tope anual de facturación de ${topeStr}. Desglose de aportes, requisitos y comparativa con otras categorías.`,
+    title: `Monotributo Categoría ${upper} ${MONOTRIBUTO_YEAR} — Cuota ${cuotaStr} / mes`,
+    description: `Categoría ${upper} del Monotributo ${MONOTRIBUTO_YEAR}: cuota mensual de ${cuotaStr}, tope anual de facturación de ${topeStr}. Desglose de aportes, requisitos y comparativa con otras categorías.`,
     keywords: [
       `monotributo categoria ${upper.toLowerCase()}`,
-      `categoria ${upper.toLowerCase()} monotributo 2026`,
+      `categoria ${upper.toLowerCase()} monotributo ${MONOTRIBUTO_YEAR}`,
       `cuota monotributo ${upper.toLowerCase()}`,
       `tope monotributo categoria ${upper.toLowerCase()}`,
       `cuanto pago monotributo categoria ${upper.toLowerCase()}`,
-      `monotributo ${upper.toLowerCase()} 2026`,
+      `monotributo ${upper.toLowerCase()} ${MONOTRIBUTO_YEAR}`,
       "monotributo argentina",
       "ARCA monotributo",
     ],
@@ -75,7 +75,7 @@ export async function generateMetadata({
       locale: "es_AR",
       url: pageUrl,
       siteName: "GARCA",
-      title: `Monotributo Categoría ${upper} 2026`,
+      title: `Monotributo Categoría ${upper} ${MONOTRIBUTO_YEAR}`,
       description: `Cuota mensual ${cuotaStr}, tope anual ${topeStr}. Desglose completo de la categoría ${upper}.`,
       images: [
         {
@@ -88,7 +88,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `Monotributo Categoría ${upper} — Cuota y Tope 2026`,
+      title: `Monotributo Categoría ${upper} — Cuota y Tope ${MONOTRIBUTO_YEAR}`,
       description: `Cuota ${cuotaStr} / mes — Tope anual ${topeStr}.`,
       images: ["/og-image.png"],
     },
@@ -141,15 +141,15 @@ export default async function CategoriaPage({
             </span>
             <div className="flex-1 min-w-0">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 dark:bg-white/10 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-3 backdrop-blur-sm">
-                Categoría {upper} · Monotributo 2026
+                Categoría {upper} · Monotributo {MONOTRIBUTO_YEAR}
               </span>
               <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
-                Monotributo Categoría {upper} 2026 — Cuánto Pago y Cuánto Puedo Facturar
+                Monotributo Categoría {upper} {MONOTRIBUTO_YEAR} — Cuánto Pago y Cuánto Puedo Facturar
               </h1>
               <p className="text-base md:text-lg text-slate-700 dark:text-slate-300 max-w-3xl mb-3">
                 Todo lo que tenés que saber de la{" "}
                 <strong className="text-slate-900 dark:text-white">categoría {upper}</strong>: cuota mensual, tope
-                anual de facturación, desglose de aportes y requisitos. Datos oficiales de ARCA, actualizados a 2026.
+                anual de facturación, desglose de aportes y requisitos. Datos oficiales de ARCA, actualizados a {MONOTRIBUTO_YEAR}.
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 Actualizado el{" "}

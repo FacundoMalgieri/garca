@@ -5,6 +5,7 @@ import { HomeSections } from "@/components/landing/HomeSections";
 import { PanelMockup } from "@/components/landing/PanelMockup";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { ArrowRightIcon } from "@/components/ui/icons";
+import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 // Homepage is a Server Component: the hero markup (logo, h1, subtitles,
 // LCP <p>, primary CTA Link) ships as pre-rendered HTML so Chrome can paint
@@ -37,7 +38,7 @@ export default function Home() {
 
               <p className="max-w-xl mx-auto lg:mx-0 text-base md:text-lg text-slate-600 dark:text-slate-300 mb-5 leading-relaxed animate-hero-entry-3">
                 GARCA analiza automáticamente tus comprobantes de ARCA, calcula tu categoría de
-                Monotributo 2026 y te muestra cuánto te queda para no pasarte.{" "}
+                Monotributo {MONOTRIBUTO_YEAR} y te muestra cuánto te queda para no pasarte.{" "}
                 <span className="font-semibold text-slate-800 dark:text-white">Gratis, privado y sin instalar nada.</span>
               </p>
 
