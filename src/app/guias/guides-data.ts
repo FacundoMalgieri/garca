@@ -320,4 +320,36 @@ export const GUIDES: readonly Guide[] = [
       chipBg: "bg-fuchsia-100 dark:bg-fuchsia-900/40",
     },
   },
+  {
+    href: "/monotributo/vs-relacion-dependencia",
+    title: "Monotributo vs relación de dependencia",
+    description:
+      "Aportes, aguinaldo, vacaciones, ART, jubilación y obra social: qué tenés en cada caso, si se pueden tener los dos y qué cambió con la Ley 27.802.",
+    category: "Comparativas",
+    readingTime: "8 min de lectura",
+    accent: {
+      border: "border-rose-200 dark:border-rose-800/40",
+      bg: "from-rose-50/70 to-pink-50/70 dark:from-rose-950/20 dark:to-pink-950/20",
+      categoryText: "text-rose-700 dark:text-rose-300",
+      hoverShadow: "hover:shadow-rose-500/10",
+      ctaText: "text-rose-700 dark:text-rose-300",
+      chipBg: "bg-rose-100 dark:bg-rose-900/40",
+    },
+  },
+  {
+    href: "/monotributo/primera-factura-electronica",
+    title: "Mi primera factura electrónica",
+    description:
+      "Requisitos, alta del punto de venta y el paso a paso en ARCA para emitir tu primera factura como monotributista, hasta obtener el CAE.",
+    category: "Facturación",
+    readingTime: "7 min de lectura",
+    accent: {
+      border: "border-sky-200 dark:border-sky-800/40",
+      bg: "from-sky-50/70 to-blue-50/70 dark:from-sky-950/20 dark:to-blue-950/20",
+      categoryText: "text-sky-700 dark:text-sky-300",
+      hoverShadow: "hover:shadow-sky-500/10",
+      ctaText: "text-sky-700 dark:text-sky-300",
+      chipBg: "bg-sky-100 dark:bg-sky-900/40",
+    },
+  },
 ];

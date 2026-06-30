@@ -1342,6 +1342,157 @@ const wisePayoneerDeelArticleSchema: Schema = {
   inLanguage: "es-AR",
 };
 
+// ----- /monotributo/vs-relacion-dependencia -----
+
+export const vsRelacionDependenciaFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Qué conviene: Monotributo o relación de dependencia?",
+    answer:
+      "Depende de qué priorices. La relación de dependencia te da estabilidad, aguinaldo, vacaciones pagas, ART, indemnización por despido y, en general, una mejor obra social y un haber jubilatorio más alto. El Monotributo te da flexibilidad (varios clientes, tus horarios) y muchas veces un mayor ingreso de bolsillo, pero todos los aportes y los imprevistos corren por tu cuenta. No hay una respuesta única: para muchos, la mejor combinación es tener empleo en blanco y, además, facturar una actividad independiente como monotributista.",
+  },
+  {
+    question: "¿Se puede ser monotributista y empleado en relación de dependencia a la vez?",
+    answer:
+      "Sí, es totalmente legal y muy común. Podés tener un empleo en relación de dependencia por un lado y estar inscripto en el Monotributo por otra actividad independiente. En ese caso, según ARCA, solo pagás el componente impositivo del Monotributo, porque los aportes jubilatorios y de obra social ya los abona tu empleador. La categoría del Monotributo se determina únicamente por lo que facturás en tu actividad por cuenta propia, no por tu sueldo.",
+  },
+  {
+    question: "¿El monotributista tiene aguinaldo, vacaciones pagas o indemnización?",
+    answer:
+      "No. El aguinaldo (SAC), las vacaciones pagas, las licencias con goce de sueldo, la ART y la indemnización por despido son derechos de la relación de dependencia regida por la Ley de Contrato de Trabajo. El monotributista factura por lo que trabaja: si no trabaja (por enfermedad, vacaciones o falta de clientes), no factura, y no hay sueldo garantizado.",
+  },
+  {
+    question: "¿Cómo es la jubilación del monotributista comparada con la del empleado?",
+    answer:
+      "Ambos necesitan 30 años de aportes y la edad mínima (60 años las mujeres, 65 los varones). La diferencia está en el monto: el monotributista aporta una suma fija y baja, por lo que suele acceder al haber mínimo; el empleado aporta sobre su remuneración, así que suele obtener un haber mayor. Atención: a 2026 la moratoria amplia (Ley 27.705) caducó, y quien no reúne los 30 años puede quedar fuera de la jubilación común y caer en la PUAM. Los montos cambian seguido, verificá la norma vigente.",
+  },
+  {
+    question: "¿Qué es la relación de dependencia encubierta y cambió algo en 2026?",
+    answer:
+      "Es cuando alguien factura como monotributista pero en los hechos trabaja como empleado: un solo cliente, subordinación, horario y herramientas del empleador. En 2026, la Ley 27.802 de Modernización Laboral (BO 6/3/2026) reformó el artículo 23 de la LCT: la presunción de contrato de trabajo ahora exige una verdadera situación de dependencia y no opera cuando se contratan servicios profesionales u oficios sin relación de dependencia, se emiten facturas y se cobra por medios bancarios. O sea, un monotributista que factura formalmente y cobra por transferencia ya no se presume empleado automáticamente. Pero la protección no es absoluta: la norma es muy reciente, no hay jurisprudencia consolidada y el análisis sigue siendo caso por caso. Si se prueba encubrimiento, hay indemnización, preaviso, salarios, vacaciones, aguinaldo, multas y certificados del art. 80 LCT.",
+  },
+  {
+    question: "¿Quién paga los aportes en cada caso?",
+    answer:
+      "El monotributista paga toda su cuota mensual de su bolsillo: impuesto integrado, jubilación (SIPA) y obra social. En relación de dependencia, al empleado se le retiene del sueldo bruto un porcentaje (en torno al 17%: jubilación, PAMI y obra social) y, además, el empleador abona aparte las contribuciones patronales (del orden del 24% al 26%, o menos con beneficios MiPyME) que el trabajador no ve en su recibo.",
+  },
+  {
+    question: "¿El monotributista tiene obra social y cubre a su familia?",
+    answer:
+      "El Monotributo incluye una obra social dentro de la cuota mensual. Para sumar al grupo familiar o adherentes hay que pagar un adicional por cada integrante. En relación de dependencia el aporte de obra social es mayor, el grupo familiar primario suele quedar incluido y la cobertura efectiva tiende a ser mejor. Los valores de aportes adicionales cambian, verificá los vigentes.",
+  },
+];
+
+const vsRelacionDependenciaBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Monotributo vs Relación de Dependencia",
+      item: `${siteUrl}/monotributo/vs-relacion-dependencia`,
+    },
+  ],
+};
+
+const vsRelacionDependenciaArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: `Monotributo vs Relación de Dependencia ${MONOTRIBUTO_YEAR}`,
+  description:
+    "Diferencias entre el Monotributo y la relación de dependencia: aportes, aguinaldo, vacaciones, ART, jubilación, obra social, tenerlos a la vez y la relación de dependencia encubierta tras la Ley 27.802.",
+  image: buildArticleImage("vs-relacion-dependencia"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/vs-relacion-dependencia`,
+    buildArticleImage("vs-relacion-dependencia"),
+  ),
+  inLanguage: "es-AR",
+};
+
+// ----- /monotributo/primera-factura-electronica -----
+
+export const primeraFacturaElectronicaFaqEntries: readonly FaqEntry[] = [
+  {
+    question: "¿Qué necesito para emitir mi primera factura electrónica como monotributista?",
+    answer:
+      "Necesitás CUIT activo e inscripción en el Monotributo, clave fiscal nivel de seguridad 3, los servicios 'Comprobantes en Línea' y 'Administración de Puntos de Venta y Domicilios' habilitados, el Domicilio Fiscal Electrónico constituido y al menos un punto de venta dado de alta. Con eso ya podés generar la factura desde Comprobantes en Línea.",
+  },
+  {
+    question: "¿Qué tipo de factura emite un monotributista?",
+    answer:
+      "Un monotributista emite Factura C, que no discrimina IVA: el importe es el total final que cobrás, porque el componente impositivo ya está incluido en la cuota mensual. La única excepción es la exportación a clientes del exterior, que se factura con Factura E.",
+  },
+  {
+    question: "¿Cómo doy de alta un punto de venta en ARCA?",
+    answer:
+      "Entrás al servicio 'Administración de Puntos de Venta y Domicilios', vas a 'A/B/M de puntos de venta' y elegís Alta. Para Comprobantes en Línea seleccionás el sistema 'Factura en Línea – Monotributo' y asociás un domicilio que ya esté dado de alta en el Sistema Registral. El número es de 5 dígitos, correlativo, desde 00001.",
+  },
+  {
+    question: "¿Por qué me aparece el error 'No posee puntos de venta'?",
+    answer:
+      "Porque todavía no diste de alta un punto de venta para el método que estás usando, o el alta aún no impactó. Cada método de facturación necesita un punto de venta distinto. Dalo de alta en 'Administración de Puntos de Venta y Domicilios'; tené en cuenta que el alta puede impactar recién al día siguiente.",
+  },
+  {
+    question: "¿Qué es el CAE y por qué es importante?",
+    answer:
+      "El CAE (Código de Autorización Electrónico) es el código que ARCA le asigna a cada comprobante para darle validez fiscal. Según ARCA, los comprobantes electrónicos no tienen efectos fiscales frente a terceros hasta que el organismo otorga el CAE. Una factura sin CAE no vale, y tenés que entregar el comprobante al comprador dentro de los 10 días corridos.",
+  },
+  {
+    question: "Me equivoqué en una factura, ¿la puedo borrar?",
+    answer:
+      "No. Una factura con CAE no se anula ni se borra. Si te equivocaste, la corregís emitiendo una Nota de Crédito C asociada por el mismo importe, idealmente antes del día 10 del mes siguiente, y luego emitís la factura correcta si corresponde.",
+  },
+  {
+    question: "¿Tengo que identificar al consumidor final?",
+    answer:
+      "Por encima de cierto umbral sí, con CUIT o DNI. A 2026 ese umbral es de $10.000.000 (RG 5700/2025), pero es un monto que se actualiza, así que verificá el valor vigente. Si el cliente pide la factura para deducir Ganancias, consignás su CUIT sin importar el monto.",
+  },
+  {
+    question: "¿Puedo usar el Facturador Móvil en lugar de Comprobantes en Línea?",
+    answer:
+      "Sí, el Facturador (web, instalable como PWA) y el Facturador Móvil (app Android) son alternativas más rápidas, habilitadas para todos los monotributistas desde la RG 5602/2024. No reemplazan a Comprobantes en Línea como vía completa, y cada uno usa su propio punto de venta distinto.",
+  },
+];
+
+const primeraFacturaElectronicaBreadcrumbSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Guías", item: `${siteUrl}/guias` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Primera factura electrónica",
+      item: `${siteUrl}/monotributo/primera-factura-electronica`,
+    },
+  ],
+};
+
+const primeraFacturaElectronicaArticleSchema: Schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Mi primera factura electrónica en el Monotributo",
+  description:
+    "Guía paso a paso para emitir tu primera factura electrónica como monotributista en ARCA: requisitos, alta del punto de venta, Factura C y obtención del CAE.",
+  image: buildArticleImage("primera-factura-electronica"),
+  author: PUBLISHER,
+  publisher: ORGANIZATION,
+  datePublished: "2026-06-30",
+  dateModified,
+  mainEntityOfPage: buildMainEntityOfPage(
+    `${siteUrl}/monotributo/primera-factura-electronica`,
+    buildArticleImage("primera-factura-electronica"),
+  ),
+  inLanguage: "es-AR",
+};
+
 // ----- /about -----
 
 const aboutBreadcrumbSchema: Schema = {
@@ -1741,6 +1892,18 @@ const guiasCollectionPageSchema: Schema = {
         url: `${siteUrl}/monotributo/wise-vs-payoneer-vs-deel`,
         name: "Wise vs Payoneer vs Deel para cobrar del exterior",
       },
+      {
+        "@type": "ListItem",
+        position: 15,
+        url: `${siteUrl}/monotributo/vs-relacion-dependencia`,
+        name: "Monotributo vs Relación de Dependencia",
+      },
+      {
+        "@type": "ListItem",
+        position: 16,
+        url: `${siteUrl}/monotributo/primera-factura-electronica`,
+        name: "Mi primera factura electrónica en el Monotributo",
+      },
     ],
   },
 };
@@ -1830,6 +1993,18 @@ export function getSchemasForPath(pathname: string): Schema[] {
         wisePayoneerDeelBreadcrumbSchema,
         wisePayoneerDeelArticleSchema,
         buildFaqSchema(wisePayoneerDeelFaqEntries),
+      ];
+    case "/monotributo/vs-relacion-dependencia":
+      return [
+        vsRelacionDependenciaBreadcrumbSchema,
+        vsRelacionDependenciaArticleSchema,
+        buildFaqSchema(vsRelacionDependenciaFaqEntries),
+      ];
+    case "/monotributo/primera-factura-electronica":
+      return [
+        primeraFacturaElectronicaBreadcrumbSchema,
+        primeraFacturaElectronicaArticleSchema,
+        buildFaqSchema(primeraFacturaElectronicaFaqEntries),
       ];
     case "/about":
       return [aboutBreadcrumbSchema, aboutPageSchema];
