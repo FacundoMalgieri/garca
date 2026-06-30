@@ -73,9 +73,15 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-background border-b border-slate-200 dark:border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none">
       <div className="w-full max-w-[1920px] mx-auto px-6">
         <div className="flex h-16 items-center justify-between gap-4">
-          {/* Logo — always navigates to home */}
+          {/* Logo — navega al home; si ya estás en el home, scroll al top */}
           <Link
             href="/"
+            onClick={(e) => {
+              if (pathname === "/") {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
             className="flex items-center gap-3 shrink-0 hover:opacity-80 transition-opacity"
           >
             <img src="/logo-icon.svg" alt="GARCA Logo" className="h-10 w-10" />
