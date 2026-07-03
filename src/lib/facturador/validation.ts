@@ -1,5 +1,6 @@
 import { validateCuit } from "@/lib/facturador/cuit";
 import { addDays } from "@/lib/facturador/dates";
+import { lineSubtotal, round2 } from "@/lib/facturador/money";
 import type { Plantilla } from "@/types/facturador";
 
 export interface ValidationResult {
@@ -14,13 +15,9 @@ function parseDMY(s: string): Date | null {
   return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
 }
 
-/** Suma total de las líneas (precio × cantidad − bonificación). */
+/** Suma total de las líneas, cada una redondeada a 2 decimales. */
 export function totalImporte(p: Plantilla): number {
-  return p.lineas.reduce((acc, l) => {
-    const bruto = l.precioUnitario * l.cantidad;
-    const bonif = bruto * ((l.bonificacion ?? 0) / 100);
-    return acc + (bruto - bonif);
-  }, 0);
+  return round2(p.lineas.reduce((acc, l) => acc + lineSubtotal(l), 0));
 }
 
 /** Valida el input antes de emitir. `today` inyectable para tests. */
@@ -30,6 +27,12 @@ export function validateEmissionInput(p: Plantilla, today: Date): ValidationResu
   // CUIT: solo si el tipo de documento es CUIT ("80")
   if (p.cliente.tipoDoc === "80" && !validateCuit(p.cliente.nroDoc)) {
     errors.push("CUIT del receptor inválido");
+  }
+
+  if (p.lineas.length === 0) {
+    errors.push("El comprobante debe tener al menos una línea");
+  } else if (p.lineas.some((l) => l.descripcion.trim() === "")) {
+    errors.push("Todas las líneas deben tener descripción");
   }
 
   if (totalImporte(p) <= 0) {
