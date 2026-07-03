@@ -1,6 +1,6 @@
 import { describe, expect,it } from "vitest";
 
-import type { EmittedInvoice,Plantilla,StoredInvoice } from "@/types/facturador";
+import type { EmissionPreview, EmissionResult, EmittedInvoice,Plantilla,StoredInvoice } from "@/types/facturador";
 
 describe("facturador types", () => {
   it("permite construir una Plantilla válida", () => {
@@ -34,5 +34,15 @@ describe("facturador types", () => {
   it("StoredInvoice acepta emittedByGarca boolean (round-trip localStorage)", () => {
     const raw: Pick<StoredInvoice, "emittedByGarca"> = { emittedByGarca: false };
     expect(raw.emittedByGarca).toBe(false);
+  });
+
+  it("EmissionPreview y EmissionResult tienen la forma esperada", () => {
+    const preview: EmissionPreview = {
+      puntoVenta: "3", tipoComprobante: 11, importeTotal: 3500000,
+      razonSocialReceptor: "GSA", lineas: [{ descripcion: "Serv", cantidad: 1, precioUnitario: 3500000, subtotal: 3500000 }],
+      html: "<html/>",
+    };
+    const result: EmissionResult = { ...preview, numeroCompleto: "00003-00000089", cae: "123", vencimientoCae: "13/07/2026" };
+    expect(result.cae).toBe("123");
   });
 });
