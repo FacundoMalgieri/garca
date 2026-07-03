@@ -74,22 +74,55 @@ export interface EmittedInvoice extends AFIPInvoice {
   emittedByGarca: true;
 }
 
-/** Línea tal como se muestra en el Resumen (pantalla 4 de RCEL). */
+/** Línea del detalle tal como se muestra en el Resumen (pantalla 4 de RCEL). */
 export interface PreviewLinea {
+  codigo: string;
   descripcion: string;
   cantidad: number;
+  /** Unidad de medida como texto ("unidades", "kilogramos", ...). */
+  unidad: string;
   precioUnitario: number;
+  porcentajeBonificacion: number;
+  importeBonificacion: number;
   subtotal: number;
 }
 
-/** Datos parseados del Resumen de RCEL (preview real, antes de confirmar). */
+/** Datos del emisor tal como aparecen en el Resumen. */
+export interface PreviewEmisor {
+  razonSocial: string;
+  puntoVenta: string;
+  domicilio: string;
+  concepto: string;
+  periodoDesde?: string;
+  periodoHasta?: string;
+  vtoPago?: string;
+}
+
+/** Datos del receptor tal como aparecen en el Resumen. */
+export interface PreviewReceptor {
+  cuit: string;
+  razonSocial: string;
+  domicilio: string;
+  email: string;
+  condicionIVA: string;
+  condicionVenta: string;
+}
+
+/**
+ * Datos COMPLETOS parseados del Resumen de RCEL (preview real, antes de confirmar).
+ * Estructura todo lo que el usuario va a emitir para poder mostrarlo en un diseño propio.
+ * `html` conserva el Resumen crudo por si se quiere render 100% fiel.
+ */
 export interface EmissionPreview {
   puntoVenta: string;
   tipoComprobante: number;
-  importeTotal: number;
-  razonSocialReceptor: string;
+  emisor: PreviewEmisor;
+  receptor: PreviewReceptor;
   lineas: PreviewLinea[];
-  /** HTML crudo del Resumen para render fiel opcional. */
+  subtotal: number;
+  importeOtrosTributos: number;
+  importeTotal: number;
+  /** HTML crudo del Resumen para auditoría / render fiel opcional. */
   html: string;
 }
 

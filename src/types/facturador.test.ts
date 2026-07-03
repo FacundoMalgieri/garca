@@ -38,8 +38,14 @@ describe("facturador types", () => {
 
   it("EmissionPreview y EmissionResult tienen la forma esperada", () => {
     const preview: EmissionPreview = {
-      puntoVenta: "3", tipoComprobante: 11, importeTotal: 3500000,
-      razonSocialReceptor: "GSA", lineas: [{ descripcion: "Serv", cantidad: 1, precioUnitario: 3500000, subtotal: 3500000 }],
+      puntoVenta: "3",
+      tipoComprobante: 11,
+      emisor: { razonSocial: "YO", puntoVenta: "00003", domicilio: "x", concepto: "Servicios" },
+      receptor: { cuit: "30707915281", razonSocial: "GSA", domicilio: "y", email: "", condicionIVA: "IVA Responsable Inscripto", condicionVenta: "Transferencia Bancaria" },
+      lineas: [{ codigo: "", descripcion: "Serv", cantidad: 1, unidad: "unidades", precioUnitario: 3500000, porcentajeBonificacion: 0, importeBonificacion: 0, subtotal: 3500000 }],
+      subtotal: 3500000,
+      importeOtrosTributos: 0,
+      importeTotal: 3500000,
       html: "<html/>",
     };
     const result: EmissionResult = { ...preview, numeroCompleto: "00003-00000089", cae: "123", vencimientoCae: "13/07/2026" };
