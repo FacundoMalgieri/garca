@@ -38,9 +38,11 @@ export async function navigateToEmission(
   // Step 2 – select company (clicks btn_empresa[index], waits networkidle)
   await selectCompany(rcelPage, companyIndex);
 
-  // Step 3 – click "Generar Comprobantes" from the RCEL main menu
+  // Step 3 – click "Generar Comprobantes" from the RCEL main menu.
+  // RCEL menu items are `<a role="button" href="buscarPtosVtas.do">` — NOT links in
+  // the a11y tree (they carry an explicit role="button"), so we locate by href.
   console.log("[AFIP Facturador] Clicking 'Generar Comprobantes'...");
-  const generar = rcelPage.getByRole("link", { name: /Generar Comprobantes/i });
+  const generar = rcelPage.locator('a[href="buscarPtosVtas.do"]');
   await generar.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await generar.click();
 
