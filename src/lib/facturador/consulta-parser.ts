@@ -10,10 +10,14 @@ function tipoTextToCode(t: string): number {
   return TIPO_OFICIAL.facturaC;
 }
 
-/** Parsea la tabla de "Consulta de comprobantes" de RCEL a AFIPInvoice[]. */
+/**
+ * Parsea la tabla de "Consulta de comprobantes" de RCEL a AFIPInvoice[].
+ * RCEL v4.9.7: la tabla no tiene id (es `table.jig_table`) y las filas de datos
+ * usan class `jig_par`/`jig_impar` (el header es un `<tr>` sin clase). Localizamos
+ * las filas por esas clases en vez de por id de tabla, y así se saltea el header.
+ */
 export function parseConsulta(html: string): AFIPInvoice[] {
-  const tbody = /<table[^>]*id="tablaComprobantes"[^>]*>([\s\S]*?)<\/table>/i.exec(html)?.[1] ?? "";
-  const rows = [...tbody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].slice(1);
+  const rows = [...html.matchAll(/<tr[^>]*class="jig_(?:par|impar)"[^>]*>([\s\S]*?)<\/tr>/gi)];
   const out: AFIPInvoice[] = [];
   for (const r of rows) {
     const c = [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => m[1].replace(/<[^>]*>/g, "").trim());
