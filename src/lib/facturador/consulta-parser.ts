@@ -1,11 +1,6 @@
 import { TIPO_OFICIAL } from "@/lib/facturador/codes";
+import { parseARNumber } from "@/lib/facturador/money";
 import type { AFIPInvoice } from "@/types/afip-scraper";
-
-function parseARNumber(s: string): number {
-  const clean = s.trim().replace(/\./g, "").replace(",", ".");
-  const n = Number(clean);
-  return Number.isFinite(n) ? n : 0;
-}
 
 /** "Factura C" → 11, "Nota de Crédito C" → 13, etc. */
 function tipoTextToCode(t: string): number {
@@ -17,8 +12,8 @@ function tipoTextToCode(t: string): number {
 
 /** Parsea la tabla de "Consulta de comprobantes" de RCEL a AFIPInvoice[]. */
 export function parseConsulta(html: string): AFIPInvoice[] {
-  const tbody = /<table id="tablaComprobantes">([\s\S]*?)<\/table>/i.exec(html)?.[1] ?? "";
-  const rows = [...tbody.matchAll(/<tr>([\s\S]*?)<\/tr>/gi)].slice(1);
+  const tbody = /<table[^>]*id="tablaComprobantes"[^>]*>([\s\S]*?)<\/table>/i.exec(html)?.[1] ?? "";
+  const rows = [...tbody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].slice(1);
   const out: AFIPInvoice[] = [];
   for (const r of rows) {
     const c = [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => m[1].replace(/<[^>]*>/g, "").trim());
