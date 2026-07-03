@@ -45,4 +45,18 @@ describe("validateEmissionInput", () => {
     const cf = { ...base, cliente: { ...base.cliente, condicionIVA: "5", tipoDoc: "96", nroDoc: "12345678" } };
     expect(validateEmissionInput(cf, today).ok).toBe(true);
   });
+
+  it("rechaza cuando no hay líneas", () => {
+    const bad = { ...base, lineas: [] };
+    const r = validateEmissionInput(bad, today);
+    expect(r.ok).toBe(false);
+    expect(r.errors).toContain("El comprobante debe tener al menos una línea");
+  });
+
+  it("rechaza líneas con descripción en blanco", () => {
+    const bad = { ...base, lineas: [{ descripcion: "   ", cantidad: 1, unidad: "7", precioUnitario: 3500000 }] };
+    const r = validateEmissionInput(bad, today);
+    expect(r.ok).toBe(false);
+    expect(r.errors).toContain("Todas las líneas deben tener descripción");
+  });
 });
