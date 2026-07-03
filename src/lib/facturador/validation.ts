@@ -1,4 +1,3 @@
-import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { validateCuit } from "@/lib/facturador/cuit";
 import { addDays } from "@/lib/facturador/dates";
 import type { Plantilla } from "@/types/facturador";
@@ -47,9 +46,6 @@ export function validateEmissionInput(p: Plantilla, today: Date): ValidationResu
       errors.push("El vencimiento de pago no puede superar los 10 días desde hoy");
     }
   }
-
-  // condicionIVA se referencia para asegurar consistencia futura del payload
-  void COND_IVA_RECEPTOR;
 
   return { ok: errors.length === 0, errors };
 }

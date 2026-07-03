@@ -12,7 +12,7 @@ describe("computeTopeAlert", () => {
     expect(r).toEqual({ level: "ok", margenRestante: 4_000_000 });
   });
 
-  it("warning cuando la factura deja poco margen (<10%... configurable por umbral absoluto)", () => {
+  it("warning cuando el margen restante cae por debajo del 20%", () => {
     const r = computeTopeAlert({ margenDisponible: 1_200_000 }, 1_000_000);
     expect(r?.level).toBe("warning");
     expect(r?.margenRestante).toBe(200_000);
