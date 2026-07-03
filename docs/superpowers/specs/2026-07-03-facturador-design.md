@@ -302,3 +302,36 @@ Protegidas por Turnstile + rate limiting como las rutas actuales.
 - **Multi-actividad / multi-PV**: si el usuario tiene varias actividades o PV, preguntar en la
   plantilla en vez de asumir.
 ```
+
+## Addendum — Verificación en vivo del DOM real (2026-07-03, RCEL v4.9.7)
+
+Se recorrió el flujo completo 0→4 en la cuenta real (sin emitir) y se capturó el HTML real de
+la Consulta y del Resumen. Hallazgos que corrigen/precisan §7:
+
+**Flujo de llenado (validado end-to-end):** el orden y los selectores mapeados funcionan.
+`mostrarOcultar()` (período), el lookup de padrón (`$("#nrodocreceptor").change()` tras setear
+IVA→tipoDoc→nro), la selección de domicilio y `formadepago6` operan como se esperaba, y se llega
+al Resumen. La navegación entre pantallas funciona por submit del `<form>` (además de "Continuar").
+
+**Consulta de comprobantes (`buscarComprobantesGenerados.do`):**
+- La tabla de resultados **NO tiene id** → es `<table class="jig_table">`.
+- Filas de datos con `class="jig_par"` / `class="jig_impar"`; el header es un `<tr>` sin clase.
+  → localizar filas por esas clases (no por id de tabla, no por `.slice(1)`).
+- 11 columnas (las últimas 4 son botones Ver/Exp). Datos en c[0..6].
+- **Importe en entero plano** (`1000000`, sin separadores ni decimales).
+- PDF: `imprimirComprobante.do?c=<idInterno>` (el `c` está en el `onclick` del botón "Ver").
+
+**Resumen (`genComResumenDatos.do`, Paso 4):**
+- Los valores **no tienen ids** (no existe `#importeTotal` ni `#razonSocialReceptor`).
+- "Razón Social" aparece en **Datos del Emisor Y Datos del Receptor** → hay que scopear a la
+  sección "Datos del Receptor" (subtítulos con class `jig_subtitulo_seccion`).
+- Detalle: `<table class="jig_table">` con **8 columnas**: Código, Producto/Servicio, Cant.,
+  U. Medida, Prec. Unitario, **% Bon., Importe Bon.**, Subtotal. Filas `jig_par`/`jig_impar`.
+  (El subtotal es la columna 8, no la 6.)
+- Importe Total: `<th><b>Importe Total: <span>$</span></b></th><td><b> 1.000,00</b></td>`, en
+  **formato AR con decimales** ("1.000,00"). Distinto del entero plano de la Consulta.
+- Hay un `<div id="observaciones"><ul></ul></div>` (vacío en el caso normal). Se relaciona con
+  `observarOConfirmar()`: si hay observaciones, puede intercalarse un paso antes del CAE.
+
+Los parsers `resumen-parser.ts` y `consulta-parser.ts` (Plan 2) fueron **ajustados y testeados
+contra este HTML real** (fixtures en `src/lib/facturador/__fixtures__/`).
