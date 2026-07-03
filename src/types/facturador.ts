@@ -71,3 +71,29 @@ export interface StoredInvoice extends AFIPInvoice {
 export interface EmittedInvoice extends AFIPInvoice {
   emittedByGarca: true;
 }
+
+/** Línea tal como se muestra en el Resumen (pantalla 4 de RCEL). */
+export interface PreviewLinea {
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+/** Datos parseados del Resumen de RCEL (preview real, antes de confirmar). */
+export interface EmissionPreview {
+  puntoVenta: string;
+  tipoComprobante: number;
+  importeTotal: number;
+  razonSocialReceptor: string;
+  lineas: PreviewLinea[];
+  /** HTML crudo del Resumen para render fiel opcional. */
+  html: string;
+}
+
+/** Resultado de una emisión confirmada. */
+export interface EmissionResult extends EmissionPreview {
+  numeroCompleto: string;
+  cae: string;
+  vencimientoCae: string;
+}
