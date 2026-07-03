@@ -15,21 +15,28 @@ export interface FillPlan {
   pantalla3: FillAction[];
 }
 
+/** Opciones de emisión no persistidas en la plantilla (ej. fecha del comprobante). */
+export interface FillPlanOptions {
+  /** Fecha del comprobante (DD/MM/YYYY). Si se omite, RCEL usa la de hoy por defecto. */
+  fecha?: string;
+}
+
 /** Convierte una Plantilla en un plan declarativo de acciones para las pantallas 0-3 de RCEL. */
-export function buildFillPlan(p: Plantilla): FillPlan {
+export function buildFillPlan(p: Plantilla, opts: FillPlanOptions = {}): FillPlan {
   const pantalla0: FillAction[] = [
     { selector: "#puntodeventa", action: "select", value: p.puntoDeVenta },
     { selector: "#universocomprobante", action: "select", value: UNIVERSO_COMPROBANTE.facturaC },
   ];
 
-  const pantalla1: FillAction[] = [
-    { selector: "#idconcepto", action: "select", value: CONCEPTO_CODE[p.concepto] },
-  ];
+  const pantalla1: FillAction[] = [];
+  if (opts.fecha) pantalla1.push({ selector: "#fc", action: "fill", value: opts.fecha });
+  pantalla1.push({ selector: "#idconcepto", action: "select", value: CONCEPTO_CODE[p.concepto] });
   if (p.concepto !== "productos") {
     if (p.periodo?.desde) pantalla1.push({ selector: "#fsd", action: "fill", value: p.periodo.desde });
     if (p.periodo?.hasta) pantalla1.push({ selector: "#fsh", action: "fill", value: p.periodo.hasta });
     if (p.periodo?.vtoPago) pantalla1.push({ selector: "#vencimientopago", action: "fill", value: p.periodo.vtoPago });
   }
+  if (p.actividad) pantalla1.push({ selector: "#actiAsociadaId", action: "select", value: p.actividad });
 
   const pantalla2: FillAction[] = [
     { selector: "#idivareceptor", action: "select", value: p.cliente.condicionIVA },
