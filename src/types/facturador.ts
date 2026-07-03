@@ -54,6 +54,8 @@ export interface Plantilla {
   /** Número de punto de venta (ej. "3"). */
   puntoDeVenta: string;
   concepto: Concepto;
+  /** Valor exacto de la opción de actividad en RCEL (`#actiAsociadaId`, ej. "620100 - ..."). */
+  actividad?: string;
   cliente: ClienteFactura;
   periodo?: PeriodoFactura;
   lineas: LineaFactura[];

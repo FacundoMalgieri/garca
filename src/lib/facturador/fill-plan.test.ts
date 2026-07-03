@@ -49,4 +49,21 @@ describe("buildFillPlan", () => {
     const plan = buildFillPlan(prod);
     expect(plan.pantalla1.some((a) => a.selector === "#fsd")).toBe(false);
   });
+
+  it("agrega fecha del comprobante (#fc) solo si se pasa en opts", () => {
+    expect(buildFillPlan(p).pantalla1.some((a) => a.selector === "#fc")).toBe(false);
+    const plan = buildFillPlan(p, { fecha: "05/07/2026" });
+    expect(plan.pantalla1).toContainEqual({ selector: "#fc", action: "fill", value: "05/07/2026" });
+  });
+
+  it("agrega actividad (#actiAsociadaId) solo si la plantilla la define", () => {
+    expect(buildFillPlan(p).pantalla1.some((a) => a.selector === "#actiAsociadaId")).toBe(false);
+    const conAct = { ...p, actividad: "620100 - SERVICIOS DE CONSULTORES EN INFORMATICA" };
+    const plan = buildFillPlan(conAct);
+    expect(plan.pantalla1).toContainEqual({
+      selector: "#actiAsociadaId",
+      action: "select",
+      value: "620100 - SERVICIOS DE CONSULTORES EN INFORMATICA",
+    });
+  });
 });
