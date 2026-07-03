@@ -59,7 +59,15 @@ export interface Plantilla {
   lineas: LineaFactura[];
 }
 
-/** Factura emitida por GARCA: es una AFIPInvoice con flag de origen. */
+/**
+ * Factura conocida por GARCA con marca de origen. `emittedByGarca` es boolean para
+ * tolerar el round-trip por localStorage (JSON.parse no preserva literales).
+ */
+export interface StoredInvoice extends AFIPInvoice {
+  emittedByGarca: boolean;
+}
+
+/** Retorno del constructor de emisión: garantiza que fue emitida por GARCA. */
 export interface EmittedInvoice extends AFIPInvoice {
   emittedByGarca: true;
 }
