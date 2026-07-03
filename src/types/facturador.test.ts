@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import type { Plantilla, EmittedInvoice } from "@/types/facturador";
+import { describe, expect,it } from "vitest";
+
+import type { EmittedInvoice,Plantilla,StoredInvoice } from "@/types/facturador";
 
 describe("facturador types", () => {
   it("permite construir una Plantilla válida", () => {
@@ -28,5 +29,10 @@ describe("facturador types", () => {
       numeroCompleto: "00003-00000088",
     };
     expect(e.emittedByGarca).toBe(true);
+  });
+
+  it("StoredInvoice acepta emittedByGarca boolean (round-trip localStorage)", () => {
+    const raw: Pick<StoredInvoice, "emittedByGarca"> = { emittedByGarca: false };
+    expect(raw.emittedByGarca).toBe(false);
   });
 });
