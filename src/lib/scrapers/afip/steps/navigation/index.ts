@@ -58,8 +58,9 @@ export async function navigateToInvoices(
  * Navigates to "Comprobantes en línea" service.
  * Always uses search box for reliability (direct links often fail).
  * May open in a new tab. Includes retry logic if navigation fails.
+ * Exported so emission steps can reuse it without re-duplicating logic.
  */
-async function navigateToComprobantes(page: Page, context: BrowserContext): Promise<Page> {
+export async function navigateToComprobantes(page: Page, context: BrowserContext): Promise<Page> {
   console.log("[AFIP Scraper] Navigating to 'Comprobantes en línea' via search...");
 
   // Setup listener for new page/tab before clicking
@@ -171,11 +172,12 @@ interface CompanySelectionResult {
 
 /**
  * Selects the company/contributor and extracts company information.
+ * Exported so emission steps can reuse it without re-duplicating logic.
  * @param page - Playwright page instance
  * @param companyIndex - Index of company to select (default: 0)
  * @returns Company selection result with extracted info
  */
-async function selectCompany(page: Page, companyIndex: number = 0): Promise<CompanySelectionResult> {
+export async function selectCompany(page: Page, companyIndex: number = 0): Promise<CompanySelectionResult> {
   console.log("[AFIP Scraper] Checking for company selection...");
 
   // First, try to extract user info from header (CUIT - Nombre)
