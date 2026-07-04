@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
+import { dedupeInvoices } from "@/lib/facturador/dedupe";
 import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
@@ -101,6 +102,7 @@ export interface UseInvoicesReturn {
   ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
+  addEmittedInvoice: (inv: AFIPInvoice) => void;
 }
 
 /**
@@ -811,6 +813,18 @@ export function useInvoices(): UseInvoicesReturn {
   };
 
   /**
+   * Prepends an emitted invoice to the invoice list, deduplicating against the
+   * current list (emitted invoice wins on key collision). Persists via the same
+   * debounced saveToStorage path used after a successful fetch.
+   */
+  const addEmittedInvoice = useCallback((inv: AFIPInvoice) => {
+    setState((prev) => {
+      const merged = dedupeInvoices([inv], prev.invoices);
+      return { ...prev, invoices: merged, hasQueried: true };
+    });
+  }, []);
+
+  /**
    * Clears companies state (used after selecting a company).
    * Note: Does NOT clear monotributoInfo as it should persist.
    */
@@ -838,6 +852,7 @@ export function useInvoices(): UseInvoicesReturn {
     loadDemoData,
     cancelOperation,
     isOperationInProgress,
+    addEmittedInvoice,
   };
 }
 

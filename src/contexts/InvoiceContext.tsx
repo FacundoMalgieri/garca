@@ -48,6 +48,7 @@ interface InvoiceContextType {
   ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
+  addEmittedInvoice: (inv: AFIPInvoice) => void;
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
