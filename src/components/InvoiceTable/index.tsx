@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { FilterBar } from "./components/FilterBar";
 import { InvoiceCard } from "./components/InvoiceCard";
@@ -27,8 +28,9 @@ const PAGE_SIZE_OPTIONS = [
  *
  * Presents invoice information in responsive tabular format with filters and sorting.
  */
-export function InvoiceTable() {
+export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
   const { state } = useInvoiceContext();
+  const source = invoices ?? state.invoices;
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [pageSize, setPageSize] = useState<string>("20");
@@ -49,7 +51,7 @@ export function InvoiceTable() {
     setSortDirection,
     filteredAndSortedInvoices,
     uniqueTypes,
-  } = useInvoiceFilters(state.invoices);
+  } = useInvoiceFilters(source);
 
   // Calculate visible invoices based on pagination
   const visibleInvoices = useMemo(() => {
@@ -109,7 +111,7 @@ export function InvoiceTable() {
             </CardTitle>
             <CardDescription>
               {filteredAndSortedInvoices.length > 0
-                ? `${filteredAndSortedInvoices.length} de ${state.invoices.length} comprobante(s)`
+                ? `${filteredAndSortedInvoices.length} de ${source.length} comprobante(s)`
                 : "Lista de facturas y comprobantes obtenidos de ARCA"}
               {activeFiltersCount > 0 && (
                 <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
@@ -122,7 +124,7 @@ export function InvoiceTable() {
           <TableToolbar
             showFilters={showFilters}
             onToggleFilters={() => setShowFilters(!showFilters)}
-            hasInvoices={state.invoices.length > 0}
+            hasInvoices={source.length > 0}
             showSortMenu={showSortMenu}
             onToggleSortMenu={() => setShowSortMenu(!showSortMenu)}
           />
@@ -131,7 +133,7 @@ export function InvoiceTable() {
 
       <CardContent>
         {/* Mobile Sort Panel */}
-        {showSortMenu && state.invoices.length > 0 && (
+        {showSortMenu && source.length > 0 && (
           <MobileSortPanel
             sortField={sortField}
             sortDirection={sortDirection}
@@ -141,7 +143,7 @@ export function InvoiceTable() {
         )}
 
         {/* Filter Bar */}
-        {showFilters && state.invoices.length > 0 && (
+        {showFilters && source.length > 0 && (
           <FilterBar
             filters={filters}
             uniqueTypes={uniqueTypes}
@@ -162,10 +164,10 @@ export function InvoiceTable() {
         {state.error && !state.isLoading && <ErrorState error={state.error} errorCode={state.errorCode} />}
 
         {/* Empty State */}
-        {!state.isLoading && !state.error && state.invoices.length === 0 && <EmptyState />}
+        {!state.isLoading && !state.error && source.length === 0 && <EmptyState />}
 
         {/* Desktop Table */}
-        {!state.isLoading && state.invoices.length > 0 && (
+        {!state.isLoading && source.length > 0 && (
           <div className="hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -185,7 +187,7 @@ export function InvoiceTable() {
         )}
 
         {/* Mobile Cards */}
-        {!state.isLoading && state.invoices.length > 0 && (
+        {!state.isLoading && source.length > 0 && (
           <div className="space-y-4 md:hidden">
             {visibleInvoices.map((invoice) => (
               <InvoiceCard key={`${invoice.numeroCompleto}-${invoice.fecha}`} invoice={invoice} />
@@ -194,7 +196,7 @@ export function InvoiceTable() {
         )}
 
         {/* Show More / Pagination Footer */}
-        {state.invoices.length > 0 && (
+        {source.length > 0 && (
           <div className="mt-6 flex flex-col gap-4">
             {/* Show More Button */}
             {hasMoreToShow && activeFiltersCount === 0 && (
@@ -222,7 +224,7 @@ export function InvoiceTable() {
                 {activeFiltersCount > 0 ? (
                   <>
                     Mostrando {filteredAndSortedInvoices.length} resultado
-                    {filteredAndSortedInvoices.length !== 1 ? "s" : ""} (filtrado de {state.invoices.length})
+                    {filteredAndSortedInvoices.length !== 1 ? "s" : ""} (filtrado de {source.length})
                   </>
                 ) : (
                   <>
