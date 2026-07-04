@@ -42,4 +42,26 @@ describe("useEmission", () => {
     await waitFor(() => expect(result.current.phase).toBe("done"));
     expect(result.current.result?.cae).toBe("123");
   });
+
+  it("reenvía turnstileToken como header x-turnstile-token y no en el body", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ preview: { importeTotal: 100 } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    await act(async () => {
+      await result.current.startPreview({} as never, {
+        cuit: "enc", password: "enc", encrypted: true, turnstileToken: "TS-TOKEN", companyIndex: 2,
+      } as never);
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers["x-turnstile-token"]).toBe("TS-TOKEN");
+    const body = JSON.parse(init.body);
+    expect(body.turnstileToken).toBeUndefined();
+    expect(body.companyIndex).toBe(2);
+    expect(body.encrypted).toBe(true);
+  });
 });
