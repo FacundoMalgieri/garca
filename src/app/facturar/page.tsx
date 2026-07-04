@@ -39,13 +39,13 @@ export default function FacturarPage() {
   const initial = activeId ? templates.find((t) => t.id === activeId) ?? null : null;
 
   if (!state.isHydrated) {
-    return <div className="p-8 text-center text-muted-foreground">Cargando…</div>;
+    return <div className="flex min-h-[calc(100svh-4rem)] items-center justify-center p-8 text-center text-muted-foreground">Cargando…</div>;
   }
   if (!state.company) {
     return (
-      <div className="mx-auto max-w-md p-8 text-center">
+      <div className="flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center px-4 text-center">
         <h1 className="text-xl font-semibold mb-2">Iniciá sesión para facturar</h1>
-        <p className="text-sm text-muted-foreground mb-4">Para emitir necesitás una sesión activa con tu empresa seleccionada.</p>
+        <p className="text-sm text-muted-foreground mb-4 max-w-md">Para emitir necesitás una sesión activa con tu empresa seleccionada.</p>
         <button onClick={() => router.push("/ingresar")} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer">Ir a ingresar</button>
       </div>
     );
@@ -62,7 +62,7 @@ export default function FacturarPage() {
   );
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-0 md:px-6 py-4 md:py-8 space-y-4">
+    <div className="w-full min-h-[calc(100svh-4rem)] max-w-[1400px] mx-auto px-0 md:px-6 py-4 md:py-8 space-y-4">
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
         🏢 Vas a facturar como <b>{state.company.razonSocial}</b>.{" "}
         <span className="text-muted-foreground">¿Otra empresa? Cerrá sesión o usá otra ventana / incógnito para tener otra sesión.</span>
