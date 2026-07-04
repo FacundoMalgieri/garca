@@ -68,7 +68,7 @@ describe("EmissionModal", () => {
     render(<EmissionModal {...baseProps} />);
     expect(screen.getByText("GSA SA")).toBeInTheDocument();
     expect(screen.getByText("CLIENTE X SA")).toBeInTheDocument();
-    expect(screen.getByText(/200\.000,00/)).toBeInTheDocument();
+    expect(screen.getByTestId("modal-total")).toHaveTextContent("200.000,00");
     expect(screen.getByTestId("tope-alert")).toHaveTextContent(/2\.340\.000/);
   });
   it("botón Emitir deshabilitado hasta checkbox + tipear EMITIR", () => {

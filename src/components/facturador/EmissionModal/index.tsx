@@ -125,16 +125,16 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
                     {preview.lineas.map((l, i) => (
                       <tr key={i} className="text-right border-t border-border">
                         <td className="text-left py-1">{l.descripcion}</td><td>{l.cantidad}</td><td>{l.unidad}</td>
-                        <td>{formatCurrency(l.precioUnitario, 0)}</td><td>{l.porcentajeBonificacion}%</td>
-                        <td>{formatCurrency(l.importeBonificacion, 0)}</td><td>{formatCurrency(l.subtotal, 0)}</td>
+                        <td>{formatCurrency(l.precioUnitario)}</td><td>{l.porcentajeBonificacion}%</td>
+                        <td>{formatCurrency(l.importeBonificacion)}</td><td>{formatCurrency(l.subtotal)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="mt-2 space-y-1 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${formatCurrency(preview.subtotal, 0)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Otros tributos</span><span>${formatCurrency(preview.importeOtrosTributos, 0)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${formatCurrency(preview.subtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Otros tributos</span><span>${formatCurrency(preview.importeOtrosTributos)}</span></div>
                 <div className="flex justify-between border-t border-border pt-1 text-xl font-bold"><span>TOTAL</span><span>{formatCurrency(preview.importeTotal)}</span></div>
               </div>
             </div>
@@ -158,7 +158,7 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
 
             <div className="rounded-lg border border-[#FF6B5C]/50 bg-[#FF6B5C]/10 p-4">
               <p className="text-sm font-medium text-[#FF6B5C] mb-2">⚠️ Esto es REAL. Se emite en tu punto de venta {preview.puntoVenta} y no se puede deshacer (solo con una Nota de Crédito).</p>
-              <p className="text-center text-2xl font-extrabold mb-3">Vas a emitir ${formatCurrency(preview.importeTotal, 0)}</p>
+              <p data-testid="modal-total" className="text-center text-2xl font-extrabold mb-3">Vas a emitir ${formatCurrency(preview.importeTotal)}</p>
               <label className="flex items-start gap-2 text-sm mb-2 cursor-pointer">
                 <input data-testid="confirm-check" type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5" />
                 <span>Confirmo que revisé los datos y quiero emitir esta factura real.</span>
