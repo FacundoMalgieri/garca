@@ -7,6 +7,16 @@ import { TIPO_OFICIAL } from "@/lib/facturador/codes";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
 
+/** Separa el token de Turnstile del resto del payload y arma headers + body. */
+function buildRequest(credsPayload: Record<string, unknown>, plantilla: Plantilla) {
+  const { turnstileToken, ...creds } = credsPayload;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (typeof turnstileToken === "string" && turnstileToken.length > 0) {
+    headers["x-turnstile-token"] = turnstileToken;
+  }
+  return { headers, body: JSON.stringify({ ...creds, plantilla }) };
+}
+
 export type EmissionPhase = "idle" | "previewing" | "preview" | "confirming" | "done" | "error";
 
 export interface UseEmissionReturn {
@@ -48,11 +58,8 @@ export function useEmission(): UseEmissionReturn {
       setPreview(null);
 
       try {
-        const response = await fetch("/api/arca/emit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...credsPayload, plantilla }),
-        });
+        const { headers, body } = buildRequest(credsPayload, plantilla);
+        const response = await fetch("/api/arca/emit", { method: "POST", headers, body });
 
         let data: Record<string, unknown>;
         try {
@@ -99,11 +106,8 @@ export function useEmission(): UseEmissionReturn {
       setResult(null);
 
       try {
-        const response = await fetch("/api/arca/emit/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...credsPayload, plantilla }),
-        });
+        const { headers, body } = buildRequest(credsPayload, plantilla);
+        const response = await fetch("/api/arca/emit/confirm", { method: "POST", headers, body });
 
         let data: Record<string, unknown>;
         try {
