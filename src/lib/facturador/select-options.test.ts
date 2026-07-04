@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CONCEPTO_OPTIONS, UNIDAD_OPTIONS, COND_IVA_OPTIONS, FORMA_PAGO_OPTIONS, TIPO_DOC_OPTIONS } from "./select-options";
+
+import { CONCEPTO_OPTIONS, COND_IVA_OPTIONS, FORMA_PAGO_OPTIONS, TIPO_DOC_OPTIONS,UNIDAD_OPTIONS } from "./select-options";
 
 describe("select-options", () => {
   it("concepto tiene las 3 opciones con value = clave de Concepto", () => {
@@ -11,6 +12,16 @@ describe("select-options", () => {
   });
   it("unidad incluye 'unidades' con el código RCEL 7", () => {
     expect(UNIDAD_OPTIONS.find((o) => o.value === "7")?.label).toBe("Unidades");
+  });
+  it("unidad incluye el catálogo completo de RCEL (toneladas, metros cuadrados, 1000 kWh)", () => {
+    expect(UNIDAD_OPTIONS.find((o) => o.value === "29")?.label).toBe("Toneladas");
+    expect(UNIDAD_OPTIONS.find((o) => o.value === "3")?.label).toBe("Metros cuadrados");
+    expect(UNIDAD_OPTIONS.find((o) => o.value === "6")?.label).toBe("1000 kWh");
+    expect(UNIDAD_OPTIONS.length).toBeGreaterThanOrEqual(45);
+  });
+  it("no hay códigos de unidad duplicados", () => {
+    const values = UNIDAD_OPTIONS.map((o) => o.value);
+    expect(new Set(values).size).toBe(values.length);
   });
   it("cond IVA incluye Responsable Inscripto (1) y Consumidor Final (5)", () => {
     expect(COND_IVA_OPTIONS.find((o) => o.value === "1")?.label).toBe("Responsable Inscripto");
