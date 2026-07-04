@@ -8,8 +8,8 @@ import { fireEvent,render, screen } from "@testing-library/react";
 
 // Mock next/link
 vi.mock("next/link", () => ({
-  default: ({ children, href, onClick }: { children: React.ReactNode; href: string; onClick?: (e: React.MouseEvent) => void }) => (
-    <a href={href} onClick={onClick}>{children}</a>
+  default: ({ children, href, onClick, title }: { children: React.ReactNode; href: string; onClick?: (e: React.MouseEvent) => void; title?: string }) => (
+    <a href={href} onClick={onClick} title={title}>{children}</a>
   ),
 }));
 
@@ -550,6 +550,14 @@ describe("Navbar", () => {
       document.body.removeChild(el);
     }
     vi.unstubAllGlobals();
+  });
+
+  it("incluye un link a /facturar en desktop y mobile", () => {
+    // "Facturar" is always visible (not session-gated), like /calculadora-monotributo
+    render(<Navbar />);
+    const links = screen.getAllByRole("link", { name: /facturar/i });
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0]).toHaveAttribute("href", "/facturar");
   });
 
   it("invokes scrollTo for each mobile navigation target", async () => {
