@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> ✅ **ESTADO: COMPLETADO** (pura + steps Playwright + orquestador + rutas). **Fase 1 (preview) verificada en vivo** contra RCEL real; parsers ajustados al HTML real. Pendiente sólo la verificación de `confirm`/`downloadPdf`/`consultarEmitidas` (requiere UNA emisión real). Ver `docs/superpowers/facturador-PROGRESO.md`.
+
 **Goal:** Emitir Factura C real sobre RCEL manejando el formulario con Playwright, exponiendo API routes, con máximo de lógica pura testeable y la conducción del navegador aislada y verificada a mano vía pre-comprobantes.
 
 **Architecture:** Se separa en dos capas: (1) **lógica pura** (builder de instrucciones de llenado, redondeo monetario, parsers de Resumen y de Consulta) — 100% unit-testeable; (2) **conducción Playwright** (steps que ejecutan el plan de llenado sobre RCEL) + **API routes** — verificadas manualmente porque tocan AFIP real (no hay homologación en RCEL). Reusa la infra del scraper existente (`src/lib/scrapers/afip/`: login, browser, eventos, streaming).

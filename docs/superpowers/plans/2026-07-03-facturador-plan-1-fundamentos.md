@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> ✅ **ESTADO: COMPLETADO** (revisado por Opus). Ver `docs/superpowers/facturador-PROGRESO.md`.
+
 **Goal:** Construir toda la lógica pura y el modelo de datos del facturador (sin UI ni Playwright), 100% testeable con Vitest.
 
 **Architecture:** Módulos puros en `src/lib/facturador/` + tipos en `src/types/facturador.ts`. Sin efectos de red. La persistencia usa `localStorage` (patrón de `useInvoices`). Todo lo de este plan se testea con unit tests; los steps de Playwright y la UI vienen en planes posteriores.
