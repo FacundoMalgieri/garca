@@ -72,6 +72,7 @@ describe("EmissionForm", () => {
     render(<EmissionForm initial={null} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
     fireEvent.change(screen.getByTestId("linea-desc-0"), { target: { value: "Trabajo" } });
     fireEvent.change(screen.getByTestId("linea-precio-0"), { target: { value: "50000" } });
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281" } });
     expect(screen.getByText(/guardar como plantilla/i)).toBeInTheDocument();
   });
 });
