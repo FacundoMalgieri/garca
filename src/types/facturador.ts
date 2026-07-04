@@ -131,4 +131,5 @@ export interface EmissionResult extends EmissionPreview {
   numeroCompleto: string;
   cae: string;
   vencimientoCae: string;
+  pdfBase64?: string;
 }
