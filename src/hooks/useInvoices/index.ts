@@ -20,6 +20,7 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 export interface CompanyInfo {
   cuit: string;
   razonSocial: string;
+  index: number;
 }
 
 /**
@@ -241,7 +242,10 @@ export function useInvoices(): UseInvoicesReturn {
         // but still marks the session as queried so /panel renders the empty
         // state instead of bouncing back to /ingresar.
         const invoices = JSON.parse(storedInvoices);
-        const company = storedCompany ? JSON.parse(storedCompany) : extractCompanyInfo(invoices);
+        const parsedCompany = storedCompany ? JSON.parse(storedCompany) : null;
+        const company: CompanyInfo | null = parsedCompany
+          ? { ...parsedCompany, index: parsedCompany.index ?? 0 }
+          : extractCompanyInfo(invoices);
         setState((prev) => ({ ...prev, invoices, company, isHydrated: true, hasQueried: true }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true }));
@@ -633,9 +637,10 @@ export function useInvoices(): UseInvoicesReturn {
             company = {
               cuit: finalResult.company.cuit || cuit,
               razonSocial: finalResult.company.razonSocial,
+              index: companyIndex,
             };
           } else {
-            company = extractCompanyInfo(invoices, cuit);
+            company = extractCompanyInfo(invoices, cuit, companyIndex);
           }
 
           setState({
@@ -679,9 +684,10 @@ export function useInvoices(): UseInvoicesReturn {
           company = {
             cuit: data.company.cuit || cuit,
             razonSocial: data.company.razonSocial,
+            index: companyIndex,
           };
         } else {
-          company = extractCompanyInfo(invoices, cuit);
+          company = extractCompanyInfo(invoices, cuit, companyIndex);
         }
 
         setState({
@@ -860,7 +866,7 @@ export function useInvoices(): UseInvoicesReturn {
  * Extracts company info from invoices.
  * Tries multiple sources since table structure may vary.
  */
-function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string): CompanyInfo | null {
+function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string, index = 0): CompanyInfo | null {
   if (invoices.length === 0) return null;
 
   const firstInvoice = invoices[0];
@@ -892,6 +898,7 @@ function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string): Compan
   return {
     cuit: cuit.replace(/\D/g, ""), // Clean CUIT
     razonSocial: razonSocial || "Empresa", // Fallback name
+    index,
   };
 }
 

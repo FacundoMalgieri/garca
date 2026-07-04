@@ -91,7 +91,7 @@ describe("useInvoices", () => {
           cae: "12345678901234",
         },
       ];
-      const mockCompany = { cuit: "20345678901", razonSocial: "Mi Empresa SA" };
+      const mockCompany = { cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 };
 
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
       localStorage.setItem("garca_company", JSON.stringify(mockCompany));
@@ -125,7 +125,7 @@ describe("useInvoices", () => {
         },
       ];
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
-      localStorage.setItem("garca_company", JSON.stringify({ cuit: "123", razonSocial: "Test" }));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "123", razonSocial: "Test", index: 0 }));
 
       const { result } = renderHook(() => useInvoices());
 
@@ -185,7 +185,7 @@ describe("useInvoices", () => {
           cae: "111",
         },
       ];
-      const demoCompany = { cuit: "20345678901", razonSocial: "Demo SA" };
+      const demoCompany = { cuit: "20345678901", razonSocial: "Demo SA", index: 0 };
       const demoMonotributo = {
         categoria: "G",
         tipoActividad: "servicios" as const,
@@ -251,7 +251,7 @@ describe("useInvoices", () => {
         },
       ];
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
-      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA" }));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 }));
 
       // Call loadFromStorage
       act(() => {
@@ -259,7 +259,7 @@ describe("useInvoices", () => {
       });
 
       expect(result.current.state.invoices).toHaveLength(1);
-      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA" });
+      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 });
     });
 
     it("should extract company info from invoices if not stored separately", () => {
@@ -288,7 +288,7 @@ describe("useInvoices", () => {
       const { result } = renderHook(() => useInvoices());
 
       // Company should be extracted from invoice
-      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA" });
+      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 });
     });
 
     it("should handle invalid JSON in localStorage gracefully", () => {
@@ -642,6 +642,7 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toEqual({
         cuit: "20345678901",
         razonSocial: "From JSON Co",
+        index: 0,
       });
       expect(result.current.state.invoices).toHaveLength(1);
       expect(result.current.companiesState.companies).toEqual([]);
@@ -692,6 +693,7 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toEqual({
         cuit: "20987654321",
         razonSocial: "Empresa",
+        index: 0,
       });
     });
 
@@ -804,6 +806,30 @@ describe("useInvoices", () => {
 
       expect(result.current.state.error).toBeNull();
       expect(result.current.state.isLoading).toBe(true);
+    });
+
+    it("should store companyIndex in state.company.index after successful fetch", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Proceso completado",
+          data: { success: true, invoices: [], company: { cuit: "20345678901", razonSocial: "Empresa Test" } },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 3, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.company).toMatchObject({ index: 3 });
     });
 
     it("should set UNKNOWN error code on unexpected failure", async () => {
