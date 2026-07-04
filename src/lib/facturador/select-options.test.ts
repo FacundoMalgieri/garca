@@ -13,11 +13,20 @@ describe("select-options", () => {
   it("unidad incluye 'unidades' con el código RCEL 7", () => {
     expect(UNIDAD_OPTIONS.find((o) => o.value === "7")?.label).toBe("Unidades");
   });
-  it("unidad incluye el catálogo completo de RCEL (toneladas, metros cuadrados, 1000 kWh)", () => {
+  it("unidad incluye las comunes de RCEL (toneladas, metros cuadrados, 1000 kWh) con código exacto", () => {
     expect(UNIDAD_OPTIONS.find((o) => o.value === "29")?.label).toBe("Toneladas");
     expect(UNIDAD_OPTIONS.find((o) => o.value === "3")?.label).toBe("Metros cuadrados");
     expect(UNIDAD_OPTIONS.find((o) => o.value === "6")?.label).toBe("1000 kWh");
-    expect(UNIDAD_OPTIONS.length).toBeGreaterThanOrEqual(45);
+  });
+  it("excluye los códigos crípticos/de nicho de RCEL (UIACTIG/curie/kg activo)", () => {
+    const values = UNIDAD_OPTIONS.map((o) => o.value);
+    // 65=MUIACTIG, 48=curie, 66=kg activo — no deben aparecer en la UI curada
+    expect(values).not.toContain("65");
+    expect(values).not.toContain("48");
+    expect(values).not.toContain("66");
+  });
+  it("mantiene 'Otras unidades' (98) como comodín", () => {
+    expect(UNIDAD_OPTIONS.find((o) => o.value === "98")?.label).toBe("Otras unidades");
   });
   it("no hay códigos de unidad duplicados", () => {
     const values = UNIDAD_OPTIONS.map((o) => o.value);
