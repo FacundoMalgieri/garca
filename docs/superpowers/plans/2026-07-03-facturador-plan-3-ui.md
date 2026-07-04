@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement task-by-task. Componentes visuales: usar superpowers/frontend-design. Steps con checkbox `- [ ]`.
 
+> 🟡 **ESTADO: hooks (Tasks 1-4) COMPLETADOS y testeados; componentes (Tasks 5-9) PENDIENTES** — próximo brainstorm de UI/UX. Ver `docs/superpowers/facturador-PROGRESO.md`.
+
 **Goal:** UI del facturador en `/facturar` (solo logueados): elegir plantilla / repetir última, completar el form, ver un **preview propio con TODO lo que se emite** + alerta de tope, confirmar, y listar lo emitido. Persistencia de plantillas en localStorage; lo emitido se integra a `InvoiceContext` con dedupe.
 
 **Architecture:** Hooks puros (testeables) sobre la lógica del Plan 1/2 (`templates.ts`, `computeTopeAlert`, `dedupeInvoices`) + un hook de emisión que llama las API routes (`/api/arca/emit`, `/emit/confirm`) en 2 fases. Componentes React siguiendo patrones del repo (`useInvoiceContext`, `Card`, `ConfirmDialog`, `Dropdown`, `InvoiceTable`, `LoginForm`, `TurnstileWidget`). Diseño propio para el preview mostrando emisor/receptor/líneas/totales; el `html` crudo del Resumen queda como respaldo colapsable.
