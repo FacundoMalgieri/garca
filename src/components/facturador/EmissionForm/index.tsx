@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -21,7 +21,7 @@ interface EmissionFormProps {
 function blankForm(): Plantilla {
   return {
     id: "", nombre: "", puntoDeVenta: "1", concepto: "servicios",
-    cliente: { condicionIVA: "1", tipoDoc: "96", nroDoc: "", razonSocial: "", email: "", condicionVenta: ["6"] },
+    cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "", razonSocial: "", email: "", condicionVenta: ["6"] },
     periodo: {},
     lineas: [{ descripcion: "", cantidad: 1, unidad: "7", precioUnitario: 0 }],
   };
@@ -35,9 +35,14 @@ function stripId(p: Plantilla): Omit<Plantilla, "id"> {
 
 export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew }: EmissionFormProps) {
   const [form, setForm] = useState<Plantilla>(initial ?? blankForm());
+  const [lineKeys, setLineKeys] = useState<number[]>(() => (initial ?? blankForm()).lineas.map((_, i) => i));
+  const nextKey = useRef((initial ?? blankForm()).lineas.length);
 
   useEffect(() => {
-    setForm(initial ?? blankForm());
+    const base = initial ?? blankForm();
+    setForm(base);
+    setLineKeys(base.lineas.map((_, i) => i));
+    nextKey.current = base.lineas.length;
   }, [initial?.id]); // only re-run when the selected template changes
 
   const total = useMemo(() => totalImporte(form), [form]);
@@ -52,8 +57,15 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   const setPeriodo = (patch: Partial<NonNullable<Plantilla["periodo"]>>) => setForm((f) => ({ ...f, periodo: { ...(f.periodo ?? {}), ...patch } }));
   const setLinea = (i: number, patch: Partial<LineaFactura>) =>
     setForm((f) => ({ ...f, lineas: f.lineas.map((l, idx) => (idx === i ? { ...l, ...patch } : l)) }));
-  const addLinea = () => setForm((f) => ({ ...f, lineas: [...f.lineas, { descripcion: "", cantidad: 1, unidad: "7", precioUnitario: 0 }] }));
-  const removeLinea = (i: number) => setForm((f) => ({ ...f, lineas: f.lineas.filter((_, idx) => idx !== i) }));
+  const addLinea = () => {
+    const key = nextKey.current++;
+    setForm((f) => ({ ...f, lineas: [...f.lineas, { descripcion: "", cantidad: 1, unidad: "7", precioUnitario: 0 }] }));
+    setLineKeys((ks) => [...ks, key]);
+  };
+  const removeLinea = (i: number) => {
+    setForm((f) => ({ ...f, lineas: f.lineas.filter((_, idx) => idx !== i) }));
+    setLineKeys((ks) => ks.filter((_, idx) => idx !== i));
+  };
 
   const applyMesAnterior = () => {
     const { desde, hasta } = previousMonthPeriod(new Date());
@@ -158,7 +170,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         <p className={sectionTitleCls}>Detalle</p>
         <div className="space-y-2">
           {form.lineas.map((l, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-end">
+            <div key={lineKeys[i]} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-12 sm:col-span-5">
                 <label className={labelCls}>Descripción</label>
                 <input data-testid={`linea-desc-${i}`} className={inputCls} value={l.descripcion} onChange={(e) => setLinea(i, { descripcion: e.target.value })} />
