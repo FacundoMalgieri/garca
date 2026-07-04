@@ -50,13 +50,15 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
   const handleConfirm = () => confirm(plantilla, buildCreds(turnstileToken));
 
   const handleReset = () => {
+    // Defense-in-depth: descartar la clave en plano también al "emitir otra",
+    // no solo al cerrar. Se re-ingresa en el próximo preview.
+    passwordRef.current = "";
     setPassword(""); setAgree(false); setTyped(""); setTurnstileToken(null);
     turnstileRef.current?.reset();
     reset();
   };
 
   const handleClose = () => {
-    passwordRef.current = "";
     handleReset();
     onClose();
   };
