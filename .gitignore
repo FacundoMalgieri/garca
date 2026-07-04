@@ -106,3 +106,6 @@ temp/
 
 # Internal plans / GSC notes — keep out of the repo
 docs/
+
+# Visual brainstorm companion
+.superpowers/
