@@ -38,6 +38,15 @@ const RESULT: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000089", c
 
 const baseProps = { isOpen: true, plantilla: PLANTILLA, cuit: "20354104076", companyIndex: 2, margenDisponible: 2540000, onClose: vi.fn() };
 
+const BASE_INV = {
+  fecha: "10/06/2026", tipo: "FACTURA C", tipoComprobante: 11, puntoVenta: 3, numero: 89,
+  numeroCompleto: "0003-00000089", cuitEmisor: "", razonSocialEmisor: "", cuitReceptor: "30707915281",
+  razonSocialReceptor: "GSA", importeNeto: 1000, importeIVA: 0, importeTotal: 1000, moneda: "ARS", emittedByGarca: false,
+};
+const SCRAPED_INV = BASE_INV as never;
+const OWN_INV = { ...BASE_INV, emittedByGarca: true } as never;
+const ncProps = { isOpen: true, mode: "creditNote" as const, cuit: "20354104076", companyIndex: 0, margenDisponible: 2540000, onClose: vi.fn() };
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockState = { phase: "idle", preview: null, result: null, error: null };
@@ -110,5 +119,26 @@ describe("EmissionModal", () => {
     mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
     render(<EmissionModal {...baseProps} margenDisponible={100000} />);
     expect(screen.getByTestId("tope-alert")).toHaveTextContent(/supera/i);
+  });
+
+  it("modo NC scrapeada (idle): copy de deshacer + selector de condición IVA", () => {
+    mockState = { phase: "idle", preview: null, result: null, error: null };
+    render(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} />);
+    expect(screen.getByText(/para deshacer/i)).toBeInTheDocument();
+    expect(screen.getByTestId("nc-cond-iva")).toBeInTheDocument();
+  });
+
+  it("modo NC emitida por GARCA (idle): NO muestra selector de condición IVA", () => {
+    mockState = { phase: "idle", preview: null, result: null, error: null };
+    render(<EmissionModal {...ncProps} invoiceToVoid={OWN_INV} />);
+    expect(screen.queryByTestId("nc-cond-iva")).not.toBeInTheDocument();
+  });
+
+  it("modo NC (preview): h2 'Deshacer factura', badge NC y botón 'Emitir Nota de Crédito', sin alerta de tope", () => {
+    mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
+    render(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} />);
+    expect(screen.getByRole("heading", { name: /Deshacer factura/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Emitir Nota de Crédito/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("tope-alert")).not.toBeInTheDocument();
   });
 });
