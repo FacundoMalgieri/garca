@@ -13,7 +13,7 @@
 
 import { Browser, BrowserContext, chromium, Page } from "playwright";
 
-import { TIPO_OFICIAL } from "@/lib/facturador/codes";
+import { TIPO_OFICIAL, UNIVERSO_COMPROBANTE, universoToOficial } from "@/lib/facturador/codes";
 import { buildFillPlan } from "@/lib/facturador/fill-plan";
 import type { AFIPCredentials, AFIPInvoice } from "@/types/afip-scraper";
 import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
@@ -36,6 +36,10 @@ export interface EmitOpts {
   fecha?: string;
   /** Which company button to click when the AFIP account has multiple representadas (default 0). */
   companyIndex?: number;
+  /** Universo de comprobante (pantalla 0). Default Factura C ("2"). NC = "4". */
+  universo?: string;
+  /** Comprobante asociado (pantalla 2). Requerido para NC. */
+  asociado?: { tipo: string; puntoVenta: string; numero: string; fecha?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +92,7 @@ export async function buildEmissionPreview(
   plantilla: Plantilla,
   opts: EmitOpts = {},
 ): Promise<EmissionPreview> {
-  const { companyIndex = 0, fecha } = opts;
+  const { companyIndex = 0, fecha, universo, asociado } = opts;
   const bundle = await launchBrowser();
 
   try {
@@ -101,12 +105,12 @@ export async function buildEmissionPreview(
 
     const rcelPage = await navigateToEmission(bundle.page, bundle.context, companyIndex);
 
-    const plan = buildFillPlan(plantilla, { fecha });
+    const plan = buildFillPlan(plantilla, { fecha, universo, asociado });
     await fillComprobante(rcelPage, plan, { domicilio: plantilla.cliente.domicilio });
 
     const preview = await capturePreview(rcelPage, {
       puntoVenta: plantilla.puntoDeVenta,
-      tipoComprobante: TIPO_OFICIAL.facturaC,
+      tipoComprobante: universoToOficial(universo ?? UNIVERSO_COMPROBANTE.facturaC) ?? TIPO_OFICIAL.facturaC,
     });
 
     console.log("[AFIP Emit] ✅ Preview captured successfully");
@@ -142,7 +146,7 @@ export async function confirmEmissionFlow(
   plantilla: Plantilla,
   opts: EmitOpts = {},
 ): Promise<EmissionResult> {
-  const { companyIndex = 0, fecha } = opts;
+  const { companyIndex = 0, fecha, universo, asociado } = opts;
   const bundle = await launchBrowser();
 
   try {
@@ -155,13 +159,13 @@ export async function confirmEmissionFlow(
 
     const rcelPage = await navigateToEmission(bundle.page, bundle.context, companyIndex);
 
-    const plan = buildFillPlan(plantilla, { fecha });
+    const plan = buildFillPlan(plantilla, { fecha, universo, asociado });
     await fillComprobante(rcelPage, plan, { domicilio: plantilla.cliente.domicilio });
 
     // Capture preview data (needed for the EmissionResult spread)
     const preview = await capturePreview(rcelPage, {
       puntoVenta: plantilla.puntoDeVenta,
-      tipoComprobante: TIPO_OFICIAL.facturaC,
+      tipoComprobante: universoToOficial(universo ?? UNIVERSO_COMPROBANTE.facturaC) ?? TIPO_OFICIAL.facturaC,
     });
 
     // Confirm — IRREVERSIBLE from this point
