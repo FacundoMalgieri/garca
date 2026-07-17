@@ -5,16 +5,24 @@ import { useCallback, useState } from "react";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { TIPO_OFICIAL } from "@/lib/facturador/codes";
 import type { AFIPInvoice } from "@/types/afip-scraper";
-import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
+import type { EmissionPreview, EmissionResult, Plantilla, StoredInvoice } from "@/types/facturador";
 
-/** Separa el token de Turnstile del resto del payload y arma headers + body. */
-function buildRequest(credsPayload: Record<string, unknown>, plantilla: Plantilla) {
+export type EmitTarget =
+  | { kind?: "facturaC"; plantilla: Plantilla; fecha?: string }
+  | { kind: "notaCreditoC"; original: StoredInvoice; condicionIVA: string };
+
+/** Separa el token de Turnstile del payload y arma headers + body según el target. */
+function buildRequest(credsPayload: Record<string, unknown>, target: EmitTarget) {
   const { turnstileToken, ...creds } = credsPayload;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (typeof turnstileToken === "string" && turnstileToken.length > 0) {
     headers["x-turnstile-token"] = turnstileToken;
   }
-  return { headers, body: JSON.stringify({ ...creds, plantilla }) };
+  const payload =
+    target.kind === "notaCreditoC"
+      ? { ...creds, kind: "notaCreditoC", original: target.original, condicionIVA: target.condicionIVA }
+      : { ...creds, kind: "facturaC", plantilla: target.plantilla };
+  return { headers, body: JSON.stringify(payload) };
 }
 
 export type EmissionPhase = "idle" | "previewing" | "preview" | "confirming" | "done" | "error";
@@ -24,8 +32,8 @@ export interface UseEmissionReturn {
   preview: EmissionPreview | null;
   result: EmissionResult | null;
   error: string | null;
-  startPreview: (plantilla: Plantilla, credsPayload: Record<string, unknown>) => Promise<void>;
-  confirm: (plantilla: Plantilla, credsPayload: Record<string, unknown>) => Promise<void>;
+  startPreview: (target: EmitTarget, credsPayload: Record<string, unknown>) => Promise<void>;
+  confirm: (target: EmitTarget, credsPayload: Record<string, unknown>) => Promise<void>;
   reset: () => void;
 }
 
@@ -52,13 +60,13 @@ export function useEmission(): UseEmissionReturn {
    * On error: moves to "error" with a descriptive message.
    */
   const startPreview = useCallback(
-    async (plantilla: Plantilla, credsPayload: Record<string, unknown>): Promise<void> => {
+    async (target: EmitTarget, credsPayload: Record<string, unknown>): Promise<void> => {
       setPhase("previewing");
       setError(null);
       setPreview(null);
 
       try {
-        const { headers, body } = buildRequest(credsPayload, plantilla);
+        const { headers, body } = buildRequest(credsPayload, target);
         const response = await fetch("/api/arca/emit", { method: "POST", headers, body });
 
         let data: Record<string, unknown>;
@@ -100,13 +108,13 @@ export function useEmission(): UseEmissionReturn {
    * moves to "done".
    */
   const confirm = useCallback(
-    async (plantilla: Plantilla, credsPayload: Record<string, unknown>): Promise<void> => {
+    async (target: EmitTarget, credsPayload: Record<string, unknown>): Promise<void> => {
       setPhase("confirming");
       setError(null);
       setResult(null);
 
       try {
-        const { headers, body } = buildRequest(credsPayload, plantilla);
+        const { headers, body } = buildRequest(credsPayload, target);
         const response = await fetch("/api/arca/emit/confirm", { method: "POST", headers, body });
 
         let data: Record<string, unknown>;
@@ -143,10 +151,11 @@ export function useEmission(): UseEmissionReturn {
         const numeroPart = emissionResult.numeroCompleto?.split("-")[1];
         const numero = numeroPart ? Number.parseInt(numeroPart, 10) : 0;
 
+        const esNC = target.kind === "notaCreditoC";
         const afipInvoice: AFIPInvoice & { emittedByGarca: true } = {
           fecha: todayStr,
-          tipo: "FACTURA C",
-          tipoComprobante: TIPO_OFICIAL.facturaC,
+          tipo: esNC ? "NOTA DE CREDITO C" : "FACTURA C",
+          tipoComprobante: esNC ? TIPO_OFICIAL.notaCreditoC : TIPO_OFICIAL.facturaC,
           puntoVenta: Number(emissionResult.puntoVenta),
           numero,
           numeroCompleto: emissionResult.numeroCompleto,
@@ -155,7 +164,7 @@ export function useEmission(): UseEmissionReturn {
           importeNeto: emissionResult.importeTotal,
           importeTotal: emissionResult.importeTotal,
           importeIVA: 0,
-          moneda: "PES",
+          moneda: "ARS",
           cae: emissionResult.cae,
           vencimientoCae: emissionResult.vencimientoCae,
           cuitEmisor: "",
