@@ -39,7 +39,7 @@ export function ChartsPanel({ monotributoData, ingresosAnuales, isCurrentYearDat
   const [activeTab, setActiveTab] = useState<TabType>("progreso");
 
   const monthlyData = useMemo(() => prepareMonthlyData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
-  const distributionData = useMemo(() => prepareDistributionData(state.invoices), [state.invoices]);
+  const distributionData = useMemo(() => prepareDistributionData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
   const currentCategory = useMemo(
     () => getCurrentCategory(monotributoData, ingresosAnuales),
     [monotributoData, ingresosAnuales]
@@ -254,7 +254,8 @@ function getChartColor(currency: string): string {
 }
 
 function prepareDistributionData(
-  invoices: { tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[]
+  invoices: { tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[],
+  manualRates: Record<string, number> = {}
 ): DistributionDataPoint[] {
   // Group totals by currency dynamically
   const totalsByCurrency: Record<string, number> = {};
@@ -265,7 +266,8 @@ function prepareDistributionData(
     const totalEnPesos = calculateTotalEnPesos(
       invoice.importeTotal,
       currency,
-      invoice.xmlData?.exchangeRate
+      invoice.xmlData?.exchangeRate,
+      manualRates[currency]
     );
 
     if (!totalsByCurrency[currency]) {
