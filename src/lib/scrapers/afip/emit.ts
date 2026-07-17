@@ -14,11 +14,12 @@
 import { Browser, BrowserContext, chromium, Page } from "playwright";
 
 import { TIPO_OFICIAL, UNIVERSO_COMPROBANTE, universoToOficial } from "@/lib/facturador/codes";
+import { formatDMY } from "@/lib/facturador/dates";
 import { buildFillPlan } from "@/lib/facturador/fill-plan";
 import type { AFIPCredentials, AFIPInvoice } from "@/types/afip-scraper";
 import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
 
-import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, USER_AGENT } from "./constants";
+import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, TIMING, USER_AGENT } from "./constants";
 import { confirmEmission, downloadPdf } from "./steps/emission/confirm";
 import { consultarEmitidas } from "./steps/emission/consulta";
 import { fillComprobante } from "./steps/emission/fill";
@@ -168,25 +169,56 @@ export async function confirmEmissionFlow(
       tipoComprobante: universoToOficial(universo ?? UNIVERSO_COMPROBANTE.facturaC) ?? TIPO_OFICIAL.facturaC,
     });
 
-    // Confirm — IRREVERSIBLE from this point
-    const { numeroCompleto, cae, vencimientoCae, idComprobante } = await confirmEmission(rcelPage);
+    // Confirm — IRREVERSIBLE from this point. Deja la página en "Comprobante Generado".
+    const { idComprobante } = await confirmEmission(rcelPage);
 
-    // PDF download is optional / best-effort
-    // TODO(manual-verify): enable after verifying downloadPdf URL path matches live RCEL version.
+    // PDF (best-effort) — se baja ANTES de salir de la pantalla post-emisión.
+    let pdfBase64: string | undefined;
     if (idComprobante) {
-      downloadPdf(rcelPage, idComprobante).catch((err) =>
-        console.warn("[AFIP Emit] PDF download failed (non-critical):", err),
-      );
+      try {
+        const pdf = await downloadPdf(rcelPage, idComprobante);
+        pdfBase64 = pdf.toString("base64");
+      } catch (err) {
+        console.warn("[AFIP Emit] PDF download failed (non-critical):", err);
+      }
+    }
+
+    // CAE + número NO están en la pantalla post-emisión → se leen de Consultas
+    // (verificado en vivo v4.9.9). Consultas no expone Vto CAE (queda en el PDF).
+    const oficial = universoToOficial(universo ?? UNIVERSO_COMPROBANTE.facturaC) ?? TIPO_OFICIAL.facturaC;
+    const consultaFecha = fecha ?? formatDMY(new Date());
+    let numeroCompleto = "";
+    let cae = "";
+    try {
+      // Volver al menú principal para que consultarEmitidas pueda clickear "Consultas".
+      await rcelPage.locator('input[type="button"][value="Menú Principal"]').first().click();
+      await rcelPage.waitForLoadState("networkidle");
+      await rcelPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
+
+      const emitidas = await consultarEmitidas(rcelPage, consultaFecha, consultaFecha);
+      const match = emitidas
+        .filter((i) => i.tipoComprobante === oficial && String(i.puntoVenta) === plantilla.puntoDeVenta)
+        .sort((a, b) => b.numero - a.numero)[0];
+
+      if (match) {
+        numeroCompleto = match.numeroCompleto;
+        cae = match.cae ?? "";
+      } else {
+        console.warn("[AFIP Emit] ⚠️  No se encontró el comprobante recién emitido en Consultas");
+      }
+    } catch (err) {
+      console.warn("[AFIP Emit] Lookup de CAE/número en Consultas falló:", err);
     }
 
     const result: EmissionResult = {
       ...preview,
       numeroCompleto,
       cae,
-      vencimientoCae,
+      vencimientoCae: "",
+      pdfBase64,
     };
 
-    console.log(`[AFIP Emit] ✅ Emission confirmed — CAE: ${cae}, Nro: ${numeroCompleto}`);
+    console.log(`[AFIP Emit] ✅ Emission confirmed — CAE: ${cae || "(pendiente Consultas)"}, Nro: ${numeroCompleto}`);
     return result;
   } finally {
     await closeBrowser(bundle);

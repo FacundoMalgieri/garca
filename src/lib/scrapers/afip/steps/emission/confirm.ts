@@ -1,12 +1,14 @@
 /**
  * ⚠️  IRREVERSIBLE STEP — confirms the RCEL emission and downloads the PDF.
  *
- * confirmEmission() clicks "Confirmar Datos…" on Screen 4. Once clicked a CAE
- * is assigned and the invoice is legally emitted. There is no undo.
+ * Flow mapeado EN VIVO contra RCEL v4.9.9 (2026-07-17, emisión real):
+ *   1. Click "Confirmar Datos..." (input[type=button], onclick=observarOConfirmar()).
+ *   2. Aparece un modal jQuery-UI "Generar Comprobante" → click su botón "Confirmar".
+ *   3. La pantalla pasa a "✅ Comprobante Generado" (misma URL, body actualizado).
+ *   4. `window.idComprobante` queda seteado (se usa para el PDF).
  *
- * Post-emission selectors are best-effort (the live HTML was not captured during
- * spec authoring). All extraction points are marked TODO(manual-verify) so they
- * can be adjusted after the first real run.
+ * ⚠️ CAE y número NO se muestran en esta pantalla — se leen de Consultas
+ * (ver confirmEmissionFlow en emit.ts). Acá solo devolvemos idComprobante.
  */
 
 import type { Page } from "playwright";
@@ -18,12 +20,6 @@ import { ELEMENT_TIMEOUT, TIMING } from "../../constants";
 // ---------------------------------------------------------------------------
 
 export interface ConfirmRaw {
-  /** Formatted invoice number, e.g. "00003-00000001". */
-  numeroCompleto: string;
-  /** CAE code assigned by AFIP. */
-  cae: string;
-  /** CAE expiry date, e.g. "YYYYMMDD" or "DD/MM/YYYY" depending on RCEL version. */
-  vencimientoCae: string;
   /** JS global `idComprobante` value — used to build the PDF download URL. */
   idComprobante: string;
 }
@@ -33,74 +29,44 @@ export interface ConfirmRaw {
 // ---------------------------------------------------------------------------
 
 /**
- * Confirms the emission by clicking "Confirmar Datos…" on Screen 4.
+ * Confirms the emission: clicks "Confirmar Datos…" then the modal's "Confirmar".
  *
  * ⚠️  IRREVERSIBLE — only call this after the user has reviewed the preview.
- *
- * Post-emit extraction is best-effort. The exact selectors depend on the HTML
- * that RCEL renders after CAE assignment, which was not captured live.
- *
- * TODO(manual-verify): run once with a real AFIP account, capture page.content()
- * on the post-emit page, and adjust the extraction regexes/selectors below.
+ * Leaves the page on the post-emit "Comprobante Generado" screen.
  */
 export async function confirmEmission(page: Page): Promise<ConfirmRaw> {
   console.log("[AFIP Facturador] ⚠️  Confirming emission — IRREVERSIBLE");
 
-  // Click "Confirmar Datos..." — RCEL renders it as an input[type=button]
-  // with onclick=observarOConfirmar()
+  // Step 1 — "Confirmar Datos..." (input[type=button], onclick=observarOConfirmar())
   const confirmBtn = page.locator('input[type="button"][value="Confirmar Datos..."]');
   await confirmBtn.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await confirmBtn.click();
 
-  // Wait for post-emit indicator (page should contain "CAE" text)
+  // Step 2 — jQuery-UI modal "Generar Comprobante" → botón "Confirmar".
+  // Es un <button class="ui-button"> con el texto "Confirmar" (no un confirm() nativo).
+  const modalConfirm = page.locator(".ui-dialog button", { hasText: /^\s*Confirmar\s*$/ });
+  await modalConfirm.first().waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
+  await modalConfirm.first().click();
+
+  // Step 3 — esperar el indicador de éxito "Comprobante Generado"
   await page.waitForFunction(
-    () => /CAE/i.test(document.body.textContent ?? ""),
+    () => /Comprobante\s+Generado/i.test(document.body.textContent ?? ""),
     { timeout: ELEMENT_TIMEOUT },
   );
-
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
 
-  const html = await page.content();
-
-  // -----------------------------------------------------------------------
-  // TODO(manual-verify): adjust selectors/regexes after first real emission.
-  // The patterns below are based on common RCEL v4 post-emit page structure
-  // but must be verified against the actual rendered HTML.
-  // -----------------------------------------------------------------------
-
-  // idComprobante — JS global set by RCEL after emission, used for PDF URL
-  // TODO(manual-verify): confirm this global name in post-emit page source
+  // Step 4 — idComprobante (global JS de la pantalla post-emisión)
   const idComprobante = await page
     .evaluate(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const g = window as any;
-      return String(g.idComprobante ?? g.nroComprobante ?? "");
+      return String(g.idComprobante ?? "");
     })
     .catch(() => "");
 
-  // CAE — typically a 14-digit number
-  // TODO(manual-verify): confirm regex pattern matches actual post-emit HTML
-  const caeMatch = /CAE\s*N[°º]?\s*:?\s*(\d{14})/i.exec(html);
-  const cae = caeMatch ? caeMatch[1] : "";
-
-  // Vencimiento CAE
-  // TODO(manual-verify): confirm label and date format in actual post-emit HTML
-  const vtoCaeMatch = /Vencimiento\s+CAE\s*:?\s*([\d/]+)/i.exec(html);
-  const vencimientoCae = vtoCaeMatch ? vtoCaeMatch[1] : "";
-
-  // Número de comprobante (XXXXX-XXXXXXXX format)
-  // TODO(manual-verify): confirm selector/pattern in actual post-emit HTML
-  const nroMatch = /(\d{5}-\d{8})/i.exec(html);
-  const numeroCompleto = nroMatch ? nroMatch[1] : "";
-
-  if (!cae) {
-    console.warn("[AFIP Facturador] ⚠️  CAE not found in post-emit HTML — TODO(manual-verify)");
-  } else {
-    console.log(`[AFIP Facturador] ✅ Emission confirmed — CAE: ${cae}, Nro: ${numeroCompleto}`);
-  }
-
-  return { numeroCompleto, cae, vencimientoCae, idComprobante };
+  console.log(`[AFIP Facturador] ✅ Comprobante generado — idComprobante=${idComprobante}`);
+  return { idComprobante };
 }
 
 // ---------------------------------------------------------------------------
@@ -110,16 +76,13 @@ export async function confirmEmission(page: Page): Promise<ConfirmRaw> {
 /**
  * Downloads the PDF for the just-emitted comprobante.
  *
- * RCEL serves the PDF at imprimirComprobante.do?c=<idComprobante>.
- * We trigger it via page.goto() (same tab) and wait for the download event.
- *
- * TODO(manual-verify): confirm the download URL path and that RCEL doesn't
- * redirect to a different endpoint on this RCEL version.
+ * RCEL serves the PDF at imprimirComprobante.do?c=<idComprobante> (confirmado en
+ * vivo v4.9.9: la navegación directa "aborta" porque dispara una descarga, que es
+ * exactamente lo que captura page.waitForEvent("download")).
  */
 export async function downloadPdf(page: Page, idComprobante: string): Promise<Buffer> {
   console.log(`[AFIP Facturador] Downloading PDF for idComprobante=${idComprobante}...`);
 
-  // TODO(manual-verify): confirm base URL matches current RCEL deployment
   const downloadUrl = `imprimirComprobante.do?c=${idComprobante}`;
 
   const [download] = await Promise.all([
