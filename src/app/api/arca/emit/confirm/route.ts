@@ -10,10 +10,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { withConcurrencyLimit } from "@/lib/concurrency";
 import { decryptCredentials } from "@/lib/crypto";
+import { buildCreditNote } from "@/lib/facturador/credit-note";
 import { confirmEmissionFlow } from "@/lib/scrapers/afip/emit";
 import { performSecurityChecks } from "@/lib/security";
 import type { AFIPCredentials } from "@/types/afip-scraper";
-import type { Plantilla } from "@/types/facturador";
+import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
 /**
  * POST /api/arca/emit/confirm
@@ -42,7 +43,10 @@ export async function POST(request: NextRequest) {
       cuit: encryptedCuit,
       password: encryptedPassword,
       encrypted = false,
+      kind = "facturaC",
       plantilla,
+      original,
+      condicionIVA,
       fecha,
       companyIndex = 0,
     } = body;
@@ -54,17 +58,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Decrypt credentials
     let cuit = encryptedCuit;
     let password = encryptedPassword;
-
     if (encrypted) {
       const decrypted = decryptCredentials(encryptedCuit, encryptedPassword);
       cuit = decrypted.cuit;
       password = decrypted.password;
     }
 
-    // Validate required parameters
     if (!cuit || !password) {
       return NextResponse.json(
         { success: false, error: "CUIT y contraseña son requeridos" },
@@ -72,29 +73,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!plantilla) {
+    // Resolver plantilla + opts según el tipo de comprobante
+    let plantillaFinal = plantilla as Plantilla | undefined;
+    let extraOpts: { universo?: string; asociado?: { tipo: string; puntoVenta: string; numero: string; fecha?: string } } = {};
+
+    if (kind === "notaCreditoC") {
+      if (!original || !condicionIVA) {
+        return NextResponse.json(
+          { success: false, error: "Nota de crédito requiere comprobante original y condición IVA" },
+          { status: 400 }
+        );
+      }
+      const nc = buildCreditNote({ original: original as StoredInvoice, condicionIVA: String(condicionIVA) });
+      plantillaFinal = nc.plantilla;
+      extraOpts = { universo: nc.opts.universo, asociado: nc.opts.asociado };
+    } else if (!plantillaFinal) {
       return NextResponse.json(
         { success: false, error: "Plantilla es requerida" },
         { status: 400 }
       );
     }
 
-    console.log("[AFIP Emit Confirm API] ⚠️  Starting IRREVERSIBLE emission confirm...");
-    console.log("[AFIP Emit Confirm API] Company index:", companyIndex);
-
     const credentials: AFIPCredentials = { cuit, password };
 
-    // Confirm emission with concurrency limit
     const result = await withConcurrencyLimit(() =>
-      confirmEmissionFlow(credentials, plantilla as Plantilla, { fecha, companyIndex })
+      confirmEmissionFlow(credentials, plantillaFinal as Plantilla, { fecha, companyIndex, ...extraOpts })
     );
 
-    console.log("[AFIP Emit Confirm API] ✅ Emission confirmed — CAE:", result.cae, "Nro:", result.numeroCompleto);
-
-    return NextResponse.json({
-      success: true,
-      result,
-    });
+    return NextResponse.json({ success: true, result });
   } catch (error) {
     console.error("[AFIP Emit Confirm API] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Error desconocido";
