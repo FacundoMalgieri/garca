@@ -8,8 +8,10 @@ export interface CreditNoteInput {
   /** La factura a anular (emitida por GARCA o scrapeada). */
   original: StoredInvoice;
   /**
-   * Condición IVA del receptor (código RCEL). Para emitidas por GARCA se pasa la guardada;
-   * para scrapeadas, la elección del usuario (default Consumidor Final "5").
+   * Condición IVA del receptor (código RCEL). GARCA no persiste la condición IVA
+   * del receptor en las facturas conocidas, así que este valor lo provee siempre el
+   * caller: para scrapeadas es la elección del usuario en el modal; para emitidas por
+   * GARCA es el default (Consumidor Final "5") hasta que se persista la real (V2).
    */
   condicionIVA: string;
 }

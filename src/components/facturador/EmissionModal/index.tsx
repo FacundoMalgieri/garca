@@ -65,7 +65,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
     // Defense-in-depth: descartar la clave en plano también al "emitir otra",
     // no solo al cerrar. Se re-ingresa en el próximo preview.
     passwordRef.current = "";
-    setPassword(""); setAgree(false); setTyped(""); setTurnstileToken(null);
+    setPassword(""); setAgree(false); setTyped(""); setTurnstileToken(null); setNcCondIVA(COND_IVA_RECEPTOR.consumidorFinal);
     turnstileRef.current?.reset();
     reset();
   };
