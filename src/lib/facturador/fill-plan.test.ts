@@ -66,4 +66,38 @@ describe("buildFillPlan", () => {
       value: "620100 - SERVICIOS DE CONSULTORES EN INFORMATICA",
     });
   });
+
+  it("pantalla 0: universo override usa el valor pasado (NC = 4)", () => {
+    const plan = buildFillPlan(p, { universo: "4" });
+    expect(plan.pantalla0).toContainEqual({ selector: "#universocomprobante", action: "select", value: "4" });
+  });
+
+  it("pantalla 0: sin universo usa Factura C (2) por default", () => {
+    const plan = buildFillPlan(p, {});
+    expect(plan.pantalla0).toContainEqual({ selector: "#universocomprobante", action: "select", value: "2" });
+  });
+
+  it("pantalla 2: con asociado anexa las acciones de comprobante asociado (tipo por id, resto por name)", () => {
+    const plan = buildFillPlan(p, {
+      universo: "4",
+      asociado: { tipo: "11", puntoVenta: "3", numero: "89", fecha: "10/06/2026" },
+    });
+    expect(plan.pantalla2).toContainEqual({ selector: "#cmp_asoc_tipo", action: "select", value: "11" });
+    expect(plan.pantalla2).toContainEqual({ selector: '[name="cmpAsociadoPtoVta"]', action: "fill", value: "3" });
+    expect(plan.pantalla2).toContainEqual({ selector: '[name="cmpAsociadoNro"]', action: "fill", value: "89" });
+    expect(plan.pantalla2).toContainEqual({ selector: '[name="cmpAsociadoFechaEmision"]', action: "fill", value: "10/06/2026" });
+  });
+
+  it("pantalla 2: asociado sin fecha NO agrega la acción de fecha", () => {
+    const plan = buildFillPlan(p, {
+      universo: "4",
+      asociado: { tipo: "11", puntoVenta: "3", numero: "89" },
+    });
+    expect(plan.pantalla2.some((a) => a.selector === '[name="cmpAsociadoFechaEmision"]')).toBe(false);
+  });
+
+  it("pantalla 2: sin asociado NO agrega campos de comprobante asociado", () => {
+    const plan = buildFillPlan(p, {});
+    expect(plan.pantalla2.some((a) => a.selector === "#cmp_asoc_tipo")).toBe(false);
+  });
 });
