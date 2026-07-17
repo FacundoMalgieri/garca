@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { AnularTab } from "@/components/facturador/AnularTab";
 import { EmissionForm } from "@/components/facturador/EmissionForm";
 import { EmissionModal } from "@/components/facturador/EmissionModal";
 import { EmittedTab } from "@/components/facturador/EmittedTab";
@@ -15,18 +16,20 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { computeAnnualIncome } from "@/lib/facturador/annual-income";
 import { getNextRecategorizacionDates } from "@/lib/projection";
 import { cn } from "@/lib/utils";
-import type { Plantilla } from "@/types/facturador";
+import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
 export default function FacturarPage() {
   const router = useRouter();
   const { state, manualExchangeRates } = useInvoiceContext();
   const { templates, save, remove } = useTemplates();
 
-  const [tab, setTab] = useState<"emitir" | "emitidas">("emitir");
+  const [tab, setTab] = useState<"emitir" | "emitidas" | "anular">("emitir");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [managerOpen, setManagerOpen] = useState(false);
   const [emitOpen, setEmitOpen] = useState(false);
   const [plantillaAEmitir, setPlantillaAEmitir] = useState<Plantilla | null>(null);
+  const [invoiceToVoid, setInvoiceToVoid] = useState<StoredInvoice | null>(null);
+  const [ncOpen, setNcOpen] = useState(false);
 
   const ventana = useMemo(() => getNextRecategorizacionDates()[0].ventana, []);
   const { ingresosAnuales, hasCurrentYearData } = useMemo(
@@ -51,7 +54,7 @@ export default function FacturarPage() {
     );
   }
 
-  const tabBtn = (id: "emitir" | "emitidas", label: string) => (
+  const tabBtn = (id: "emitir" | "emitidas" | "anular", label: string) => (
     <button
       key={id}
       onClick={() => setTab(id)}
@@ -68,9 +71,9 @@ export default function FacturarPage() {
         <span className="text-muted-foreground">¿Otra empresa? Cerrá sesión o usá otra ventana / incógnito para tener otra sesión.</span>
       </div>
 
-      <div className="flex gap-2">{tabBtn("emitir", "Emitir")}{tabBtn("emitidas", "Emitidas")}</div>
+      <div className="flex gap-2">{tabBtn("emitir", "Emitir")}{tabBtn("emitidas", "Emitidas")}{tabBtn("anular", "Anular")}</div>
 
-      {tab === "emitir" ? (
+      {tab === "emitir" && (
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
           <div className="hidden md:block">
             <TemplateSidebar templates={templates} activeId={activeId} onSelect={setActiveId} onManage={() => setManagerOpen(true)} />
@@ -92,8 +95,10 @@ export default function FacturarPage() {
             onSaveAsNew={(p) => { const nombre = p.nombre || (p.cliente.razonSocial ? `Factura ${p.cliente.razonSocial}` : "Nueva plantilla"); save({ ...p, nombre }); }}
           />
         </div>
-      ) : (
-        <EmittedTab />
+      )}
+      {tab === "emitidas" && <EmittedTab />}
+      {tab === "anular" && (
+        <AnularTab onVoid={(inv) => { setInvoiceToVoid(inv); setNcOpen(true); }} />
       )}
 
       <TemplatesManager
@@ -111,6 +116,16 @@ export default function FacturarPage() {
         companyIndex={state.company.index}
         margenDisponible={margenDisponible}
         onClose={() => setEmitOpen(false)}
+      />
+
+      <EmissionModal
+        isOpen={ncOpen}
+        mode="creditNote"
+        invoiceToVoid={invoiceToVoid}
+        cuit={state.company.cuit}
+        companyIndex={state.company.index}
+        margenDisponible={margenDisponible}
+        onClose={() => setNcOpen(false)}
       />
     </div>
   );
