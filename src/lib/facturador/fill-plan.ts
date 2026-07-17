@@ -45,8 +45,18 @@ export function buildFillPlan(p: Plantilla, opts: FillPlanOptions = {}): FillPla
   const pantalla2: FillAction[] = [
     { selector: "#idivareceptor", action: "select", value: p.cliente.condicionIVA },
     { selector: "#idtipodocreceptor", action: "select", value: p.cliente.tipoDoc },
-    { selector: "#nrodocreceptor", action: "lookup", value: p.cliente.nroDoc },
   ];
+  // El `lookup` (escribir + Enter + esperar que el padrón llene #razonsocialreceptor) solo
+  // aplica a CUIT/CUIL con número. Para Consumidor Final sin documento (tipoDoc DNI + nroDoc
+  // vacío) el padrón nunca responde y el wait se colgaría → usar `fill` simple.
+  // (Verificado en vivo v4.9.9: CF con doc vacío se acepta sin lookup.)
+  const puedeLookup =
+    (p.cliente.tipoDoc === "80" || p.cliente.tipoDoc === "86") && p.cliente.nroDoc.trim().length > 0;
+  if (puedeLookup) {
+    pantalla2.push({ selector: "#nrodocreceptor", action: "lookup", value: p.cliente.nroDoc });
+  } else {
+    pantalla2.push({ selector: "#nrodocreceptor", action: "fill", value: p.cliente.nroDoc });
+  }
   for (const fp of p.cliente.condicionVenta) {
     pantalla2.push({ selector: `#formadepago${fp}`, action: "check", value: "true" });
   }

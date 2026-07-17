@@ -36,6 +36,16 @@ describe("buildFillPlan", () => {
     expect(plan.pantalla2).toContainEqual({ selector: "#formadepago6", action: "check", value: "true" });
   });
 
+  it("pantalla 2: Consumidor Final sin documento usa fill (no lookup, que se colgaría)", () => {
+    const cf: Plantilla = {
+      ...p,
+      cliente: { ...p.cliente, condicionIVA: "5", tipoDoc: "96", nroDoc: "" },
+    };
+    const plan = buildFillPlan(cf);
+    expect(plan.pantalla2).toContainEqual({ selector: "#nrodocreceptor", action: "fill", value: "" });
+    expect(plan.pantalla2.some((a) => a.selector === "#nrodocreceptor" && a.action === "lookup")).toBe(false);
+  });
+
   it("pantalla 3: primera línea con descripción, cantidad, unidad, precio", () => {
     const plan = buildFillPlan(p);
     expect(plan.pantalla3).toContainEqual({ selector: "#detalle_descripcion1", action: "fill", value: "Por 120 horas" });

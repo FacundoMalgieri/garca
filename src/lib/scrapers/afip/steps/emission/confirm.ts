@@ -83,11 +83,15 @@ export async function confirmEmission(page: Page): Promise<ConfirmRaw> {
 export async function downloadPdf(page: Page, idComprobante: string): Promise<Buffer> {
   console.log(`[AFIP Facturador] Downloading PDF for idComprobante=${idComprobante}...`);
 
-  const downloadUrl = `imprimirComprobante.do?c=${idComprobante}`;
+  // page.goto exige URL absoluta → resolver la relativa contra la URL actual de RCEL
+  // (la página está en fe.afip.gob.ar/rcel/jsp/... al momento de descargar).
+  const downloadUrl = new URL(`imprimirComprobante.do?c=${idComprobante}`, page.url()).toString();
 
+  // La navegación dispara una descarga → page.goto lanza "Download is starting".
+  // Es esperado: lo ignoramos y nos quedamos con el evento "download".
   const [download] = await Promise.all([
     page.waitForEvent("download", { timeout: ELEMENT_TIMEOUT }),
-    page.goto(downloadUrl, { waitUntil: "commit" }),
+    page.goto(downloadUrl, { waitUntil: "commit" }).catch(() => null),
   ]);
 
   const stream = await download.createReadStream();
