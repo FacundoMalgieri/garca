@@ -29,10 +29,16 @@ describe("buildCreditNote", () => {
     ]);
   });
 
-  it("universo NC (4) y concepto productos, con opts.asociado coercionado a string", () => {
+  it("universo NC (4) y asociado con PV/Nro zero-padded (RCEL exige 5 y 8 dígitos)", () => {
     const { opts } = buildCreditNote({ original: base, condicionIVA: "1" });
     expect(opts.universo).toBe("4");
-    expect(opts.asociado).toEqual({ tipo: "11", puntoVenta: "3", numero: "89", fecha: "10/06/2026" });
+    expect(opts.asociado).toEqual({ tipo: "11", puntoVenta: "00003", numero: "00000089", fecha: "10/06/2026" });
+  });
+
+  it("asociado: padding con números más largos no trunca", () => {
+    const original = { ...base, puntoVenta: 12345, numero: 12345678 };
+    const { opts } = buildCreditNote({ original, condicionIVA: "1" });
+    expect(opts.asociado).toEqual({ tipo: "11", puntoVenta: "12345", numero: "12345678", fecha: "10/06/2026" });
   });
 
   it("concepto productos (evita bloque de período)", () => {

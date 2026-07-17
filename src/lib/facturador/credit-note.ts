@@ -51,8 +51,10 @@ export function buildCreditNote(input: CreditNoteInput): { plantilla: Plantilla;
     universo: UNIVERSO_COMPROBANTE.notaCreditoC,
     asociado: {
       tipo: String(TIPO_OFICIAL.facturaC),
-      puntoVenta: String(original.puntoVenta),
-      numero: String(original.numero),
+      // RCEL valida por longitud (alert nativo on blur): PV = 5 dígitos, Nro = 8 dígitos.
+      // Verificado en vivo contra RCEL v4.9.9 (2026-07-17).
+      puntoVenta: String(original.puntoVenta).padStart(5, "0"),
+      numero: String(original.numero).padStart(8, "0"),
       fecha: original.fecha,
     },
   };

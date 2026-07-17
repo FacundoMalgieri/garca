@@ -29,21 +29,23 @@ if (!cuit || !password) {
   process.exit(1);
 }
 
-// Factura ficticia a "deshacer" (una que exista en tu cuenta; ajustá PV/numero/fecha).
+// Factura a "deshacer": DEBE existir en tu cuenta, sino RCEL rechaza la asociación
+// (valida PV=5 dígitos y Nro=8 dígitos; el padding lo hace buildCreditNote).
+// Ajustá puntoVenta/numero/fecha a una Factura C real tuya (mirá Consultas en RCEL).
 const original: StoredInvoice = {
-  fecha: "10/06/2026",
+  fecha: "17/07/2026",
   tipo: "FACTURA C",
   tipoComprobante: 11,
   puntoVenta: 3,
-  numero: 1,
-  numeroCompleto: "0003-00000001",
+  numero: 89,
+  numeroCompleto: "0003-00000089",
   cuitEmisor: cuit!,
   razonSocialEmisor: "",
-  cuitReceptor: "30707915281",
-  razonSocialReceptor: "GSA COLLECTIONS ARGENTINA SA",
-  importeNeto: 1000,
+  cuitReceptor: "30711437580",
+  razonSocialReceptor: "",
+  importeNeto: 3000000,
   importeIVA: 0,
-  importeTotal: 1000,
+  importeTotal: 3000000,
   moneda: "ARS",
   emittedByGarca: false,
 };
