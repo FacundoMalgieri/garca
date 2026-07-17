@@ -18,7 +18,7 @@ export default function Home() {
       {/* En desktop el hero queda pegado (sticky) bajo el navbar y la sección
           siguiente sube por encima tapándolo (overlap progresivo). overflow-x-clip
           en el wrapper —no hidden— para no romper el sticky. */}
-      <section className="relative z-0 -mt-16 flex items-center overflow-hidden min-h-[100svh] pt-16 sticky top-0">
+      <section className="relative z-0 -mt-16 flex items-center overflow-hidden min-h-[100svh] pt-16 lg:sticky lg:top-0">
         {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
         <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
