@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+
+import { buildCreditNote } from "@/lib/facturador/credit-note";
+import type { StoredInvoice } from "@/types/facturador";
+
+const base: StoredInvoice = {
+  fecha: "10/06/2026",
+  tipo: "FACTURA C",
+  tipoComprobante: 11,
+  puntoVenta: 3,
+  numero: 89,
+  numeroCompleto: "0003-00000089",
+  cuitEmisor: "20354104076",
+  razonSocialEmisor: "MALGIERI FACUNDO ARIEL",
+  cuitReceptor: "30707915281",
+  razonSocialReceptor: "GSA COLLECTIONS ARGENTINA SA",
+  importeNeto: 180000,
+  importeIVA: 0,
+  importeTotal: 180000,
+  moneda: "ARS",
+  emittedByGarca: true,
+};
+
+describe("buildCreditNote", () => {
+  it("arma una línea sintética por el total del original", () => {
+    const { plantilla } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(plantilla.lineas).toEqual([
+      { descripcion: "Anulación Factura C 0003-00000089", cantidad: 1, unidad: "7", precioUnitario: 180000 },
+    ]);
+  });
+
+  it("universo NC (4) y concepto productos, con opts.asociado coercionado a string", () => {
+    const { opts } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(opts.universo).toBe("4");
+    expect(opts.asociado).toEqual({ tipo: "11", puntoVenta: "3", numero: "89", fecha: "10/06/2026" });
+  });
+
+  it("concepto productos (evita bloque de período)", () => {
+    const { plantilla } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(plantilla.concepto).toBe("productos");
+    expect(plantilla.periodo).toBeUndefined();
+  });
+
+  it("receptor: CUIT válido → tipoDoc 80; usa la condicionIVA pasada", () => {
+    const { plantilla } = buildCreditNote({ original: base, condicionIVA: "6" });
+    expect(plantilla.cliente.tipoDoc).toBe("80");
+    expect(plantilla.cliente.nroDoc).toBe("30707915281");
+    expect(plantilla.cliente.razonSocial).toBe("GSA COLLECTIONS ARGENTINA SA");
+    expect(plantilla.cliente.condicionIVA).toBe("6");
+  });
+
+  it("receptor: sin CUIT válido → Consumidor Final sin documento", () => {
+    const original = { ...base, cuitReceptor: "0", razonSocialReceptor: "Consumidor Final" };
+    const { plantilla } = buildCreditNote({ original, condicionIVA: "5" });
+    expect(plantilla.cliente.condicionIVA).toBe("5");
+    expect(plantilla.cliente.nroDoc).toBe("");
+  });
+
+  it("condicionVenta default Contado (1)", () => {
+    const { plantilla } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(plantilla.cliente.condicionVenta).toEqual(["1"]);
+  });
+
+  it("puntoDeVenta de la plantilla = PV del original como string", () => {
+    const { plantilla } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(plantilla.puntoDeVenta).toBe("3");
+  });
+});
