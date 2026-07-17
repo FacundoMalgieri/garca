@@ -7,31 +7,38 @@ import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { useEmission } from "@/hooks/useEmission";
 import { encryptCredentials } from "@/lib/crypto";
+import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { formatDMY } from "@/lib/facturador/dates";
 import { computeTopeAlert } from "@/lib/facturador/tope";
-import type { Plantilla } from "@/types/facturador";
+import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
 interface EmissionModalProps {
   isOpen: boolean;
-  plantilla: Plantilla | null;
+  mode?: "emit" | "creditNote";
+  plantilla?: Plantilla | null;
+  invoiceToVoid?: StoredInvoice | null;
   cuit: string;
   companyIndex: number;
   margenDisponible: number | null;
   onClose: () => void;
 }
 
-export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDisponible, onClose }: EmissionModalProps) {
+export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid, cuit, companyIndex, margenDisponible, onClose }: EmissionModalProps) {
   const { phase, preview, result, error, startPreview, confirm, reset } = useEmission();
   const [mounted, setMounted] = useState(false);
   const [password, setPassword] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [typed, setTyped] = useState("");
+  const [ncCondIVA, setNcCondIVA] = useState<string>(COND_IVA_RECEPTOR.consumidorFinal);
   const passwordRef = useRef<string>("");
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   useEffect(() => setMounted(true), []);
-  if (!isOpen || !mounted || !plantilla) return null;
+  const target = mode === "creditNote" ? invoiceToVoid : plantilla;
+  if (!isOpen || !mounted || !target) return null;
+  const esNC = mode === "creditNote";
+  const necesitaCondIVA = esNC && invoiceToVoid !== null && invoiceToVoid !== undefined && !invoiceToVoid.emittedByGarca;
 
   const buildCreds = (token: string | null) => ({
     ...encryptCredentials(cuit, passwordRef.current),
@@ -40,14 +47,19 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
     turnstileToken: token,
   });
 
+  const buildTarget = () =>
+    esNC
+      ? { kind: "notaCreditoC" as const, original: invoiceToVoid as StoredInvoice, condicionIVA: ncCondIVA }
+      : { kind: "facturaC" as const, plantilla: plantilla as Plantilla };
+
   const handleGeneratePreview = () => {
     passwordRef.current = password;
-    startPreview({ kind: "facturaC", plantilla }, buildCreds(turnstileToken));
+    startPreview(buildTarget(), buildCreds(turnstileToken));
     turnstileRef.current?.reset();
     setTurnstileToken(null);
   };
 
-  const handleConfirm = () => confirm({ kind: "facturaC", plantilla }, buildCreds(turnstileToken));
+  const handleConfirm = () => confirm(buildTarget(), buildCreds(turnstileToken));
 
   const handleReset = () => {
     // Defense-in-depth: descartar la clave en plano también al "emitir otra",
@@ -65,7 +77,7 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
 
   const handleBackdrop = (e: React.MouseEvent) => { if (e.target === e.currentTarget) handleClose(); };
 
-  const tope = preview ? computeTopeAlert(margenDisponible !== null ? { margenDisponible } : null, preview.importeTotal) : null;
+  const tope = !esNC && preview ? computeTopeAlert(margenDisponible !== null ? { margenDisponible } : null, preview.importeTotal) : null;
   const canConfirm = agree && typed.trim().toUpperCase() === "EMITIR" && !!turnstileToken;
   const confirmFailed = phase === "error" && preview !== null;
 
@@ -76,10 +88,21 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
 
         {phase === "idle" && (
           <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">🔒 Reingresá tu clave</h2>
+            <h2 className="text-lg font-semibold mb-2">{esNC ? "🔒 Reingresá tu clave para deshacer" : "🔒 Reingresá tu clave"}</h2>
             <p className="text-sm text-muted-foreground mb-4">Por seguridad no guardamos tu clave fiscal. Reingresala para emitir esta factura; se descarta al terminar.</p>
             <label className="block text-xs text-muted-foreground mb-1">CUIT</label>
             <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground mb-3">{cuit}</div>
+            {necesitaCondIVA && (
+              <div className="mb-3">
+                <label className="block text-xs text-muted-foreground mb-1">Condición frente al IVA del receptor</label>
+                <select data-testid="nc-cond-iva" value={ncCondIVA} onChange={(e) => setNcCondIVA(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                  <option value="5">Consumidor Final</option>
+                  <option value="1">IVA Responsable Inscripto</option>
+                  <option value="6">Responsable Monotributo</option>
+                  <option value="4">IVA Sujeto Exento</option>
+                </select>
+              </div>
+            )}
             <label className="block text-xs text-muted-foreground mb-1">Clave fiscal</label>
             <input data-testid="clave-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-4" />
             <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
@@ -99,8 +122,8 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
         {phase === "preview" && preview && (
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Revisá antes de emitir</h2>
-              <span className="rounded-md bg-muted px-2 py-1 text-xs text-primary dark:text-primary-foreground">FACTURA C · PV {preview.puntoVenta}</span>
+              <h2 className="text-lg font-semibold">{esNC ? "Deshacer factura" : "Revisá antes de emitir"}</h2>
+              <span className="rounded-md bg-muted px-2 py-1 text-xs text-primary dark:text-primary-foreground">{esNC ? "NOTA DE CRÉDITO C · PV " : "FACTURA C · PV "}{preview.puntoVenta}</span>
             </div>
 
             <PreviewBlock title="Emisor" rows={[
@@ -159,8 +182,8 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
             </details>
 
             <div className="rounded-lg border border-[#FF6B5C]/50 bg-[#FF6B5C]/10 p-4">
-              <p className="text-sm font-medium text-[#FF6B5C] mb-2">⚠️ Esto es REAL. Se emite en tu punto de venta {preview.puntoVenta} y no se puede deshacer (solo con una Nota de Crédito).</p>
-              <p data-testid="modal-total" className="text-center text-2xl font-extrabold mb-3">Vas a emitir ${formatCurrency(preview.importeTotal)}</p>
+              <p className="text-sm font-medium text-[#FF6B5C] mb-2">{esNC ? "⚠️ Esto emite una Nota de Crédito real e irreversible." : `⚠️ Esto es REAL. Se emite en tu punto de venta ${preview.puntoVenta} y no se puede deshacer (solo con una Nota de Crédito).`}</p>
+              <p data-testid="modal-total" className="text-center text-2xl font-extrabold mb-3">{esNC ? "Vas a emitir una NC por $" : "Vas a emitir $"}{formatCurrency(preview.importeTotal)}</p>
               <label className="flex items-start gap-2 text-sm mb-2 cursor-pointer">
                 <input data-testid="confirm-check" type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5" />
                 <span>Confirmo que revisé los datos y quiero emitir esta factura real.</span>
@@ -170,7 +193,7 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
               <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
               <div className="flex gap-2 mt-3">
                 <button onClick={handleClose} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Cancelar</button>
-                <button onClick={handleConfirm} disabled={!canConfirm} className="flex-[2] rounded-lg bg-[#FF6B5C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#FF6B5C]/90 disabled:opacity-50 cursor-pointer">Emitir factura</button>
+                <button onClick={handleConfirm} disabled={!canConfirm} className="flex-[2] rounded-lg bg-[#FF6B5C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#FF6B5C]/90 disabled:opacity-50 cursor-pointer">{esNC ? "Emitir Nota de Crédito" : "Emitir factura"}</button>
               </div>
             </div>
           </div>
@@ -179,7 +202,7 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
         {phase === "done" && result && (
           <div className="p-6 text-center">
             <div className="text-4xl mb-2">✅</div>
-            <p className="font-semibold text-emerald-600 dark:text-emerald-400">Factura emitida</p>
+            <p className="font-semibold text-emerald-600 dark:text-emerald-400">{esNC ? "Nota de crédito emitida" : "Factura emitida"}</p>
             <p className="text-2xl font-bold my-2">{result.numeroCompleto}</p>
             <div className="mx-auto max-w-xs rounded-lg border border-border p-3 text-sm space-y-1 text-left">
               <div className="flex justify-between"><span className="text-muted-foreground">CAE</span><span>{result.cae}</span></div>
