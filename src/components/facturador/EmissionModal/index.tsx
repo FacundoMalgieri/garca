@@ -42,12 +42,12 @@ export function EmissionModal({ isOpen, plantilla, cuit, companyIndex, margenDis
 
   const handleGeneratePreview = () => {
     passwordRef.current = password;
-    startPreview(plantilla, buildCreds(turnstileToken));
+    startPreview({ kind: "facturaC", plantilla }, buildCreds(turnstileToken));
     turnstileRef.current?.reset();
     setTurnstileToken(null);
   };
 
-  const handleConfirm = () => confirm(plantilla, buildCreds(turnstileToken));
+  const handleConfirm = () => confirm({ kind: "facturaC", plantilla }, buildCreds(turnstileToken));
 
   const handleReset = () => {
     // Defense-in-depth: descartar la clave en plano también al "emitir otra",
