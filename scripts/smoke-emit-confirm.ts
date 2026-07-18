@@ -1,9 +1,13 @@
 /**
  * ⚠️  SMOKE QUE EMITE DE VERDAD — valida el path completo de confirmEmissionFlow
- * (confirm.ts + emit.ts) contra RCEL real, desde el CÓDIGO.
+ * (confirm.ts + emit.ts) contra RCEL real, desde el CÓDIGO, pasando por el
+ * idempotencyStore (Contrato A) igual que el route de prod.
  *
  * Emite una Factura C de $1 a Consumidor Final y luego una Nota de Crédito que la
- * cancela, ambas vía confirmEmissionFlow (el mismo camino que usa la app en prod).
+ * cancela, ambas vía `store.run(key, () => confirmEmissionFlow(...))`. Además, tras
+ * cada emisión re-corre `store.run` con la MISMA key y verifica que:
+ *   - confirmEmissionFlow se invocó UNA sola vez (no re-emite), y
+ *   - el segundo run devuelve el MISMO resultado cacheado.
  * Imprime numeroCompleto + CAE (leídos de Consultas) + tamaño del PDF (base64).
  *
  * IRREVERSIBLE. Requiere env explícito para correr:
@@ -11,8 +15,9 @@
  */
 import { buildCreditNote } from "../src/lib/facturador/credit-note";
 import { formatDMY } from "../src/lib/facturador/dates";
+import { createIdempotencyStore } from "../src/lib/facturador/idempotency";
 import { confirmEmissionFlow } from "../src/lib/scrapers/afip/emit";
-import type { Plantilla, StoredInvoice } from "../src/types/facturador";
+import type { EmissionResult, Plantilla, StoredInvoice } from "../src/types/facturador";
 
 const cuit = process.env.AFIP_CUIT;
 const password = process.env.AFIP_PASS;
@@ -41,9 +46,42 @@ const facturaPlantilla: Plantilla = {
   lineas: [{ descripcion: "Prueba GARCA confirm - anular", cantidad: 1, unidad: "7", precioUnitario: 1 }],
 };
 
+const creds = { cuit: cuit!, password: password! };
+
+/**
+ * Corre `confirmEmissionFlow` bajo el store con una key, luego re-corre con la
+ * MISMA key y verifica que la operación real se ejecutó una sola vez (no re-emite)
+ * y que el segundo run devuelve el resultado cacheado idéntico.
+ */
+async function emitirIdempotente(
+  label: string,
+  plantilla: Plantilla,
+  opts: Parameters<typeof confirmEmissionFlow>[2]
+): Promise<EmissionResult> {
+  const store = createIdempotencyStore<EmissionResult>();
+  const key = crypto.randomUUID();
+  let calls = 0;
+  const op = () => {
+    calls += 1;
+    return confirmEmissionFlow(creds, plantilla, opts);
+  };
+
+  const first = await store.run(key, op);
+  const second = await store.run(key, op); // misma key → NO debe re-emitir
+
+  if (calls !== 1) {
+    throw new Error(`${label}: idempotencia ROTA — confirmEmissionFlow se ejecutó ${calls} veces (esperado 1). Se pudo haber emitido un duplicado.`);
+  }
+  if (first !== second) {
+    throw new Error(`${label}: el segundo run devolvió un objeto distinto (esperado el resultado cacheado).`);
+  }
+  console.log(`   ✓ idempotencia OK (${label}): 2 store.run, 1 sola emisión real.`);
+  return first;
+}
+
 async function main() {
-  console.log("→ [1/2] Emitiendo Factura C $1 Consumidor Final (REAL)...");
-  const fact = await confirmEmissionFlow({ cuit: cuit!, password: password! }, facturaPlantilla, {});
+  console.log("→ [1/2] Emitiendo Factura C $1 Consumidor Final (REAL, vía idempotencyStore)...");
+  const fact = await emitirIdempotente("factura", facturaPlantilla, {});
   console.log("   Factura:", {
     numeroCompleto: fact.numeroCompleto,
     cae: fact.cae,
@@ -75,8 +113,8 @@ async function main() {
   };
 
   const { plantilla, opts } = buildCreditNote({ original, condicionIVA: "5" });
-  console.log(`→ [2/2] Emitiendo Nota de Crédito que cancela ${fact.numeroCompleto} (REAL)...`);
-  const nc = await confirmEmissionFlow({ cuit: cuit!, password: password! }, plantilla, opts);
+  console.log(`→ [2/2] Emitiendo Nota de Crédito que cancela ${fact.numeroCompleto} (REAL, vía idempotencyStore)...`);
+  const nc = await emitirIdempotente("nota-credito", plantilla, opts);
   console.log("   Nota de Crédito:", {
     numeroCompleto: nc.numeroCompleto,
     cae: nc.cae,
