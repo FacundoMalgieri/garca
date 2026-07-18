@@ -107,6 +107,76 @@ Descubierto emitiendo de verdad por Chrome MCP. Antes de correr el flujo desde c
 
 **Próximo paso:** aplicar fixes 1-5 y correr el flujo desde código (empezando por `smoke-nc-preview.ts`, ya con el padding corregido).
 
+## ✅ Validación de emisión REAL desde código (2026-07-17) — confirm.ts OK
+
+Corrido `scripts/smoke-emit-confirm.ts` (EMIT_REAL=1) → `confirmEmissionFlow` end-to-end contra RCEL real:
+emitió **Factura C 0003-00000091** (CAE 86294319907270) y **NC 0003-00000004** (CAE 86294320072368) que la
+asocia/cancela. Todo el flujo reescrito (modal jQuery-UI, "Comprobante Generado", idComprobante, CAE vía
+Consultas) funcionó. PDF validado aparte: 83.403 bytes, header `%PDF-`.
+
+Dos bugs MÁS que encontró el code-run (que el run manual ocultó) — ya corregidos (commit 540cdb4):
+- **`fill-plan.ts`**: el `lookup` de padrón sobre `#nrodocreceptor` se colgaba para Consumidor Final sin
+  documento (esperaba una razón social que nunca llega). Ahora `lookup` solo si tipoDoc CUIT/CUIL + nroDoc
+  no vacío; si no, `fill` simple.
+- **`confirm.ts downloadPdf`**: `page.goto` exige URL absoluta (la relativa daba "invalid URL") y lanza
+  "Download is starting" (hay que ignorarlo y quedarse con el evento `download`). Ambos corregidos.
+
+**Limitación conocida restante:** `vencimientoCae` queda vacío (Consultas no expone la columna Vto CAE; está
+en el PDF). No bloqueante. Parsearlo del PDF = V2.
+
+**Estado: facturador COMPLETO y validado con emisiones reales (Factura C + NC).** Comprobantes de prueba de
+$1 quedaron en la cuenta (se cancelan entre sí).
+
+## ✅ Ronda de hardening post-review (2026-07-18) — 933 tests verdes
+
+Tras completar el facturador se corrió un **review adversarial exhaustivo** (3 agentes Opus: backend,
+hooks, UI) sobre todo el trabajo del branch. Los hallazgos se convirtieron en un plan multi-subagente
+(`plans/2026-07-18-facturador-review-fixes.md`, gitignored) con 6 workstreams file-disjuntos + 2 contratos
+pinneados, **criticado y endurecido por un 4º agente Opus** antes de ejecutar, y luego implementado por 6
+agentes Opus en paralelo. Coordinator (sesión principal) integró y verificó: typecheck + lint (0 errores) +
+**suite completa 933 tests verdes** (baseline 871 → +62). Commits `d65a69a`..`7298614`, branch mantenida sin push.
+
+**El hallazgo central: cadena de doble-emisión (documento fiscal irreversible), cerrada por 3 lados:**
+- **WS2 `useEmission`** (`1f304ec`): `inFlightRef` (early-return si un confirm ya está en vuelo) +
+  `idempotencyKey` estable en `useRef` que cambia SOLO en `startPreview` y **sobrevive los reintentos
+  post-error** (`reset()` no la toca) → un "Reintentar" manda la misma key.
+- **WS1 backend** (`d65a69a`): `idempotencyStore` server-side (`lib/facturador/idempotency.ts`, puro+testeado)
+  en el route de confirm — misma key devuelve el result cacheado en vez de re-emitir. Limitación serverless
+  (Map por-instancia) documentada.
+- **WS5 modal** (`7a0caeb`): "Reintentar" post-confirm re-llama `confirm()` (misma key), no `reset()`/`startPreview`.
+- **Estado "CAE pendiente"** (Contrato B): emisión con `cae:""` (Consultas no resolvió) se muestra como
+  "Emitida — CAE pendiente", NUNCA como error → el usuario no reenvía.
+- Smoke `smoke-emit-confirm.ts` (`7298614`) reescrito para emitir vía `store.run` y verificar en vivo que
+  re-correr con la misma key **no re-emite** (2 store.run → 1 emisión real).
+
+**Otros fixes de la ronda:**
+- **WS1** (`d65a69a`): resolución de CAE robusta (`pickEmittedMatch`, compare de PV **numérico** — arreglaba
+  el bug de padding que dejaba `cae:""`); `validateEmitBody` (whitelist de `kind` + validación server-side,
+  400 antes de abrir browser); error genérico al cliente (sin volcar mensajes crudos de RCEL).
+- **WS3 `useInvoices`** (`dd3d01d`): `mergeFetchedInvoices` — un re-fetch de ARCA ya no pisa las facturas
+  emitidas por GARCA (el row autoritativo con CAE gana sobre el placeholder; reconcilia el caso CAE-pendiente
+  sin duplicar; preserva la emitida aún no indexada). `garca_pdv` corrupto aislado en su try/catch (ya no
+  deslogueaba al usuario).
+- **WS4 parsers** (`a58a555`): `parseARNumber` punto/coma robusto (un punto → decimal `"10.00"→10`; múltiples
+  puntos → miles `"1.234.567"→1234567`, evita NaN); `buildCreditNote` deriva `asociado.tipo` y el texto del
+  `tipoComprobante` real del original (ya no hardcodea Factura C).
+- **WS5 modales** (`7a0caeb`): a11y de teclado (`useModalA11y`: Esc, focus trap, foco inicial+restore,
+  aria-labelledby); backdrop-close arreglado (el overlay comía el click); copy del gate NC-aware; test de
+  descarga de PDF.
+- **WS6 form/landing** (`54217a6`): inputs numéricos sin `$NaN`; guard que no deja emitir con PV export-only
+  (evita el cuelgue de 60s); tests de alto riesgo (auto tipoDoc DNI para Consumidor Final, gate de validación,
+  PV auto-select); `FacturadorSection` respeta `prefers-reduced-motion`.
+- **Coordinator** (`929e700`): globals de browser en `eslint.config.mjs` (`crypto`, `Element`,
+  `KeyboardEvent`, `MediaQueryListEvent`).
+
+**Verificado limpio en el review (sin acción):** sin XSS (todo por text nodes; PDF vía `data:` URL); CSP sin
+bypass LAN ni `http:`; rutas emit igual de protegidas que invoices (rate-limit → bot → Turnstile); la clave
+nunca se persiste/loguea.
+
+**Fuera de alcance (documentado):** idempotencia cross-instance real (Redis/KV) y rate-limit distribuido (M5);
+persistir condición IVA real del receptor para NC; hash del preview re-validado antes de confirmar; listener
+`storage` multi-tab.
+
 ## Decisiones/constraints clave para la UI
 - Feature **solo logueados**. Pass en memoria → transparente; sesión fresca → re-login (no se guarda).
 - El **preview es la red de seguridad**: mostrar TODO lo que se va a emitir; confirmación deliberada.
