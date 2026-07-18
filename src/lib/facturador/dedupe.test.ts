@@ -7,7 +7,7 @@ function inv(partial: Partial<AFIPInvoice>): AFIPInvoice {
   return {
     fecha: "03/07/2026", tipo: "FACTURA C", tipoComprobante: 11,
     puntoVenta: 3, numero: 88, numeroCompleto: "00003-00000088",
-    cuitEmisor: "20354104076", razonSocialEmisor: "YO",
+    cuitEmisor: "20301234563", razonSocialEmisor: "YO",
     cuitReceptor: "30707915281", razonSocialReceptor: "GSA",
     importeNeto: 3500000, importeIVA: 0, importeTotal: 3500000, moneda: "PES",
     ...partial,
@@ -55,13 +55,13 @@ describe("mergeFetchedInvoices", () => {
     // Row scrapeado de AFIP: mismo CAE, datos reales.
     const autoritativo = inv({
       cae: "70000000000001",
-      cuitEmisor: "20354104076",
+      cuitEmisor: "20301234563",
       importeIVA: 12345,
     });
     const merged = mergeFetchedInvoices([placeholder], [autoritativo]);
     expect(merged).toHaveLength(1);
     // Gana el dato autoritativo...
-    expect(merged[0].cuitEmisor).toBe("20354104076");
+    expect(merged[0].cuitEmisor).toBe("20301234563");
     expect(merged[0].importeIVA).toBe(12345);
     // ...pero conserva el marcador para la pestaña "Emitidas".
     expect((merged[0] as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);

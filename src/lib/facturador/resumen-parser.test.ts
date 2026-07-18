@@ -17,7 +17,7 @@ describe("parseResumen", () => {
   });
 
   it("datos del emisor (incluye período y vto)", () => {
-    expect(preview.emisor.razonSocial).toBe("MALGIERI FACUNDO ARIEL");
+    expect(preview.emisor.razonSocial).toBe("PEREZ JUAN CARLOS");
     expect(preview.emisor.puntoVenta).toBe("00003");
     expect(preview.emisor.concepto).toBe("Servicios");
     expect(preview.emisor.periodoDesde).toBe("01/06/2026");
@@ -27,7 +27,7 @@ describe("parseResumen", () => {
 
   it("datos del receptor (scopeados, no confunde con el emisor)", () => {
     expect(preview.receptor.razonSocial).toBe("GSA COLLECTIONS ARGENTINA SA");
-    expect(preview.receptor.razonSocial).not.toContain("MALGIERI");
+    expect(preview.receptor.razonSocial).not.toContain("PEREZ");
     expect(preview.receptor.cuit).toBe("30707915281");
     expect(preview.receptor.domicilio).toContain("Belgrano 2687");
     expect(preview.receptor.condicionIVA).toBe("IVA Responsable Inscripto");

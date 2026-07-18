@@ -5,7 +5,7 @@ import { validateCuit } from "@/lib/facturador/cuit";
 describe("validateCuit", () => {
   it("acepta un CUIT válido", () => {
     expect(validateCuit("30707915281")).toBe(true);
-    expect(validateCuit("20354104076")).toBe(true);
+    expect(validateCuit("20301234563")).toBe(true);
   });
 
   it("acepta CUIT con guiones/espacios", () => {

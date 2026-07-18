@@ -17,7 +17,7 @@ vi.mock("@/components/facturador/EmittedTab", () => ({ EmittedTab: () => <div>em
 
 beforeEach(() => {
   vi.clearAllMocks();
-  ctx = { state: { isHydrated: true, company: { cuit: "20354104076", razonSocial: "GSA SA", index: 2 }, invoices: [] }, manualExchangeRates: {} };
+  ctx = { state: { isHydrated: true, company: { cuit: "20301234563", razonSocial: "GSA SA", index: 2 }, invoices: [] }, manualExchangeRates: {} };
 });
 
 describe("FacturarPage", () => {

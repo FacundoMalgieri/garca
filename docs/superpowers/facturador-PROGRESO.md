@@ -49,7 +49,7 @@ Fase 1 completa end-to-end vía `scripts/smoke-emit-preview.ts` (headful/headles
 login → navegación → llenar 4 pantallas → **lookup de padrón** (trae "GSA COLLECTIONS ARGENTINA SA")
 → Resumen → **`EmissionPreview` completo** (emisor+receptor+líneas+totales) parseado OK. Frena sin confirmar.
 
-Correr: `AFIP_CUIT=20354104076 AFIP_PASS='clave' npx tsx scripts/smoke-emit-preview.ts` (HEADLESS=1 opcional).
+Correr: `AFIP_CUIT=20301234563 AFIP_PASS='clave' npx tsx scripts/smoke-emit-preview.ts` (HEADLESS=1 opcional).
 
 ## ✅ Plan 4 — Notas de Crédito ("Deshacer") — COMPLETADO (2026-07-17)
 

@@ -38,7 +38,7 @@ const RESULT: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000089", c
 const RESULT_PDF: EmissionResult = { ...RESULT, pdfBase64: "JVBERi0xLjQK" };
 const RESULT_PENDING: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000090", cae: "", vencimientoCae: "" };
 
-const baseProps = { isOpen: true, plantilla: PLANTILLA, cuit: "20354104076", companyIndex: 2, margenDisponible: 2540000, onClose: vi.fn() };
+const baseProps = { isOpen: true, plantilla: PLANTILLA, cuit: "20301234563", companyIndex: 2, margenDisponible: 2540000, onClose: vi.fn() };
 
 const BASE_INV = {
   fecha: "10/06/2026", tipo: "FACTURA C", tipoComprobante: 11, puntoVenta: 3, numero: 89,
@@ -47,7 +47,7 @@ const BASE_INV = {
 };
 const SCRAPED_INV = BASE_INV as never;
 const OWN_INV = { ...BASE_INV, emittedByGarca: true } as never;
-const ncProps = { isOpen: true, mode: "creditNote" as const, cuit: "20354104076", companyIndex: 0, margenDisponible: 2540000, onClose: vi.fn() };
+const ncProps = { isOpen: true, mode: "creditNote" as const, cuit: "20301234563", companyIndex: 0, margenDisponible: 2540000, onClose: vi.fn() };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,7 +62,7 @@ describe("EmissionModal", () => {
   it("fase clave: muestra CUIT readonly y pide clave", () => {
     render(<EmissionModal {...baseProps} />);
     expect(screen.getByText(/reingresá tu clave/i)).toBeInTheDocument();
-    expect(screen.getByText(/20354104076/)).toBeInTheDocument();
+    expect(screen.getByText(/20301234563/)).toBeInTheDocument();
   });
   it("genera preview con creds encriptadas + token + companyIndex", () => {
     render(<EmissionModal {...baseProps} />);
@@ -72,7 +72,7 @@ describe("EmissionModal", () => {
     expect(startPreview).toHaveBeenCalledTimes(1);
     const [targetArg, creds] = startPreview.mock.calls[0];
     expect(targetArg).toEqual({ kind: "facturaC", plantilla: PLANTILLA });
-    expect(creds).toMatchObject({ cuit: "e:20354104076", password: "e:mi-clave", encrypted: true, turnstileToken: "TS-TOKEN", companyIndex: 2 });
+    expect(creds).toMatchObject({ cuit: "e:20301234563", password: "e:mi-clave", encrypted: true, turnstileToken: "TS-TOKEN", companyIndex: 2 });
   });
   it("fase preview: muestra emisor, receptor, líneas, total y alerta de tope", () => {
     mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
