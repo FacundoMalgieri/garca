@@ -46,7 +46,6 @@ describe("facturador types", () => {
       subtotal: 3500000,
       importeOtrosTributos: 0,
       importeTotal: 3500000,
-      html: "<html/>",
     };
     const result: EmissionResult = { ...preview, numeroCompleto: "00003-00000089", cae: "123", vencimientoCae: "13/07/2026" };
     expect(result.cae).toBe("123");

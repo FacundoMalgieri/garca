@@ -74,8 +74,8 @@ async function main() {
     });
 
     console.log("\n===== PREVIEW COMPLETO (Resumen real de RCEL) =====");
-    // Todo lo estructurado (lo que el modal propio va a mostrar); el html crudo se abrevia.
-    console.log(JSON.stringify({ ...preview, html: `[${preview.html.length} chars — Resumen crudo completo]` }, null, 2));
+    // Todo lo estructurado (lo que el modal propio va a mostrar).
+    console.log(JSON.stringify(preview, null, 2));
     console.log("===================================================\n");
     console.log("⚠️  NO se confirmó nada. Cerrando en 10s (mirá la ventana en el Resumen).");
     await rcel.waitForTimeout(10000);

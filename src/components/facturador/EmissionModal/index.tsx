@@ -178,11 +178,6 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
               </div>
             )}
 
-            <details className="rounded-lg border border-border bg-background p-2 text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Ver comprobante crudo de RCEL (auditoría)</summary>
-              <div className="mt-2 max-h-64 overflow-auto" dangerouslySetInnerHTML={{ __html: preview.html }} />
-            </details>
-
             <div className="rounded-lg border border-[#FF6B5C]/50 bg-[#FF6B5C]/10 p-4">
               <p className="text-sm font-medium text-[#FF6B5C] mb-2">{esNC ? "⚠️ Esto emite una Nota de Crédito real e irreversible." : `⚠️ Esto es REAL. Se emite en tu punto de venta ${preview.puntoVenta} y no se puede deshacer (solo con una Nota de Crédito).`}</p>
               <p data-testid="modal-total" className="text-center text-2xl font-extrabold mb-3">{esNC ? "Vas a emitir una NC por $" : "Vas a emitir $"}{formatCurrency(preview.importeTotal)}</p>
@@ -244,13 +239,17 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
 }
 
 function PreviewBlock({ title, rows }: { title: string; rows: [string, string][] }) {
+  // Ocultamos filas sin valor (ej. un Consumidor Final no tiene CUIT/razón social/
+  // domicilio/email) para que el bloque no muestre etiquetas vacías.
+  const visibleRows = rows.filter(([, v]) => v != null && v.trim() !== "" && v.trim() !== "—");
+  if (visibleRows.length === 0) return null;
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <p className="text-xs uppercase tracking-wide text-primary dark:text-primary-foreground mb-2">{title}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between border-b border-dashed border-border py-1">
-            <span className="text-muted-foreground">{k}</span><span className="text-right">{v}</span>
+        {visibleRows.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4 border-b border-dashed border-border py-1">
+            <span className="text-muted-foreground shrink-0">{k}</span><span className="text-right break-words">{v}</span>
           </div>
         ))}
       </div>

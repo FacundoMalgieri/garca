@@ -111,7 +111,6 @@ export interface PreviewReceptor {
 /**
  * Datos COMPLETOS parseados del Resumen de RCEL (preview real, antes de confirmar).
  * Estructura todo lo que el usuario va a emitir para poder mostrarlo en un diseño propio.
- * `html` conserva el Resumen crudo por si se quiere render 100% fiel.
  */
 export interface EmissionPreview {
   puntoVenta: string;
@@ -122,8 +121,6 @@ export interface EmissionPreview {
   subtotal: number;
   importeOtrosTributos: number;
   importeTotal: number;
-  /** HTML crudo del Resumen para auditoría / render fiel opcional. */
-  html: string;
 }
 
 /** Resultado de una emisión confirmada. */
