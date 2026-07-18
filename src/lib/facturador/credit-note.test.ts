@@ -71,4 +71,24 @@ describe("buildCreditNote", () => {
     const { plantilla } = buildCreditNote({ original: base, condicionIVA: "1" });
     expect(plantilla.puntoDeVenta).toBe("3");
   });
+
+  it("[M4] NC contra Factura C: asociado.tipo=11 y línea 'Anulación Factura C'", () => {
+    const { plantilla, opts } = buildCreditNote({ original: base, condicionIVA: "1" });
+    expect(opts.asociado!.tipo).toBe("11");
+    expect(plantilla.lineas[0].descripcion).toBe("Anulación Factura C 0003-00000089");
+  });
+
+  it("[M4] NC contra Nota de Débito C: asociado.tipo=12 y línea con el tipo real", () => {
+    const original: StoredInvoice = { ...base, tipo: "NOTA DE DEBITO C", tipoComprobante: 12 };
+    const { plantilla, opts } = buildCreditNote({ original, condicionIVA: "1" });
+    expect(opts.asociado!.tipo).toBe("12");
+    expect(plantilla.lineas[0].descripcion).toBe("Anulación Nota de Débito C 0003-00000089");
+  });
+
+  it("[M4] asociado.tipo deriva del original, no hardcodea Factura C", () => {
+    const original: StoredInvoice = { ...base, tipoComprobante: 13 };
+    const { plantilla, opts } = buildCreditNote({ original, condicionIVA: "1" });
+    expect(opts.asociado!.tipo).toBe("13");
+    expect(plantilla.lineas[0].descripcion).toBe("Anulación Nota de Crédito C 0003-00000089");
+  });
 });

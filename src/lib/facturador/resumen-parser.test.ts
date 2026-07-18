@@ -46,3 +46,44 @@ describe("parseResumen", () => {
     expect(l.subtotal).toBe(1000);
   });
 });
+
+// Regresión [WS4]: parseARNumber robusto debe funcionar en el resumen tanto para el
+// decimal de un solo punto de "% Bon." ("10.00"→10) como para miles con múltiples
+// puntos en precios/totales ("1.234.567"→1234567, NO NaN).
+describe("parseResumen — formatos de número (regresión parseARNumber)", () => {
+  const detalleRow =
+    `<tr class="jig_par">` +
+    `<td>001</td>` +
+    `<td>Servicio</td>` +
+    `<td>1,00</td>` +
+    `<td>unidades</td>` +
+    `<td>1.234.567</td>` + // precioUnitario: miles con múltiples puntos
+    `<td>10.00</td>` + // % Bon.: decimal de un solo punto
+    `<td>0,00</td>` +
+    `<td>1.234.567</td>` + // subtotal: miles
+    `</tr>`;
+  const htmlInline =
+    `<h3>Datos del Emisor</h3>` +
+    `<h3>Datos del Receptor</h3>` +
+    `<h3>Detalle de la Operación</h3>` +
+    `<table class="jig_table"><tr><th>Producto/Servicio</th></tr>${detalleRow}</table>` +
+    `<th>Subtotal:</th><td>1.234.567,00</td>` +
+    `<th>Importe Otros Tributos</th><td>0,00</td>` +
+    `<th>Importe Total</th><td>1.234.567,00</td>`;
+  const p = parseResumen(htmlInline, { puntoVenta: "3", tipoComprobante: 11 });
+
+  it("% Bon. de un solo punto se lee como decimal, no NaN", () => {
+    expect(p.lineas[0].porcentajeBonificacion).toBe(10);
+  });
+
+  it("precio/subtotal con múltiples puntos se leen como miles (no NaN)", () => {
+    expect(p.lineas[0].precioUnitario).toBe(1234567);
+    expect(p.lineas[0].subtotal).toBe(1234567);
+  });
+
+  it("totales con miles + decimal AR", () => {
+    expect(p.subtotal).toBe(1234567);
+    expect(p.importeTotal).toBe(1234567);
+    expect(p.importeOtrosTributos).toBe(0);
+  });
+});

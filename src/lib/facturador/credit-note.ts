@@ -3,6 +3,20 @@ import { validateCuit } from "@/lib/facturador/cuit";
 import type { FillPlanOptions } from "@/lib/facturador/fill-plan";
 import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
+/** Etiqueta legible del comprobante original (código oficial RCEL) para el texto de la NC. */
+function tipoOficialLabel(codigo: number): string {
+  switch (codigo) {
+    case TIPO_OFICIAL.facturaC:
+      return "Factura C";
+    case TIPO_OFICIAL.notaDebitoC:
+      return "Nota de Débito C";
+    case TIPO_OFICIAL.notaCreditoC:
+      return "Nota de Crédito C";
+    default:
+      return "Comprobante";
+  }
+}
+
 /** Datos mínimos para armar una NC total a partir de una factura conocida. */
 export interface CreditNoteInput {
   /** La factura a anular (emitida por GARCA o scrapeada). */
@@ -24,6 +38,7 @@ export function buildCreditNote(input: CreditNoteInput): { plantilla: Plantilla;
   const { original, condicionIVA } = input;
 
   const esCuitValido = validateCuit(original.cuitReceptor);
+  const labelOriginal = tipoOficialLabel(original.tipoComprobante);
 
   const plantilla: Plantilla = {
     id: `nc-${original.numeroCompleto}`,
@@ -39,7 +54,7 @@ export function buildCreditNote(input: CreditNoteInput): { plantilla: Plantilla;
     },
     lineas: [
       {
-        descripcion: `Anulación Factura C ${original.numeroCompleto}`,
+        descripcion: `Anulación ${labelOriginal} ${original.numeroCompleto}`,
         cantidad: 1,
         unidad: UNIDAD_MEDIDA.unidades,
         precioUnitario: original.importeTotal,
@@ -50,7 +65,8 @@ export function buildCreditNote(input: CreditNoteInput): { plantilla: Plantilla;
   const opts: FillPlanOptions = {
     universo: UNIVERSO_COMPROBANTE.notaCreditoC,
     asociado: {
-      tipo: String(TIPO_OFICIAL.facturaC),
+      // Tipo del comprobante asociado = tipo oficial del original (no siempre Factura C).
+      tipo: String(original.tipoComprobante),
       // RCEL valida por longitud (alert nativo on blur): PV = 5 dígitos, Nro = 8 dígitos.
       // Verificado en vivo contra RCEL v4.9.9 (2026-07-17).
       puntoVenta: String(original.puntoVenta).padStart(5, "0"),
