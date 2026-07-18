@@ -29,4 +29,34 @@ describe("money", () => {
     expect(parseARNumber("")).toBe(0);
     expect(parseARNumber("-53,97")).toBe(-53.97);
   });
+
+  it("parseARNumber: coma + punto → punto miles, coma decimal", () => {
+    expect(parseARNumber("3.500.000,00")).toBe(3500000);
+    expect(parseARNumber("1.234,50")).toBe(1234.5);
+    expect(parseARNumber("$ 1.234,50")).toBe(1234.5);
+  });
+
+  it("parseARNumber: solo coma → coma decimal", () => {
+    expect(parseARNumber("1234,50")).toBe(1234.5);
+    expect(parseARNumber("0,00")).toBe(0);
+    expect(parseARNumber("-53,97")).toBe(-53.97);
+  });
+
+  it("parseARNumber: un solo punto sin coma → decimal (columna % Bon. del resumen)", () => {
+    expect(parseARNumber("10.00")).toBe(10);
+    expect(parseARNumber("0.00")).toBe(0);
+    // Decisión documentada: "1.500" (un punto, sin coma) se interpreta como decimal.
+    expect(parseARNumber("1.500")).toBe(1.5);
+  });
+
+  it("parseARNumber: múltiples puntos sin coma → miles (NO NaN)", () => {
+    expect(parseARNumber("1.234.567")).toBe(1234567);
+    expect(parseARNumber("3.500.000")).toBe(3500000);
+    expect(parseARNumber("1.000.000")).toBe(1000000);
+  });
+
+  it("parseARNumber: enteros planos y basura", () => {
+    expect(parseARNumber("1000000")).toBe(1000000);
+    expect(parseARNumber("abc")).toBe(0);
+  });
 });
