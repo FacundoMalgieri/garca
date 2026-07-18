@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
@@ -142,15 +143,6 @@ export function Navbar() {
               <CalculatorIcon />
             </Link>
 
-            <Link
-              href="/facturar"
-              className="flex h-9 items-center gap-1.5 rounded-lg border border-primary/60 bg-primary/10 px-3 text-sm font-semibold text-primary dark:text-primary-foreground transition-colors hover:bg-primary/20"
-              title="Emitir Factura C y Notas de Crédito"
-            >
-              <ReceiptIcon />
-              <span>Facturar</span>
-            </Link>
-
             {mounted && (
               <button
                 onClick={toggleTheme}
@@ -170,6 +162,14 @@ export function Navbar() {
                 <HelpIcon />
               </button>
             )}
+
+            <Link
+              href="/facturar"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-muted transition-colors"
+              title="Emitir Factura C y Notas de Crédito"
+            >
+              Facturar
+            </Link>
 
             {showIngresarCta && (
               <Link
@@ -212,8 +212,11 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu — full screen overlay */}
-        {isOpen && (
+        {/* Mobile Menu — full screen overlay.
+            Se portalea al <body>: el <nav> tiene backdrop-filter, que crea un
+            containing block para position:fixed → si el menú vive dentro del nav,
+            el "fixed inset-0" queda relativo al nav (64px de alto) y colapsa. */}
+        {isOpen && createPortal(
           <div className="fixed inset-0 top-16 z-50 bg-background overflow-y-auto md:hidden">
             <div className="flex flex-col gap-1 px-2 py-4 border-t border-border">
               {/* Navigation actions */}
@@ -290,7 +293,8 @@ export function Navbar() {
                 </>
               )}
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 
