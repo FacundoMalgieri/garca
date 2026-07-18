@@ -104,4 +104,143 @@ describe("useEmission", () => {
     expect(appended.tipoComprobante).toBe(13);
     expect(appended.moneda).toBe("ARS");
   });
+
+  // [H2] Anti doble-click sincrónico
+  it("doble-confirm mientras el primero está en vuelo: el segundo es no-op (un solo fetch)", async () => {
+    const resultObj = { ...previewObj, numeroCompleto: "00003-00000091", cae: "111", vencimientoCae: "13/07/2026" };
+    // fetch que resuelve recién cuando lo destrabamos → mantiene el primero "en vuelo"
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    const fetchMock = vi.fn().mockImplementation(async () => {
+      await gate;
+      return new Response(JSON.stringify(resultObj), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    await act(async () => {
+      // Dos confirm() sincrónicos antes de que el primero resuelva.
+      const p1 = result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never);
+      const p2 = result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never);
+      release();
+      await Promise.all([p1, p2]);
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("done"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // [Contrato A P0] retry post-error reusa la MISMA idempotencyKey
+  it("confirm falla → reintento (sin reset del target) manda el MISMO idempotencyKey", async () => {
+    const keys: (string | undefined)[] = [];
+    const fetchMock = vi
+      .fn()
+      // 1er intento: falla en red
+      .mockImplementationOnce((_url, init) => {
+        keys.push(JSON.parse((init as { body: string }).body).idempotencyKey);
+        return Promise.reject(new Error("network down"));
+      })
+      // reintento: éxito
+      .mockImplementationOnce((_url, init) => {
+        keys.push(JSON.parse((init as { body: string }).body).idempotencyKey);
+        const resultObj = { ...previewObj, numeroCompleto: "00003-00000092", cae: "222", vencimientoCae: "13/07/2026" };
+        return Promise.resolve(new Response(JSON.stringify(resultObj), { status: 200 }));
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.phase).toBe("error"));
+
+    // Reintento: SIN startPreview/reset del target → confirm() otra vez.
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.phase).toBe("done"));
+
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  // [Contrato A P0] reset() NO regenera la key
+  it("reset() entre el error y el reintento NO cambia el idempotencyKey", async () => {
+    const keys: (string | undefined)[] = [];
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce((_url, init) => {
+        keys.push(JSON.parse((init as { body: string }).body).idempotencyKey);
+        return Promise.reject(new Error("network down"));
+      })
+      .mockImplementationOnce((_url, init) => {
+        keys.push(JSON.parse((init as { body: string }).body).idempotencyKey);
+        const resultObj = { ...previewObj, numeroCompleto: "00003-00000093", cae: "333", vencimientoCae: "13/07/2026" };
+        return Promise.resolve(new Response(JSON.stringify(resultObj), { status: 200 }));
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.phase).toBe("error"));
+    act(() => { result.current.reset(); });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.phase).toBe("done"));
+
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  // [Contrato A P0] un nuevo comprobante (startPreview) SÍ genera una key distinta
+  it("arrancar un target nuevo (startPreview) genera un idempotencyKey distinto en el confirm siguiente", async () => {
+    const keys: (string | undefined)[] = [];
+    const previewResp = () => new Response(JSON.stringify(previewObj), { status: 200 });
+    const confirmResp = (n: string, cae: string) =>
+      new Response(JSON.stringify({ ...previewObj, numeroCompleto: n, cae, vencimientoCae: "13/07/2026" }), { status: 200 });
+
+    const fetchMock = vi.fn().mockImplementation((url, init) => {
+      if (String(url).includes("/confirm")) {
+        keys.push(JSON.parse((init as { body: string }).body).idempotencyKey);
+        return Promise.resolve(confirmResp("00003-00000094", "444"));
+      }
+      return Promise.resolve(previewResp());
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useEmission(), { wrapper });
+
+    // Comprobante 1
+    await act(async () => { await result.current.startPreview({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    // Comprobante 2 (nuevo preview)
+    await act(async () => { await result.current.startPreview({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBeTruthy();
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
+  // [Contrato B] CAE pendiente: cae:"" NO es error, va a "done"
+  it("result con cae vacío pasa a phase done (CAE pendiente), no a error", async () => {
+    const resultObj = { ...previewObj, numeroCompleto: "00003-00000095", cae: "", vencimientoCae: "" };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(resultObj), { status: 200 }));
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.phase).toBe("done"));
+    expect(result.current.error).toBeNull();
+    expect(result.current.result?.cae).toBe("");
+  });
+
+  // [L2-hooks] numeroCompleto sin guion no colapsa a numero 0 si hay dígitos
+  it("numeroCompleto sin guion preserva el número (no colapsa a 0)", async () => {
+    const resultObj = { ...previewObj, numeroCompleto: "97", cae: "555", vencimientoCae: "13/07/2026" };
+    const { result } = renderHook(
+      () => ({ emission: useEmission(), ctx: useInvoiceContext() }),
+      { wrapper },
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(resultObj), { status: 200 }));
+    await act(async () => { await result.current.emission.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
+    await waitFor(() => expect(result.current.emission.phase).toBe("done"));
+
+    const appended = result.current.ctx.state.invoices.at(-1)!;
+    expect(appended.numero).toBe(97);
+  });
 });
