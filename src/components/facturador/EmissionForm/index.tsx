@@ -135,8 +135,12 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   }, [puntosDeVenta]);
 
   const labelCls = "block text-xs text-muted-foreground mb-1";
-  const inputCls = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm";
-  const sectionCls = "rounded-lg border border-border bg-muted/30 p-3";
+  // Inputs blancos en light (como el Dropdown) para que resalten sobre las cards
+  // grises; en dark siguen usando el fondo del tema.
+  const inputCls = "w-full rounded-md border border-border bg-white dark:bg-background px-3 py-2 text-sm";
+  // Cards con más presencia en light (muted más sólido + sombra sutil) para
+  // separarlas del fondo de la página, que es casi del mismo gris.
+  const sectionCls = "rounded-lg border border-border bg-muted/60 dark:bg-muted/30 p-3 shadow-sm dark:shadow-none";
   const sectionTitleCls = "text-xs uppercase tracking-wide text-primary dark:text-primary-foreground mb-2";
 
   return (

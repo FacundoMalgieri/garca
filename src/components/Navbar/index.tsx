@@ -165,7 +165,7 @@ export function Navbar() {
 
             <Link
               href="/facturar"
-              className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-primary dark:hover:text-primary-foreground transition-colors"
               title="Emitir Factura C y Notas de Crédito"
             >
               Facturar
