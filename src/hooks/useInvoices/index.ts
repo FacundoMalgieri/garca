@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
-import { dedupeInvoices } from "@/lib/facturador/dedupe";
+import { dedupeInvoices, mergeFetchedInvoices } from "@/lib/facturador/dedupe";
 import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
@@ -254,7 +254,14 @@ export function useInvoices(): UseInvoicesReturn {
         const company: CompanyInfo | null = parsedCompany
           ? { ...parsedCompany, index: parsedCompany.index ?? 0 }
           : extractCompanyInfo(invoices);
-        const puntosDeVenta: PuntoDeVenta[] | null = storedPdv ? JSON.parse(storedPdv) : null;
+        // PDV va en su propio try/catch: si el JSON está corrupto no debe tirar
+        // toda la hidratación (que dejaría al usuario deslogueado). Default null.
+        let puntosDeVenta: PuntoDeVenta[] | null = null;
+        try {
+          puntosDeVenta = storedPdv ? JSON.parse(storedPdv) : null;
+        } catch {
+          puntosDeVenta = null;
+        }
         setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true }));
@@ -671,16 +678,25 @@ export function useInvoices(): UseInvoicesReturn {
           const puntosDeVenta = finalResult.puntosDeVenta ?? null;
           persistPuntosDeVenta(puntosDeVenta);
 
-          setState({
-            invoices,
-            isLoading: false,
-            error: null,
-            errorCode: null,
-            company,
-            puntosDeVenta,
-            progress: null,
-            isHydrated: true,
-            hasQueried: true,
+          setState((prev) => {
+            // Conservar las emitidas por GARCA a través del re-fetch: el row
+            // autoritativo de AFIP reemplaza al placeholder (sin duplicar) y las
+            // emitidas que AFIP todavía no indexó se mantienen. Ver mergeFetchedInvoices.
+            const emittedByGarca = prev.invoices.filter(
+              (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
+            );
+            return {
+              ...prev,
+              invoices: mergeFetchedInvoices(emittedByGarca, invoices),
+              isLoading: false,
+              error: null,
+              errorCode: null,
+              company,
+              puntosDeVenta,
+              progress: null,
+              isHydrated: true,
+              hasQueried: true,
+            };
           });
 
           trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
@@ -722,16 +738,23 @@ export function useInvoices(): UseInvoicesReturn {
         const puntosDeVenta = (data.puntosDeVenta as PuntoDeVenta[] | undefined) ?? null;
         persistPuntosDeVenta(puntosDeVenta);
 
-        setState({
-          invoices,
-          isLoading: false,
-          error: null,
-          errorCode: null,
-          company,
-          puntosDeVenta,
-          progress: null,
-          isHydrated: true,
-          hasQueried: true,
+        setState((prev) => {
+          // Ver comentario en el success path del SSE (mergeFetchedInvoices).
+          const emittedByGarca = prev.invoices.filter(
+            (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
+          );
+          return {
+            ...prev,
+            invoices: mergeFetchedInvoices(emittedByGarca, invoices),
+            isLoading: false,
+            error: null,
+            errorCode: null,
+            company,
+            puntosDeVenta,
+            progress: null,
+            isHydrated: true,
+            hasQueried: true,
+          };
         });
 
         trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
