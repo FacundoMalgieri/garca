@@ -103,7 +103,8 @@ export function FacturadorSection() {
               {/* Chip "Deshacer" — el superpoder del undo fiscal */}
               <div className="absolute -bottom-4 -left-3 sm:-left-5 flex items-center gap-2 rounded-full border border-white/15 bg-[#0c1b16] px-3.5 py-1.5 text-xs font-medium text-slate-200 shadow-lg">
                 <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v6h6M3 13a9 9 0 1 0 2.6-6.4L3 9" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 14 4 9l5-5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 9h11a5 5 0 0 1 0 10h-3" />
                 </svg>
                 Deshacer <span className="text-slate-400">→ Nota de Crédito</span>
               </div>
