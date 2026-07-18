@@ -78,13 +78,20 @@ export default function FacturarPage() {
           <div className="hidden md:block">
             <TemplateSidebar templates={templates} activeId={activeId} onSelect={setActiveId} onManage={() => setManagerOpen(true)} />
           </div>
-          <div className="md:hidden">
+          <div className="md:hidden space-y-2">
             <Dropdown
               options={[{ value: "", label: "Factura en blanco" }, ...templates.map((t) => ({ value: t.id, label: t.nombre }))]}
               value={activeId ?? ""}
               onChange={(v) => setActiveId(v === "" ? null : v)}
               placeholder="Elegí una plantilla"
             />
+            <button
+              type="button"
+              onClick={() => setManagerOpen(true)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              ⚙ Gestionar plantillas
+            </button>
           </div>
 
           <EmissionForm
