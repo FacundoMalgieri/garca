@@ -243,7 +243,7 @@ async function extractUserInfoFromHeader(page: Page): Promise<{ cuit: string; no
       const userText = await userTable.first().textContent();
 
       if (userText) {
-        // Format: "20354104076 - MALGIERI FACUNDO ARIEL"
+        // Format: "20301234563 - PEREZ JUAN CARLOS"
         const match = userText.match(/(\d{11})\s*-\s*(.+)/);
         if (match) {
           return {

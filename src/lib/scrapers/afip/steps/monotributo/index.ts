@@ -136,8 +136,8 @@ async function navigateToMonotributo(
  * Extracts Monotributo information from the portal page.
  * 
  * Expected HTML structure:
- * <h2 class="h3 m-b-2">FACUNDO ARIEL MALGIERI</h2>
- * <p class="lead m-b-0"><strong>CUIT</strong> 20-35410407-6</p>
+ * <h2 class="h3 m-b-2">JUAN CARLOS PEREZ</h2>
+ * <p class="lead m-b-0"><strong>CUIT</strong> 20-30123456-3</p>
  * <p class="lead"><strong>Categoría H LOCACIONES DE SERVICIOS</strong></p>
  * <div id="divProxRecategorizacion">Próximo período de recategorización: <strong>Enero 2026</strong></div>
  */
@@ -163,7 +163,7 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     const cuitElement = page.locator(".jumbotron_body p.lead").first();
     const cuitText = await cuitElement.textContent().catch(() => null);
 
-    // Parse CUIT (format: "CUIT 20-35410407-6")
+    // Parse CUIT (format: "CUIT 20-30123456-3")
     const cuitMatch = cuitText?.match(/CUIT\s*([\d-]+)/i);
     const cuit = cuitMatch ? cuitMatch[1].replace(/-/g, "") : "";
 

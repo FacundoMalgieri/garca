@@ -747,7 +747,7 @@ export async function navigateToEmission(page: Page): Promise<void> {
   await page.getByRole("heading", { name: "Comprobantes en línea" }).click();
   // El servicio abre RCEL; seleccionar empresa a representar
   const rcel = await waitForRcelPage(page);
-  await rcel.getByRole("button").first().click(); // botón "MALGIERI FACUNDO ARIEL" (empresa)
+  await rcel.getByRole("button").first().click(); // botón "PEREZ JUAN CARLOS" (empresa)
   // Menú principal → Generar Comprobantes
   await rcel.getByText("Generar Comprobantes").click();
 }

@@ -39,7 +39,7 @@ Que el usuario cargue **lo mínimo**: condición IVA + tipo/número de doc + lí
 ### 1. Recorte de campos del receptor (`EmissionForm`)
 Quitar del form: **razón social, domicilio, email**. Quedan: condición IVA, tipo de doc, número de doc, condición de venta, concepto, PV, líneas.
 
-- La razón social **no** es input del usuario. Se muestra **read-only** como confirmación cuando la conocemos (del historial), con copy tipo *"AFIP: MALGIERI FACUNDO ARIEL"* o, si es cliente nuevo, *"AFIP va a completar la razón social al emitir"*.
+- La razón social **no** es input del usuario. Se muestra **read-only** como confirmación cuando la conocemos (del historial), con copy tipo *"AFIP: PEREZ JUAN CARLOS"* o, si es cliente nuevo, *"AFIP va a completar la razón social al emitir"*.
 - El **preview real** (Resumen de RCEL) sigue siendo la red de seguridad: muestra la razón social/domicilio efectivos que AFIP resolvió, antes de confirmar.
 
 ### 2. Tipos (`types/facturador.ts`)

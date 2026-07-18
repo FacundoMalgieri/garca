@@ -321,7 +321,7 @@ import { validateCuit } from "@/lib/facturador/cuit";
 describe("validateCuit", () => {
   it("acepta un CUIT válido", () => {
     expect(validateCuit("30707915281")).toBe(true); // GSA (dígito verificador correcto)
-    expect(validateCuit("20354104076")).toBe(true); // persona física válida
+    expect(validateCuit("20301234563")).toBe(true); // persona física válida
   });
 
   it("acepta CUIT con guiones/espacios", () => {
@@ -770,7 +770,7 @@ function inv(partial: Partial<AFIPInvoice>): AFIPInvoice {
   return {
     fecha: "03/07/2026", tipo: "FACTURA C", tipoComprobante: 11,
     puntoVenta: 3, numero: 88, numeroCompleto: "00003-00000088",
-    cuitEmisor: "20354104076", razonSocialEmisor: "YO",
+    cuitEmisor: "20301234563", razonSocialEmisor: "YO",
     cuitReceptor: "30707915281", razonSocialReceptor: "GSA",
     importeNeto: 3500000, importeIVA: 0, importeTotal: 3500000, moneda: "PES",
     ...partial,

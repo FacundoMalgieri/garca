@@ -1133,12 +1133,12 @@ describe("useInvoices", () => {
       const otra = { ...baseEmitted, numero: 89, numeroCompleto: "00003-00000089", cae: "70000000000002", emittedByGarca: undefined };
       mockFetch.mockResolvedValueOnce(
         createMockSSEResponse([
-          { type: "result", message: "ok", data: { success: true, invoices: [otra], company: { cuit: "20354104076", razonSocial: "YO" } } },
+          { type: "result", message: "ok", data: { success: true, invoices: [otra], company: { cuit: "20301234563", razonSocial: "YO" } } },
         ])
       );
 
       await act(async () => {
-        await result.current.fetchInvoicesWithCompany("20354104076", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
       });
 
       // La emitida persiste + la nueva scrapeada = 2, sin perder el marcador.
@@ -1152,19 +1152,19 @@ describe("useInvoices", () => {
       act(() => result.current.addEmittedInvoice(baseEmitted));
 
       // AFIP devuelve la MISMA factura (mismo CAE) con datos reales.
-      const autoritativo = { ...baseEmitted, cuitEmisor: "20354104076", importeIVA: 12345, emittedByGarca: undefined };
+      const autoritativo = { ...baseEmitted, cuitEmisor: "20301234563", importeIVA: 12345, emittedByGarca: undefined };
       mockFetch.mockResolvedValueOnce(
         createMockSSEResponse([
-          { type: "result", message: "ok", data: { success: true, invoices: [autoritativo], company: { cuit: "20354104076", razonSocial: "YO" } } },
+          { type: "result", message: "ok", data: { success: true, invoices: [autoritativo], company: { cuit: "20301234563", razonSocial: "YO" } } },
         ])
       );
 
       await act(async () => {
-        await result.current.fetchInvoicesWithCompany("20354104076", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
       });
 
       expect(result.current.state.invoices).toHaveLength(1);
-      expect(result.current.state.invoices[0].cuitEmisor).toBe("20354104076");
+      expect(result.current.state.invoices[0].cuitEmisor).toBe("20301234563");
       expect(result.current.state.invoices[0].importeIVA).toBe(12345);
       expect((result.current.state.invoices[0] as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);
     });
@@ -1177,12 +1177,12 @@ describe("useInvoices", () => {
       const real = { ...baseEmitted, cae: "70000000000009", emittedByGarca: undefined };
       mockFetch.mockResolvedValueOnce(
         createMockSSEResponse([
-          { type: "result", message: "ok", data: { success: true, invoices: [real], company: { cuit: "20354104076", razonSocial: "YO" } } },
+          { type: "result", message: "ok", data: { success: true, invoices: [real], company: { cuit: "20301234563", razonSocial: "YO" } } },
         ])
       );
 
       await act(async () => {
-        await result.current.fetchInvoicesWithCompany("20354104076", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
       });
 
       expect(result.current.state.invoices).toHaveLength(1);

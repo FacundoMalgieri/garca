@@ -6,7 +6,7 @@ import type { AFIPInvoice } from "@/types/afip-scraper";
 function inv(p: Partial<AFIPInvoice>): AFIPInvoice {
   return {
     fecha: "01/06/2026", tipo: "FACTURA C", tipoComprobante: 11, puntoVenta: 3, numero: 1,
-    numeroCompleto: "00003-00000001", cuitEmisor: "20354104076", razonSocialEmisor: "YO",
+    numeroCompleto: "00003-00000001", cuitEmisor: "20301234563", razonSocialEmisor: "YO",
     cuitReceptor: "30707915281", razonSocialReceptor: "GSA", importeNeto: 1, importeIVA: 0,
     importeTotal: 1, moneda: "PES", ...p,
   };
