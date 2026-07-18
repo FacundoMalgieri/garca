@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withConcurrencyLimit } from "@/lib/concurrency";
 import { decryptCredentials } from "@/lib/crypto";
 import { buildCreditNote } from "@/lib/facturador/credit-note";
+import { validateEmitBody } from "@/lib/facturador/validate-emit-body";
 import { buildEmissionPreview } from "@/lib/scrapers/afip/emit";
 import { performSecurityChecks } from "@/lib/security";
 import type { AFIPCredentials } from "@/types/afip-scraper";
@@ -69,25 +70,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validación + whitelist server-side ANTES de lanzar el browser (M2/M3).
+    const validation = validateEmitBody({ kind, plantilla, original, condicionIVA });
+    if (!validation.ok) {
+      return NextResponse.json({ success: false, error: validation.error }, { status: 400 });
+    }
+
     // Resolver plantilla + opts según el tipo de comprobante
     let plantillaFinal = plantilla as Plantilla | undefined;
     let extraOpts: { universo?: string; asociado?: { tipo: string; puntoVenta: string; numero: string; fecha?: string } } = {};
 
     if (kind === "notaCreditoC") {
-      if (!original || !condicionIVA) {
-        return NextResponse.json(
-          { success: false, error: "Nota de crédito requiere comprobante original y condición IVA" },
-          { status: 400 }
-        );
-      }
       const nc = buildCreditNote({ original: original as StoredInvoice, condicionIVA: String(condicionIVA) });
       plantillaFinal = nc.plantilla;
       extraOpts = { universo: nc.opts.universo, asociado: nc.opts.asociado };
-    } else if (!plantillaFinal) {
-      return NextResponse.json(
-        { success: false, error: "Plantilla es requerida" },
-        { status: 400 }
-      );
     }
 
     const credentials: AFIPCredentials = { cuit, password };
@@ -98,10 +94,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, preview });
   } catch (error) {
+    // Log completo server-side; el cliente recibe un mensaje genérico (L1) —
+    // no exponer el error crudo de Playwright/RCEL.
     console.error("[AFIP Emit API] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
     return NextResponse.json(
-      { success: false, error: `Error al procesar solicitud: ${errorMessage}`, errorCode: "UNKNOWN" },
+      { success: false, error: "No se pudo procesar la solicitud", errorCode: "UNKNOWN" },
       { status: 500 }
     );
   }

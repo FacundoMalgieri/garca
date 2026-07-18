@@ -16,6 +16,7 @@ import { Browser, BrowserContext, chromium, Page } from "playwright";
 import { TIPO_OFICIAL, UNIVERSO_COMPROBANTE, universoToOficial } from "@/lib/facturador/codes";
 import { formatDMY } from "@/lib/facturador/dates";
 import { buildFillPlan } from "@/lib/facturador/fill-plan";
+import { pickEmittedMatch } from "@/lib/facturador/pick-emitted-match";
 import type { AFIPCredentials, AFIPInvoice } from "@/types/afip-scraper";
 import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
 
@@ -196,9 +197,9 @@ export async function confirmEmissionFlow(
       await rcelPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
 
       const emitidas = await consultarEmitidas(rcelPage, consultaFecha, consultaFecha);
-      const match = emitidas
-        .filter((i) => i.tipoComprobante === oficial && String(i.puntoVenta) === plantilla.puntoDeVenta)
-        .sort((a, b) => b.numero - a.numero)[0];
+      // Compare de PV numérico (Consultas puede padding-ear el PV) + selección del
+      // más reciente. Extraído a helper puro testeable (H1). Sin match → cae:"".
+      const match = pickEmittedMatch(emitidas, { oficial, puntoVenta: plantilla.puntoDeVenta });
 
       if (match) {
         numeroCompleto = match.numeroCompleto;
