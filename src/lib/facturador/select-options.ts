@@ -62,9 +62,12 @@ export const FORMA_PAGO_OPTIONS: SelectOption[] = [
   { value: FORMA_PAGO.otra, label: "Otra" },
 ];
 
+// Nota: NO incluimos "99" (Consumidor Final / sin identificar). RCEL no ofrece ese
+// código en #idtipodocreceptor para Factura C — un Consumidor Final se factura con
+// tipo doc DNI (96) y número vacío (ver EmissionForm.setCondicionIVA). Ofrecer "99"
+// sería un footgun: selectOption a 99 cuelga la emisión 30s.
 export const TIPO_DOC_OPTIONS: SelectOption[] = [
   { value: "80", label: "CUIT" },
   { value: "86", label: "CUIL" },
   { value: "96", label: "DNI" },
-  { value: "99", label: "Consumidor Final" },
 ];
