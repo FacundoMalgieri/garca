@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useModalA11y } from "@/hooks/useModalA11y";
 import type { Plantilla } from "@/types/facturador";
 
 interface TemplatesManagerProps {
@@ -19,6 +20,8 @@ export function TemplatesManager({ isOpen, onClose, templates, onRename, onDelet
   const [pendingDelete, setPendingDelete] = useState<Plantilla | null>(null);
 
   useEffect(() => setMounted(true), []);
+  const titleId = "templates-manager-title";
+  const dialogRef = useModalA11y<HTMLDivElement>(isOpen && mounted, onClose);
   if (!isOpen || !mounted) return null;
 
   const handleBackdrop = (e: React.MouseEvent) => {
@@ -26,11 +29,11 @@ export function TemplatesManager({ isOpen, onClose, templates, onRename, onDelet
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={handleBackdrop}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div role="dialog" aria-modal="true" aria-label="Gestionar plantillas" className="relative z-10 w-full max-w-lg rounded-xl bg-white dark:bg-zinc-900 border border-border shadow-2xl p-6">
+    <div data-testid="templates-backdrop" className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={handleBackdrop}>
+      <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="relative z-10 w-full max-w-lg rounded-xl bg-white dark:bg-zinc-900 border border-border shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Gestionar plantillas</h2>
+          <h2 id={titleId} className="text-lg font-semibold">Gestionar plantillas</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer" aria-label="Cerrar">✕</button>
         </div>
 

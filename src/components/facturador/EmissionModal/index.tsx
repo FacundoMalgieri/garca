@@ -7,6 +7,7 @@ import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { LoadingSplash } from "@/components/LoadingSplash";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { useEmission } from "@/hooks/useEmission";
+import { useModalA11y } from "@/hooks/useModalA11y";
 import { encryptCredentials } from "@/lib/crypto";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { formatDMY } from "@/lib/facturador/dates";
@@ -37,7 +38,6 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
 
   useEffect(() => setMounted(true), []);
   const target = mode === "creditNote" ? invoiceToVoid : plantilla;
-  if (!isOpen || !mounted || !target) return null;
   const esNC = mode === "creditNote";
   const necesitaCondIVA = esNC && invoiceToVoid !== null && invoiceToVoid !== undefined && !invoiceToVoid.emittedByGarca;
 
@@ -78,18 +78,40 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
 
   const handleBackdrop = (e: React.MouseEvent) => { if (e.target === e.currentTarget) handleClose(); };
 
-  const tope = !esNC && preview ? computeTopeAlert(margenDisponible !== null ? { margenDisponible } : null, preview.importeTotal) : null;
-  const canConfirm = agree && typed.trim().toUpperCase() === "EMITIR" && !!turnstileToken;
+  // [Contrato A P0] Diferenciar el error de fase-preview (fase 1, no se emitió
+  // nada → seguro re-previsualizar/resetear) del error de fase-confirm (fase 2,
+  // la emisión pudo haber ocurrido → NO resetear; re-llamar confirm() reusa la
+  // MISMA idempotencyKey (ref de useEmission) y el server devuelve el CAE
+  // cacheado en vez de re-emitir un duplicado legal).
+  // `preview !== null` es el estado observable que lo distingue: startPreview
+  // limpia `preview` al arrancar (error fase 1 → preview null); confirm no lo
+  // toca (error fase 2 → preview sigue seteado).
   const confirmFailed = phase === "error" && preview !== null;
 
+  // [Contrato A P0] En el retry post-confirm re-solvemos Turnstile pero NO
+  // reseteamos: confirm() reusa la key estable, evitando la doble emisión.
+  const handleRetryConfirm = () => confirm(buildTarget(), buildCreds(turnstileToken));
+
+  const tope = !esNC && preview ? computeTopeAlert(margenDisponible !== null ? { margenDisponible } : null, preview.importeTotal) : null;
+  const canConfirm = agree && typed.trim().toUpperCase() === "EMITIR" && !!turnstileToken;
+
+  // [Contrato B] Emisión confirmada legalmente pero sin CAE resuelto vía
+  // Consultas. NO es error: la factura YA se emitió.
+  const caePendiente = phase === "done" && !!result && !result.cae;
+
+  const titleId = "emission-modal-title";
+  const active = isOpen && mounted && !!target;
+  const dialogRef = useModalA11y<HTMLDivElement>(active, handleClose);
+  if (!active) return null;
+
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={handleBackdrop}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div role="dialog" aria-modal="true" className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 border border-border shadow-2xl">
+    <div data-testid="emission-backdrop" className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={handleBackdrop}>
+      <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 border border-border shadow-2xl">
 
         {phase === "idle" && (
           <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">{esNC ? "🔒 Reingresá tu clave para deshacer" : "🔒 Reingresá tu clave"}</h2>
+            <h2 id={titleId} className="text-lg font-semibold mb-2">{esNC ? "🔒 Reingresá tu clave para deshacer" : "🔒 Reingresá tu clave"}</h2>
             <p className="text-sm text-muted-foreground mb-4">Por seguridad no guardamos tu clave fiscal. Reingresala para emitir esta factura; se descarta al terminar.</p>
             <label className="block text-xs text-muted-foreground mb-1">CUIT</label>
             <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground mb-3">{cuit}</div>
@@ -124,7 +146,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
         {phase === "preview" && preview && (
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{esNC ? "Deshacer factura" : "Revisá antes de emitir"}</h2>
+              <h2 id={titleId} className="text-lg font-semibold">{esNC ? "Deshacer factura" : "Revisá antes de emitir"}</h2>
               <span className="rounded-md bg-muted px-2 py-1 text-xs text-primary dark:text-primary-foreground">{esNC ? "NOTA DE CRÉDITO C · PV " : "FACTURA C · PV "}{preview.puntoVenta}</span>
             </div>
 
@@ -183,7 +205,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
               <p data-testid="modal-total" className="text-center text-2xl font-extrabold mb-3">{esNC ? "Vas a emitir una NC por $" : "Vas a emitir $"}{formatCurrency(preview.importeTotal)}</p>
               <label className="flex items-start gap-2 text-sm mb-2 cursor-pointer">
                 <input data-testid="confirm-check" type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5" />
-                <span>Confirmo que revisé los datos y quiero emitir esta factura real.</span>
+                <span>{esNC ? "Confirmo que revisé los datos y quiero emitir esta nota de crédito real." : "Confirmo que revisé los datos y quiero emitir esta factura real."}</span>
               </label>
               <label className="block text-xs text-muted-foreground mb-1">Escribí <b>EMITIR</b> para habilitar:</label>
               <input data-testid="confirm-typed" value={typed} onChange={(e) => setTyped(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-3" />
@@ -199,11 +221,16 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
         {phase === "done" && result && (
           <div className="p-6 text-center">
             <div className="text-4xl mb-2">✅</div>
-            <p className="font-semibold text-emerald-600 dark:text-emerald-400">{esNC ? "Nota de crédito emitida" : "Factura emitida"}</p>
-            <p className="text-2xl font-bold my-2">{result.numeroCompleto}</p>
+            <p id={titleId} className="font-semibold text-emerald-600 dark:text-emerald-400">{esNC ? "Nota de crédito emitida" : "Factura emitida"}</p>
+            {result.numeroCompleto && <p className="text-2xl font-bold my-2">{result.numeroCompleto}</p>}
+            {caePendiente && (
+              <p data-testid="cae-pendiente" className="mx-auto max-w-xs rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400 my-2">
+                Emitida — CAE pendiente de confirmación. El comprobante ya está emitido; el CAE se verá al refrescar tus comprobantes desde ARCA.
+              </p>
+            )}
             <div className="mx-auto max-w-xs rounded-lg border border-border p-3 text-sm space-y-1 text-left">
-              <div className="flex justify-between"><span className="text-muted-foreground">CAE</span><span>{result.cae}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Vto. CAE</span><span>{result.vencimientoCae}</span></div>
+              {result.cae && <div className="flex justify-between"><span className="text-muted-foreground">CAE</span><span>{result.cae}</span></div>}
+              {result.vencimientoCae && <div className="flex justify-between"><span className="text-muted-foreground">Vto. CAE</span><span>{result.vencimientoCae}</span></div>}
               <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span>${formatCurrency(result.importeTotal)}</span></div>
             </div>
             {result.pdfBase64 && (
@@ -219,15 +246,25 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
 
         {phase === "error" && (
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-destructive mb-2">No se pudo completar la emisión</h2>
+            <h2 id={titleId} className="text-lg font-semibold text-destructive mb-2">No se pudo completar la emisión</h2>
             <p className="text-sm mb-3">{error}</p>
             {confirmFailed && (
-              <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400 mb-3">
-                Antes de reintentar, verificá en <b>Mis Comprobantes</b> de ARCA si la factura ya se emitió, para no duplicarla.
-              </p>
+              <>
+                <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400 mb-3">
+                  Antes de reintentar, verificá en <b>Mis Comprobantes</b> de ARCA si la factura ya se emitió, para no duplicarla.
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Reintentando no se vuelve a emitir: si el comprobante ya se emitió, se recupera automáticamente.
+                </p>
+                <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
+              </>
             )}
-            <div className="flex gap-2">
-              <button onClick={handleReset} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Reintentar</button>
+            <div className="flex gap-2 mt-3">
+              {confirmFailed ? (
+                <button data-testid="retry-confirm" onClick={handleRetryConfirm} disabled={!turnstileToken} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted disabled:opacity-50 cursor-pointer">Reintentar</button>
+              ) : (
+                <button data-testid="retry-reset" onClick={handleReset} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Reintentar</button>
+              )}
               <button onClick={handleClose} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Cerrar</button>
             </div>
           </div>

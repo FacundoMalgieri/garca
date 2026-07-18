@@ -35,6 +35,8 @@ const PREVIEW: EmissionPreview = {
   subtotal: 200000, importeOtrosTributos: 0, importeTotal: 200000,
 };
 const RESULT: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000089", cae: "75123456789012", vencimientoCae: "23/07/2026" };
+const RESULT_PDF: EmissionResult = { ...RESULT, pdfBase64: "JVBERi0xLjQK" };
+const RESULT_PENDING: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000090", cae: "", vencimientoCae: "" };
 
 const baseProps = { isOpen: true, plantilla: PLANTILLA, cuit: "20354104076", companyIndex: 2, margenDisponible: 2540000, onClose: vi.fn() };
 
@@ -140,5 +142,72 @@ describe("EmissionModal", () => {
     expect(screen.getByRole("heading", { name: /Deshacer factura/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Emitir Nota de Crédito/i })).toBeInTheDocument();
     expect(screen.queryByTestId("tope-alert")).not.toBeInTheDocument();
+  });
+
+  it("[L1-UI] copy del checkbox de confirmación es NC-aware", () => {
+    mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
+    render(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} />);
+    expect(screen.getByText(/quiero emitir esta nota de crédito real/i)).toBeInTheDocument();
+    expect(screen.queryByText(/quiero emitir esta factura real/i)).not.toBeInTheDocument();
+  });
+
+  it("[M2-UI] fase done con pdfBase64: renderiza link de descarga con href data: y filename", () => {
+    mockState = { phase: "done", preview: PREVIEW, result: RESULT_PDF, error: null };
+    render(<EmissionModal {...baseProps} />);
+    const link = screen.getByRole("link", { name: /descargar pdf/i });
+    expect(link).toHaveAttribute("href", "data:application/pdf;base64,JVBERi0xLjQK");
+    expect(link).toHaveAttribute("download", "00003-00000089.pdf");
+  });
+
+  it("[Contrato B] fase done sin CAE: muestra 'CAE pendiente', sin fila de CAE ni Vto vacíos, sin reintento", () => {
+    mockState = { phase: "done", preview: PREVIEW, result: RESULT_PENDING, error: null };
+    render(<EmissionModal {...baseProps} />);
+    expect(screen.getByTestId("cae-pendiente")).toHaveTextContent(/CAE pendiente/i);
+    // No renderiza el label "CAE" ni "Vto. CAE" con valor vacío
+    expect(screen.queryByText("CAE")).not.toBeInTheDocument();
+    expect(screen.queryByText("Vto. CAE")).not.toBeInTheDocument();
+    // No hay botones de reintento de emisión en el estado done
+    expect(screen.queryByTestId("retry-confirm")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("retry-reset")).not.toBeInTheDocument();
+  });
+
+  it("[Contrato A P0] error tras confirm (preview presente): 'Reintentar' re-llama confirm (misma key), no reset", () => {
+    mockState = { phase: "error", preview: PREVIEW, result: null, error: "Se cortó la red" };
+    render(<EmissionModal {...baseProps} />);
+    fireEvent.click(screen.getByTestId("ts-solve"));
+    fireEvent.click(screen.getByTestId("retry-confirm"));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(reset).not.toHaveBeenCalled();
+    expect(startPreview).not.toHaveBeenCalled();
+  });
+
+  it("[Contrato A P0] error en fase preview (sin preview): 'Reintentar' resetea, no confirma", () => {
+    mockState = { phase: "error", preview: null, result: null, error: "Falló el preview" };
+    render(<EmissionModal {...baseProps} />);
+    fireEvent.click(screen.getByTestId("retry-reset"));
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("[H1-UI] el diálogo expone aria-labelledby apuntando a un título existente", () => {
+    render(<EmissionModal {...baseProps} />);
+    const dialog = screen.getByRole("dialog");
+    const labelId = dialog.getAttribute("aria-labelledby");
+    expect(labelId).toBeTruthy();
+    expect(document.getElementById(labelId as string)).toBeInTheDocument();
+  });
+
+  it("[H1-UI] Esc cierra el modal", () => {
+    const onClose = vi.fn();
+    render(<EmissionModal {...baseProps} onClose={onClose} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("[M1-UI] click en el backdrop cierra el modal", () => {
+    const onClose = vi.fn();
+    render(<EmissionModal {...baseProps} onClose={onClose} />);
+    fireEvent.click(screen.getByTestId("emission-backdrop"));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
