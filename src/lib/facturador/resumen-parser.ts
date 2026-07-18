@@ -107,6 +107,5 @@ export function parseResumen(
     subtotal: parseARNumber(findVal(totalRows, /^Subtotal:/)),
     importeOtrosTributos: parseARNumber(findVal(totalRows, /Importe Otros Tributos/)),
     importeTotal: parseARNumber(findVal(totalRows, /Importe Total/)),
-    html,
   };
 }

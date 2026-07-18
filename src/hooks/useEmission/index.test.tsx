@@ -12,7 +12,7 @@ const previewObj = {
   puntoVenta: "3", tipoComprobante: 11,
   emisor: { razonSocial: "YO", puntoVenta: "00003", domicilio: "x", concepto: "Servicios" },
   receptor: { cuit: "30707915281", razonSocial: "GSA", domicilio: "y", email: "", condicionIVA: "IVA Responsable Inscripto", condicionVenta: "Transferencia Bancaria" },
-  lineas: [], subtotal: 1000, importeOtrosTributos: 0, importeTotal: 1000, html: "<x/>",
+  lineas: [], subtotal: 1000, importeOtrosTributos: 0, importeTotal: 1000,
 };
 
 describe("useEmission", () => {

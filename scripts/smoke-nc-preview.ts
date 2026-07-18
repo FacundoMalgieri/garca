@@ -76,7 +76,7 @@ async function main() {
     });
 
     console.log("\n===== PREVIEW NC (Resumen real de RCEL) =====");
-    console.log(JSON.stringify({ ...preview, html: `[${preview.html.length} chars]` }, null, 2));
+    console.log(JSON.stringify(preview, null, 2));
     console.log("\n⚠️  NO se confirmó nada. Cerrando en 10s.");
     await rcel.waitForTimeout(10000);
   } finally {

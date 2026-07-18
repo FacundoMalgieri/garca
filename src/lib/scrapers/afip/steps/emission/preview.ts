@@ -29,6 +29,8 @@ export async function capturePreview(
     { timeout: ELEMENT_TIMEOUT },
   );
 
+  // page.content() se usa solo para parsear el Resumen; el HTML crudo no se guarda
+  // ni se muestra (la UI arma su propio diseño con los datos parseados).
   const html = await page.content();
 
   // Check for the observations div — it may signal warnings but is not a blocker at preview

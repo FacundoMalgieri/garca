@@ -32,7 +32,7 @@ const PREVIEW: EmissionPreview = {
   emisor: { razonSocial: "GSA SA", puntoVenta: "0003", domicilio: "Corrientes 1234", concepto: "Servicios", periodoDesde: "01/06/2026", periodoHasta: "30/06/2026", vtoPago: "13/07/2026" },
   receptor: { cuit: "30-70791528-1", razonSocial: "CLIENTE X SA", domicilio: "San Martín 500", email: "c@x.com", condicionIVA: "Responsable Inscripto", condicionVenta: "Transferencia" },
   lineas: [{ codigo: "", descripcion: "Serv", cantidad: 1, unidad: "unidades", precioUnitario: 200000, porcentajeBonificacion: 0, importeBonificacion: 0, subtotal: 200000 }],
-  subtotal: 200000, importeOtrosTributos: 0, importeTotal: 200000, html: "<div>RESUMEN</div>",
+  subtotal: 200000, importeOtrosTributos: 0, importeTotal: 200000,
 };
 const RESULT: EmissionResult = { ...PREVIEW, numeroCompleto: "00003-00000089", cae: "75123456789012", vencimientoCae: "23/07/2026" };
 
