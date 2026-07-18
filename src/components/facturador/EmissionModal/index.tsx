@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
+import { LoadingSplash } from "@/components/LoadingSplash";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { useEmission } from "@/hooks/useEmission";
 import { encryptCredentials } from "@/lib/crypto";
@@ -114,9 +115,10 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
         )}
 
         {(phase === "previewing" || phase === "confirming") && (
-          <div className="p-10 text-center text-muted-foreground">
-            {phase === "previewing" ? "Conectando con ARCA… generando preview…" : "Emitiendo la factura…"}
-          </div>
+          <LoadingSplash
+            isLoading
+            message={phase === "previewing" ? "Conectando con ARCA" : "Emitiendo el comprobante"}
+          />
         )}
 
         {phase === "preview" && preview && (

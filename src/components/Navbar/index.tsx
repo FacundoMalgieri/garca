@@ -144,10 +144,11 @@ export function Navbar() {
 
             <Link
               href="/facturar"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary dark:border-border bg-muted transition-colors hover:bg-muted/80"
-              title="Facturar"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-primary/60 bg-primary/10 px-3 text-sm font-semibold text-primary dark:text-primary-foreground transition-colors hover:bg-primary/20"
+              title="Emitir Factura C y Notas de Crédito"
             >
               <ReceiptIcon />
+              <span>Facturar</span>
             </Link>
 
             {mounted && (

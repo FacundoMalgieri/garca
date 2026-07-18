@@ -4,18 +4,45 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { defaultVtoPago,previousMonthPeriod } from "@/lib/facturador/dates";
 import {
   CONCEPTO_OPTIONS, COND_IVA_OPTIONS, FORMA_PAGO_OPTIONS, TIPO_DOC_OPTIONS,
 UNIDAD_OPTIONS, } from "@/lib/facturador/select-options";
 import { totalImporte, validateEmissionInput } from "@/lib/facturador/validation";
+import type { PuntoDeVenta } from "@/types/afip-scraper";
 import type { Concepto, LineaFactura, Plantilla } from "@/types/facturador";
+
+// Tipos de documento del receptor (RCEL): 80 = CUIT, 99 = Consumidor Final (sin identificar).
+const TIPO_DOC_CUIT = "80";
+const TIPO_DOC_CONSUMIDOR_FINAL = "99";
+
+// Universo (tipo de comprobante) de Factura C en RCEL. La tab "Emitir" siempre emite Factura C.
+const UNIVERSO_FACTURA_C = "2";
+
+/** ¿Este punto de venta puede emitir Factura C? */
+function pvSupportsFacturaC(p: PuntoDeVenta): boolean {
+  return p.tipos.some((t) => t.value === UNIVERSO_FACTURA_C);
+}
+
+/** Etiqueta corta que le dice al usuario qué emite el PV (C vs E). */
+function pvSummary(p: PuntoDeVenta): string {
+  const numero = /(\d{4,5})/.exec(p.label)?.[1] ?? p.value;
+  const kind = pvSupportsFacturaC(p)
+    ? "Factura C"
+    : p.tipos.some((t) => /exportaci[oó]n/i.test(t.label))
+      ? "Factura E (exportación)"
+      : (p.tipos[0]?.label ?? "sin comprobantes");
+  return `${numero} · ${kind}`;
+}
 
 interface EmissionFormProps {
   initial: Plantilla | null;
   onPreview: (plantilla: Plantilla) => void;
   onUpdateTemplate: (id: string, plantilla: Plantilla) => void;
   onSaveAsNew: (plantilla: Omit<Plantilla, "id">) => void;
+  /** Puntos de venta scrapeados (best-effort). Si viene null/vacío, se usa input de texto. */
+  puntosDeVenta?: PuntoDeVenta[] | null;
 }
 
 function blankForm(): Plantilla {
@@ -33,7 +60,7 @@ function stripId(p: Plantilla): Omit<Plantilla, "id"> {
   return rest;
 }
 
-export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew }: EmissionFormProps) {
+export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew, puntosDeVenta }: EmissionFormProps) {
   const [form, setForm] = useState<Plantilla>(initial ?? blankForm());
   const [lineKeys, setLineKeys] = useState<number[]>(() => (initial ?? blankForm()).lineas.map((_, i) => i));
   const nextKey = useRef((initial ?? blankForm()).lineas.length);
@@ -51,9 +78,30 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
 
   const dirty = initial !== null && JSON.stringify(stripId(form)) !== JSON.stringify(stripId(initial));
   const blankHasData = initial === null && validation.ok;
+  // ¿El usuario ya empezó a cargar datos? Para no mostrar los errores de validación
+  // sobre un formulario pristino (recién abierto), solo los mostramos cuando hay algo cargado.
+  const hasData =
+    total > 0 ||
+    form.lineas.some((l) => l.descripcion.trim() !== "") ||
+    form.cliente.nroDoc.trim() !== "" ||
+    form.cliente.razonSocial.trim() !== "";
 
   const set = (patch: Partial<Plantilla>) => setForm((f) => ({ ...f, ...patch }));
   const setCliente = (patch: Partial<Plantilla["cliente"]>) => setForm((f) => ({ ...f, cliente: { ...f.cliente, ...patch } }));
+  // Al elegir Consumidor Final, RCEL factura "sin identificar": autoseleccionamos
+  // tipo doc 99 y limpiamos el número (si no, el botón queda deshabilitado por
+  // "CUIT inválido" sin explicar por qué). Al salir de CF con tipo 99, volvemos a CUIT.
+  const setCondicionIVA = (condicionIVA: string) =>
+    setForm((f) => {
+      const cliente = { ...f.cliente, condicionIVA };
+      if (condicionIVA === COND_IVA_RECEPTOR.consumidorFinal) {
+        cliente.tipoDoc = TIPO_DOC_CONSUMIDOR_FINAL;
+        cliente.nroDoc = "";
+      } else if (f.cliente.tipoDoc === TIPO_DOC_CONSUMIDOR_FINAL) {
+        cliente.tipoDoc = TIPO_DOC_CUIT;
+      }
+      return { ...f, cliente };
+    });
   const setPeriodo = (patch: Partial<NonNullable<Plantilla["periodo"]>>) => setForm((f) => ({ ...f, periodo: { ...(f.periodo ?? {}), ...patch } }));
   const setLinea = (i: number, patch: Partial<LineaFactura>) =>
     setForm((f) => ({ ...f, lineas: f.lineas.map((l, idx) => (idx === i ? { ...l, ...patch } : l)) }));
@@ -71,6 +119,17 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
     const { desde, hasta } = previousMonthPeriod(new Date());
     setPeriodo({ desde, hasta, vtoPago: form.periodo?.vtoPago ?? defaultVtoPago(new Date()) });
   };
+
+  // Cuando llegan los PV scrapeados, si el PV actual no puede emitir Factura C
+  // (ej. el default "1" hardcodeado, que en algunas cuentas es de exportación),
+  // elegimos automáticamente el primero que sí pueda. Evita el cuelgue de 60s.
+  useEffect(() => {
+    if (!puntosDeVenta || puntosDeVenta.length === 0) return;
+    const current = puntosDeVenta.find((p) => p.value === form.puntoDeVenta);
+    if (current && pvSupportsFacturaC(current)) return;
+    const target = puntosDeVenta.find(pvSupportsFacturaC) ?? puntosDeVenta[0];
+    if (target && target.value !== form.puntoDeVenta) set({ puntoDeVenta: target.value });
+  }, [puntosDeVenta]);
 
   const labelCls = "block text-xs text-muted-foreground mb-1";
   const inputCls = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm";
@@ -98,7 +157,15 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={labelCls}>Punto de venta</label>
-            <input data-testid="punto-venta" className={inputCls} value={form.puntoDeVenta} onChange={(e) => set({ puntoDeVenta: e.target.value })} />
+            {puntosDeVenta && puntosDeVenta.length > 0 ? (
+              <Dropdown
+                options={puntosDeVenta.map((p) => ({ value: p.value, label: pvSummary(p) }))}
+                value={form.puntoDeVenta}
+                onChange={(v) => set({ puntoDeVenta: v })}
+              />
+            ) : (
+              <input data-testid="punto-venta" className={inputCls} value={form.puntoDeVenta} onChange={(e) => set({ puntoDeVenta: e.target.value })} />
+            )}
           </div>
           <div>
             <label className={labelCls}>Concepto</label>
@@ -116,7 +183,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={labelCls}>Condición IVA</label>
-            <Dropdown options={COND_IVA_OPTIONS} value={form.cliente.condicionIVA} onChange={(v) => setCliente({ condicionIVA: v })} />
+            <Dropdown options={COND_IVA_OPTIONS} value={form.cliente.condicionIVA} onChange={setCondicionIVA} />
           </div>
           <div>
             <label className={labelCls}>Tipo doc</label>
@@ -185,7 +252,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
               </div>
               <div className="col-span-3 sm:col-span-3">
                 <label className={labelCls}>P. unitario</label>
-                <input data-testid={`linea-precio-${i}`} type="number" className={inputCls} value={l.precioUnitario} onChange={(e) => setLinea(i, { precioUnitario: Number(e.target.value) })} />
+                <input data-testid={`linea-precio-${i}`} type="number" inputMode="decimal" min="0" step="0.01" className={inputCls} value={l.precioUnitario === 0 ? "" : l.precioUnitario} onChange={(e) => setLinea(i, { precioUnitario: Number(e.target.value) })} />
               </div>
               <div className="col-span-1">
                 <button type="button" data-testid={`linea-remove-${i}`} onClick={() => removeLinea(i)} disabled={form.lineas.length === 1} className="rounded-md border border-border px-2 py-2 text-xs hover:bg-muted disabled:opacity-40 cursor-pointer" aria-label="Quitar línea">✕</button>
@@ -195,6 +262,15 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         </div>
         <button type="button" onClick={addLinea} className="mt-2 text-sm text-primary dark:text-primary-foreground hover:underline cursor-pointer">+ Agregar línea</button>
       </div>
+
+      {!validation.ok && hasData && (
+        <div data-testid="validation-errors" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
+          <p className="font-medium mb-1">Para poder emitir, revisá:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {validation.errors.map((e) => <li key={e}>{e}</li>)}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
         <div>

@@ -40,6 +40,12 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-stretch">
             {/* Columna izquierda: copy + CTAs, centrada verticalmente vs. la derecha */}
             <div className="flex flex-col justify-center text-center lg:text-left">
+              <a
+                href="#facturador"
+                className="mb-4 mx-auto lg:mx-0 inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors animate-hero-entry-1"
+              >
+                ✨ Nuevo: emití Facturas C y Notas de Crédito
+              </a>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-balance mb-4 text-slate-900 dark:text-white animate-hero-entry-1">
                 Monitoreá tu facturación{" "}
                 <span className="bg-gradient-to-r from-[#262F55] to-[#0f7d8c] dark:from-white dark:to-[#64D3DE] bg-clip-text text-transparent">

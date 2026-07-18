@@ -78,16 +78,31 @@ async function fillPantalla0(page: Page, actions: FillAction[]): Promise<void> {
 
   for (const a of actions) {
     if (a.selector === "#universocomprobante") {
-      // Wait for the AJAX to populate the select with the target option
+      // El PV recién seleccionado dispara un AJAX que repuebla el universo.
+      // Esperamos a que termine (haya alguna opción real), NO a la opción objetivo:
+      // si ese PV no emite el comprobante pedido, la opción nunca llegaría y
+      // esperaríamos los 60s completos. En su lugar, apenas pobló, verificamos.
       await page.waitForFunction(
-        (val: string) => {
+        () => {
           const sel = document.querySelector<HTMLSelectElement>("#universocomprobante");
-          if (!sel) return false;
-          return [...sel.options].some((o) => o.value === val);
+          return !!sel && [...sel.options].some((o) => o.value !== "");
         },
-        a.value,
+        undefined,
         { timeout: ELEMENT_TIMEOUT },
       );
+      const available = await page.$eval("#universocomprobante", (el) =>
+        [...(el as HTMLSelectElement).options]
+          .map((o) => ({ value: o.value, label: o.text.trim() }))
+          .filter((o) => o.value !== ""),
+      );
+      if (!available.some((o) => o.value === a.value)) {
+        const tipos = available.map((o) => o.label).join(", ") || "ninguno";
+        throw new Error(
+          `El punto de venta seleccionado no puede emitir este tipo de comprobante. ` +
+            `Ese punto de venta emite: ${tipos}. ` +
+            `Elegí un punto de venta habilitado para el comprobante que querés emitir.`,
+        );
+      }
     }
     await applyAction(page, a);
   }
