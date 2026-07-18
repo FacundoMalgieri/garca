@@ -65,7 +65,7 @@ export default function FacturarPage() {
   );
 
   return (
-    <div className="w-full min-h-[calc(100svh-4rem)] max-w-[1400px] mx-auto px-0 md:px-6 py-4 md:py-8 space-y-4">
+    <div className="w-full min-h-[calc(100svh-4rem)] max-w-[1400px] mx-auto px-4 md:px-6 py-4 md:py-8 space-y-4">
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
         🏢 Vas a facturar como <b>{state.company.razonSocial}</b>.{" "}
         <span className="text-muted-foreground">¿Otra empresa? Cerrá sesión o usá otra ventana / incógnito para tener otra sesión.</span>
