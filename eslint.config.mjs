@@ -73,6 +73,10 @@ export default [
                 HTMLInputElement: 'readonly',
                 HTMLSelectElement: 'readonly',
                 Node: 'readonly',
+                Element: 'readonly',
+                KeyboardEvent: 'readonly',
+                MediaQueryListEvent: 'readonly',
+                crypto: 'readonly',
                 // Web API types (for server-side code)
                 Request: 'readonly',
                 Response: 'readonly',
