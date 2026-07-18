@@ -13,9 +13,12 @@ import { totalImporte, validateEmissionInput } from "@/lib/facturador/validation
 import type { PuntoDeVenta } from "@/types/afip-scraper";
 import type { Concepto, LineaFactura, Plantilla } from "@/types/facturador";
 
-// Tipos de documento del receptor (RCEL): 80 = CUIT, 99 = Consumidor Final (sin identificar).
+// Tipos de documento del receptor (RCEL): 80 = CUIT, 96 = DNI.
+// Para un Consumidor Final sin identificar, RCEL factura con tipo doc DNI (96) y
+// número vacío — el código 99 NO figura en #idtipodocreceptor cuando la condición
+// IVA es Consumidor Final (verificado: selectOption a 99 tira timeout).
 const TIPO_DOC_CUIT = "80";
-const TIPO_DOC_CONSUMIDOR_FINAL = "99";
+const TIPO_DOC_DNI = "96";
 
 // Universo (tipo de comprobante) de Factura C en RCEL. La tab "Emitir" siempre emite Factura C.
 const UNIVERSO_FACTURA_C = "2";
@@ -89,15 +92,15 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   const set = (patch: Partial<Plantilla>) => setForm((f) => ({ ...f, ...patch }));
   const setCliente = (patch: Partial<Plantilla["cliente"]>) => setForm((f) => ({ ...f, cliente: { ...f.cliente, ...patch } }));
   // Al elegir Consumidor Final, RCEL factura "sin identificar": autoseleccionamos
-  // tipo doc 99 y limpiamos el número (si no, el botón queda deshabilitado por
-  // "CUIT inválido" sin explicar por qué). Al salir de CF con tipo 99, volvemos a CUIT.
+  // tipo doc DNI (96) y limpiamos el número (si no, el botón queda deshabilitado por
+  // "CUIT inválido" sin explicar por qué). Al salir de CF con tipo DNI, volvemos a CUIT.
   const setCondicionIVA = (condicionIVA: string) =>
     setForm((f) => {
       const cliente = { ...f.cliente, condicionIVA };
       if (condicionIVA === COND_IVA_RECEPTOR.consumidorFinal) {
-        cliente.tipoDoc = TIPO_DOC_CONSUMIDOR_FINAL;
+        cliente.tipoDoc = TIPO_DOC_DNI;
         cliente.nroDoc = "";
-      } else if (f.cliente.tipoDoc === TIPO_DOC_CONSUMIDOR_FINAL) {
+      } else if (f.cliente.tipoDoc === TIPO_DOC_DNI && !f.cliente.nroDoc.trim()) {
         cliente.tipoDoc = TIPO_DOC_CUIT;
       }
       return { ...f, cliente };
