@@ -75,4 +75,89 @@ describe("EmissionForm", () => {
     fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281" } });
     expect(screen.getByText(/guardar como plantilla/i)).toBeInTheDocument();
   });
+
+  // [L2-UI] Los inputs numéricos no deben coercionar a NaN (paste de basura) ni
+  // renderizar "$NaN" en el CTA.
+  it("no renderiza $NaN cuando se pega basura en el precio", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    // Un <input type="number"> normaliza la basura a "" antes de llegar al onChange;
+    // el helper la trata como 0 en vez de escribir NaN en el estado.
+    fireEvent.change(screen.getByTestId("linea-precio-0"), { target: { value: "abc" } });
+    expect(screen.getByTestId("form-total")).not.toHaveTextContent("NaN");
+    expect(screen.getByTestId("form-total")).toHaveTextContent("0,00");
+  });
+
+  it("vaciar el precio deja el total en 0 (no $NaN)", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    fireEvent.change(screen.getByTestId("linea-precio-0"), { target: { value: "" } });
+    expect(screen.getByTestId("form-total")).not.toHaveTextContent("NaN");
+    expect(screen.getByTestId("form-total")).toHaveTextContent("0,00");
+  });
+
+  // [M2-UI] CF: elegir Consumidor Final autoselecciona tipo doc DNI (96), limpia el
+  // número y des-bloquea el CTA (antes bloqueado por "CUIT inválido").
+  it("Consumidor Final setea tipoDoc DNI, limpia nroDoc y desbloquea el CTA", () => {
+    // Arranca con CUIT (80) y número vacío → CTA bloqueado por CUIT inválido.
+    const sinDoc: Plantilla = { ...BASE, cliente: { ...BASE.cliente, tipoDoc: "80", nroDoc: "" } };
+    render(<EmissionForm initial={sinDoc} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+
+    const cta = screen.getByRole("button", { name: /previsualizar y emitir/i });
+    expect(cta).toBeDisabled();
+    expect(screen.getByText("CUIT")).toBeInTheDocument(); // tipo doc actual
+
+    // Abrir el dropdown de Condición IVA y elegir Consumidor Final.
+    fireEvent.click(screen.getByText("Responsable Inscripto"));
+    fireEvent.click(screen.getByText("Consumidor Final"));
+
+    expect((screen.getByTestId("nro-doc") as HTMLInputElement).value).toBe("");
+    expect(screen.getByText("DNI")).toBeInTheDocument(); // tipo doc pasó a DNI
+    expect(cta).not.toBeDisabled();
+  });
+
+  // [M2-UI] Gate de validación: datos inválidos bloquean y muestran el panel de errores.
+  it("bloquea y muestra el panel de errores con datos inválidos", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "123" } }); // CUIT inválido
+    expect(screen.getByTestId("validation-errors")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /previsualizar y emitir/i })).toBeDisabled();
+  });
+
+  // [M2-UI] PV auto-select: al montar con puntosDeVenta, elige uno capaz de Factura C
+  // cuando el PV actual no lo es.
+  it("autoselecciona un PV capaz de Factura C al recibir puntosDeVenta", () => {
+    const puntosDeVenta = [
+      { value: "1", label: " 00001-Exporta", tipos: [{ value: "19", label: "Factura E (exportación)" }] },
+      { value: "2", label: " 00002-Local", tipos: [{ value: "2", label: "Factura C" }] },
+    ];
+    render(
+      <EmissionForm
+        initial={BASE}
+        onPreview={vi.fn()}
+        onUpdateTemplate={vi.fn()}
+        onSaveAsNew={vi.fn()}
+        puntosDeVenta={puntosDeVenta}
+      />,
+    );
+    // El PV inicial ("3") no está en la lista → elige el primero capaz = 00002.
+    expect(screen.getByText("00002 · Factura C")).toBeInTheDocument();
+    expect(screen.queryByText(/exportaci/i)).not.toBeInTheDocument();
+  });
+
+  // [L5-UI] Guard: elegir manualmente un PV que no soporta Factura C bloquea la emisión.
+  it("bloquea el CTA si el PV elegido no puede emitir Factura C", () => {
+    const puntosDeVenta = [
+      { value: "3", label: " 00003-Exporta", tipos: [{ value: "19", label: "Factura E (exportación)" }] },
+    ];
+    render(
+      <EmissionForm
+        initial={BASE}
+        onPreview={vi.fn()}
+        onUpdateTemplate={vi.fn()}
+        onSaveAsNew={vi.fn()}
+        puntosDeVenta={puntosDeVenta}
+      />,
+    );
+    expect(screen.getByTestId("pv-unsupported")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /previsualizar y emitir/i })).toBeDisabled();
+  });
 });

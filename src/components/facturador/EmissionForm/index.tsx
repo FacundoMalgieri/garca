@@ -28,6 +28,17 @@ function pvSupportsFacturaC(p: PuntoDeVenta): boolean {
   return p.tipos.some((t) => t.value === UNIVERSO_FACTURA_C);
 }
 
+/**
+ * Parsea el value de un <input type="number">. Vacío → 0 (el display de precio lo
+ * muestra vacío al ser 0). Basura o paste no-numérico → null: el caller ignora el
+ * cambio en vez de escribir NaN en el estado, que renderizaría "$NaN" en el CTA.
+ */
+function parseNumericInput(raw: string): number | null {
+  if (raw.trim() === "") return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 /** Etiqueta corta que le dice al usuario qué emite el PV (C vs E). */
 function pvSummary(p: PuntoDeVenta): string {
   const numero = /(\d{4,5})/.exec(p.label)?.[1] ?? p.value;
@@ -78,6 +89,12 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   const total = useMemo(() => totalImporte(form), [form]);
   const validation = useMemo(() => validateEmissionInput(form, new Date()), [form]);
   const showPeriodo = form.concepto === "servicios" || form.concepto === "ambos";
+
+  // Si el usuario eligió manualmente un PV que no puede emitir Factura C (ej. uno
+  // de exportación), no lo dejamos emitir: RCEL se cuelga ~60s en ese caso. Solo
+  // aplica cuando conocemos el universo del PV (viene de los scrapeados).
+  const selectedPv = puntosDeVenta?.find((p) => p.value === form.puntoDeVenta) ?? null;
+  const pvUnsupported = selectedPv !== null && !pvSupportsFacturaC(selectedPv);
 
   const dirty = initial !== null && JSON.stringify(stripId(form)) !== JSON.stringify(stripId(initial));
   const blankHasData = initial === null && validation.ok;
@@ -251,7 +268,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
               </div>
               <div className="col-span-3 sm:col-span-1">
                 <label className={labelCls}>Cant.</label>
-                <input data-testid={`linea-cant-${i}`} type="number" className={inputCls} value={l.cantidad} onChange={(e) => setLinea(i, { cantidad: Number(e.target.value) })} />
+                <input data-testid={`linea-cant-${i}`} type="number" inputMode="decimal" min="0" className={inputCls} value={l.cantidad} onChange={(e) => { const n = parseNumericInput(e.target.value); if (n !== null) setLinea(i, { cantidad: n }); }} />
               </div>
               <div className="col-span-5 sm:col-span-2">
                 <label className={labelCls}>Unidad</label>
@@ -259,7 +276,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
               </div>
               <div className="col-span-3 sm:col-span-3">
                 <label className={labelCls}>P. unitario</label>
-                <input data-testid={`linea-precio-${i}`} type="number" inputMode="decimal" min="0" step="0.01" className={inputCls} value={l.precioUnitario === 0 ? "" : l.precioUnitario} onChange={(e) => setLinea(i, { precioUnitario: Number(e.target.value) })} />
+                <input data-testid={`linea-precio-${i}`} type="number" inputMode="decimal" min="0" step="0.01" className={inputCls} value={l.precioUnitario === 0 ? "" : l.precioUnitario} onChange={(e) => { const n = parseNumericInput(e.target.value); if (n !== null) setLinea(i, { precioUnitario: n }); }} />
               </div>
               <div className="col-span-1">
                 <button type="button" data-testid={`linea-remove-${i}`} onClick={() => removeLinea(i)} disabled={form.lineas.length === 1} className="rounded-md border border-border px-2 py-2 text-xs hover:bg-muted disabled:opacity-40 cursor-pointer" aria-label="Quitar línea">✕</button>
@@ -279,6 +296,12 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         </div>
       )}
 
+      {pvUnsupported && (
+        <div data-testid="pv-unsupported" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
+          El punto de venta seleccionado no puede emitir Factura C. Elegí otro para continuar.
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Factura C</p>
@@ -286,7 +309,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         </div>
         <button
           type="button"
-          disabled={!validation.ok}
+          disabled={!validation.ok || pvUnsupported}
           onClick={() => onPreview(form)}
           className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer"
         >

@@ -1,10 +1,24 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useSectionVisible } from "@/components/landing/hooks/useScrollReveal";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { ArrowRightIcon } from "@/components/ui/icons";
+
+/** True si el usuario pidió menos movimiento (prefers-reduced-motion: reduce). */
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
 
 // Proceso real de emisión (secuencia → la numeración informa el orden).
 const PASOS = [
@@ -16,12 +30,18 @@ const PASOS = [
 export function FacturadorSection() {
   const ref = useRef<HTMLElement>(null);
   const visible = useSectionVisible(ref, 0.15);
-  const enter = (delay: number) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translateY(0)" : "translateY(24px)",
-    transition: "opacity 700ms ease, transform 700ms ease",
-    transitionDelay: `${delay}ms`,
-  });
+  const reducedMotion = usePrefersReducedMotion();
+  // Con reduced-motion no animamos: mostramos el contenido en su estado final,
+  // sin opacity/transform ni transiciones ni delays escalonados.
+  const enter = (delay: number) =>
+    reducedMotion
+      ? {}
+      : {
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(24px)",
+          transition: "opacity 700ms ease, transform 700ms ease",
+          transitionDelay: `${delay}ms`,
+        };
 
   return (
     <section ref={ref} id="facturador" className="relative py-20 md:py-28 overflow-hidden">
