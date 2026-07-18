@@ -10,7 +10,7 @@ import { createContext, ReactNode, useContext } from "react";
 
 import type { CompaniesState, CompanyInfo, DateRange, ScraperProgress } from "@/hooks/useInvoices";
 import { useInvoices as useInvoicesHook } from "@/hooks/useInvoices";
-import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
+import type { AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 interface InvoiceState {
   invoices: AFIPInvoice[];
@@ -18,6 +18,7 @@ interface InvoiceState {
   error: string | null;
   errorCode: string | null;
   company: CompanyInfo | null;
+  puntosDeVenta: PuntoDeVenta[] | null;
   progress: ScraperProgress | null;
   isHydrated: boolean;
   hasQueried: boolean;

@@ -10,7 +10,9 @@
 export const DEFAULT_TIMEOUT = 120000; // 2 minutes - overall navigation timeout
 export const ELEMENT_TIMEOUT = 60000; // 1 minute - timeout for waiting for individual elements
 export const NEW_TAB_TIMEOUT = 60000; // 1 minute - timeout for waiting for new tabs to open
-export const DEFAULT_HEADLESS = true;
+// Headless por defecto. Poné AFIP_HEADLESS=false en el entorno (dev) para
+// ver la ventana de Chromium y observar el scraping/emisión en vivo.
+export const DEFAULT_HEADLESS = process.env.AFIP_HEADLESS !== "false";
 export const MAX_RETRIES = 2;
 
 // ============================================================================

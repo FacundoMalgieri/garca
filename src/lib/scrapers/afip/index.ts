@@ -18,6 +18,7 @@ import type {
 
 import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, USER_AGENT } from "./constants";
 import { type EventEmitter, noopEmitter, SCRAPER_EVENTS } from "./events";
+import { scrapePuntosDeVentaBestEffort } from "./steps/emission/puntos-venta";
 import { extractInvoices } from "./steps/extraction";
 import { applyFilters } from "./steps/filters";
 import { login } from "./steps/login";
@@ -335,6 +336,14 @@ export async function scrapeAFIPInvoicesWithEvents(
       await downloadXMLs(page, invoices);
     }
 
+    // Puntos de venta (best-effort): reutiliza la sesión RCEL viva para leer los
+    // PV y su universo de comprobantes. Si falla, seguimos con las facturas ya
+    // extraídas (el facturador cae al input de texto libre para el PV).
+    let puntosDeVenta = null;
+    if (!isCancelled()) {
+      puntosDeVenta = await scrapePuntosDeVentaBestEffort(page);
+    }
+
     // Complete event
     emit(SCRAPER_EVENTS.complete(invoices.length));
     console.log("[AFIP Scraper] ✅ Successfully scraped", invoices.length, "invoices");
@@ -345,6 +354,7 @@ export async function scrapeAFIPInvoicesWithEvents(
       total: invoices.length,
       company: company || undefined,
       availableCompanies: availableCompanies.length > 1 ? availableCompanies : undefined,
+      puntosDeVenta: puntosDeVenta ?? undefined,
     };
   } catch (error) {
     console.error("[AFIP Scraper] ❌ Error:", error);

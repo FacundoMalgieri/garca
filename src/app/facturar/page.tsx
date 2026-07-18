@@ -90,6 +90,7 @@ export default function FacturarPage() {
           <EmissionForm
             key={activeId ?? "blank"}
             initial={initial}
+            puntosDeVenta={state.puntosDeVenta}
             onPreview={(p) => { setPlantillaAEmitir(p); setEmitOpen(true); }}
             onUpdateTemplate={(id, p) => save({ ...p, id })}
             onSaveAsNew={(p) => { const nombre = p.nombre || (p.cliente.razonSocial ? `Factura ${p.cliente.razonSocial}` : "Nueva plantilla"); save({ ...p, nombre }); }}

@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
       count: result.total,
       company: result.company,
       availableCompanies: result.availableCompanies,
+      puntosDeVenta: result.puntosDeVenta,
     });
   } catch (error) {
     console.error("[AFIP API] Error:", error);

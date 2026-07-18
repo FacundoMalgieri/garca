@@ -53,6 +53,7 @@ describe("useInvoices", () => {
         error: null,
         errorCode: null,
         company: null,
+        puntosDeVenta: null,
         progress: null,
         isHydrated: true,
         hasQueried: false,

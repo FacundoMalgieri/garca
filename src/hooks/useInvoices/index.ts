@@ -5,10 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
 import { dedupeInvoices } from "@/lib/facturador/dedupe";
-import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
+import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
+const PDV_STORAGE_KEY = "garca_pdv";
 const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 const STORAGE_TTL_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
@@ -41,6 +42,10 @@ export interface InvoiceState {
   error: string | null;
   errorCode: string | null;
   company: CompanyInfo | null;
+  // Puntos de venta habilitados (con su universo de comprobantes), scrapeados
+  // best-effort junto con las facturas. null = no disponibles (sesión vieja o
+  // demo) → el facturador cae al input de texto libre para el PV.
+  puntosDeVenta: PuntoDeVenta[] | null;
   progress: ScraperProgress | null;
   // True once loadFromStorage has run on mount. Consumers (e.g. /panel and
   // /ingresar) must gate their "empty invoices → redirect" effects on this
@@ -120,6 +125,7 @@ export function useInvoices(): UseInvoicesReturn {
     error: null,
     errorCode: null,
     company: null,
+    puntosDeVenta: null,
     progress: null,
     isHydrated: false,
     hasQueried: false,
@@ -224,6 +230,7 @@ export function useInvoices(): UseInvoicesReturn {
       if (storedTs && Date.now() - Number.parseInt(storedTs, 10) > TTL_MS) {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(COMPANY_STORAGE_KEY);
+        localStorage.removeItem(PDV_STORAGE_KEY);
         localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
         localStorage.removeItem(STORAGE_TTL_KEY);
         localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
@@ -234,6 +241,7 @@ export function useInvoices(): UseInvoicesReturn {
 
       const storedInvoices = localStorage.getItem(STORAGE_KEY);
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
+      const storedPdv = localStorage.getItem(PDV_STORAGE_KEY);
       const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
 
       if (storedInvoices !== null) {
@@ -246,7 +254,8 @@ export function useInvoices(): UseInvoicesReturn {
         const company: CompanyInfo | null = parsedCompany
           ? { ...parsedCompany, index: parsedCompany.index ?? 0 }
           : extractCompanyInfo(invoices);
-        setState((prev) => ({ ...prev, invoices, company, isHydrated: true, hasQueried: true }));
+        const puntosDeVenta: PuntoDeVenta[] | null = storedPdv ? JSON.parse(storedPdv) : null;
+        setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true }));
       }
@@ -270,6 +279,22 @@ export function useInvoices(): UseInvoicesReturn {
       localStorage.setItem(STORAGE_TTL_KEY, String(Date.now()));
       if (company) {
         localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(company));
+      }
+    } catch {
+      // Silently fail - localStorage might be full or unavailable
+    }
+  };
+
+  /**
+   * Persiste (o limpia) los puntos de venta scrapeados. Se guardan aparte de
+   * saveToStorage porque solo cambian al hacer un fetch, no en cada flush.
+   */
+  const persistPuntosDeVenta = (puntosDeVenta: PuntoDeVenta[] | null) => {
+    try {
+      if (puntosDeVenta && puntosDeVenta.length > 0) {
+        localStorage.setItem(PDV_STORAGE_KEY, JSON.stringify(puntosDeVenta));
+      } else {
+        localStorage.removeItem(PDV_STORAGE_KEY);
       }
     } catch {
       // Silently fail - localStorage might be full or unavailable
@@ -556,7 +581,7 @@ export function useInvoices(): UseInvoicesReturn {
         }
 
         let buffer = "";
-        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; error?: string; errorCode?: string } | null = null;
+        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; puntosDeVenta?: PuntoDeVenta[]; error?: string; errorCode?: string } | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -643,12 +668,16 @@ export function useInvoices(): UseInvoicesReturn {
             company = extractCompanyInfo(invoices, cuit, companyIndex);
           }
 
+          const puntosDeVenta = finalResult.puntosDeVenta ?? null;
+          persistPuntosDeVenta(puntosDeVenta);
+
           setState({
             invoices,
             isLoading: false,
             error: null,
             errorCode: null,
             company,
+            puntosDeVenta,
             progress: null,
             isHydrated: true,
             hasQueried: true,
@@ -690,12 +719,16 @@ export function useInvoices(): UseInvoicesReturn {
           company = extractCompanyInfo(invoices, cuit, companyIndex);
         }
 
+        const puntosDeVenta = (data.puntosDeVenta as PuntoDeVenta[] | undefined) ?? null;
+        persistPuntosDeVenta(puntosDeVenta);
+
         setState({
           invoices,
           isLoading: false,
           error: null,
           errorCode: null,
           company,
+          puntosDeVenta,
           progress: null,
           isHydrated: true,
           hasQueried: true,
@@ -723,6 +756,7 @@ export function useInvoices(): UseInvoicesReturn {
         error: errorMessage,
         errorCode: "UNKNOWN",
         company: null,
+        puntosDeVenta: null,
         progress: null,
         isHydrated: true,
         hasQueried: false,
@@ -772,6 +806,7 @@ export function useInvoices(): UseInvoicesReturn {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(COMPANY_STORAGE_KEY);
+      localStorage.removeItem(PDV_STORAGE_KEY);
       localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
       localStorage.removeItem(STORAGE_TTL_KEY);
       localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
@@ -787,6 +822,7 @@ export function useInvoices(): UseInvoicesReturn {
       error: null,
       errorCode: null,
       company: null,
+      puntosDeVenta: null,
       progress: null,
       isHydrated: true,
       hasQueried: false,
@@ -809,6 +845,7 @@ export function useInvoices(): UseInvoicesReturn {
       error: null,
       errorCode: null,
       company,
+      puntosDeVenta: null,
       progress: null,
       isHydrated: true,
       hasQueried: true,

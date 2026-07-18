@@ -146,6 +146,20 @@ export interface AFIPCompany {
 }
 
 /**
+ * Punto de venta habilitado en RCEL, con los tipos de comprobante (universo)
+ * que puede emitir. Ej: PV 00003 → [Factura C, NC C…]; PV 00001 → [Factura E].
+ * Se scrapea de la pantalla `buscarPtosVtas.do` (Screen 0) del facturador.
+ */
+export interface PuntoDeVenta {
+  /** Valor del <option> en #puntodeventa (ej. "3") */
+  value: string;
+  /** Label completo de RCEL (ej. " 00003-Azcuenaga 255…") */
+  label: string;
+  /** Tipos de comprobante que este PV puede emitir (universo) */
+  tipos: { value: string; label: string }[];
+}
+
+/**
  * Extended result including company information.
  */
 export interface AFIPScraperResultWithCompany extends AFIPScraperResult {
@@ -153,6 +167,8 @@ export interface AFIPScraperResultWithCompany extends AFIPScraperResult {
   company?: AFIPCompany;
   /** Available companies if multiple found */
   availableCompanies?: AFIPCompany[];
+  /** Puntos de venta habilitados (con su universo de comprobantes). Best-effort. */
+  puntosDeVenta?: PuntoDeVenta[];
 }
 
 /**
