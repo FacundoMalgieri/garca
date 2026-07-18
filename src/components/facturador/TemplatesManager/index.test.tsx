@@ -36,4 +36,26 @@ describe("TemplatesManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
     expect(onDelete).toHaveBeenCalledWith("1");
   });
+
+  it("[H1-UI] el diálogo expone aria-labelledby apuntando al título", () => {
+    render(<TemplatesManager isOpen onClose={vi.fn()} templates={[T("1", "A")]} onRename={vi.fn()} onDelete={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    const labelId = dialog.getAttribute("aria-labelledby");
+    expect(labelId).toBeTruthy();
+    expect(document.getElementById(labelId as string)).toHaveTextContent("Gestionar plantillas");
+  });
+
+  it("[H1-UI] Esc cierra el modal", () => {
+    const onClose = vi.fn();
+    render(<TemplatesManager isOpen onClose={onClose} templates={[T("1", "A")]} onRename={vi.fn()} onDelete={vi.fn()} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("[M1-UI] click en el backdrop cierra el modal", () => {
+    const onClose = vi.fn();
+    render(<TemplatesManager isOpen onClose={onClose} templates={[T("1", "A")]} onRename={vi.fn()} onDelete={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("templates-backdrop"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
