@@ -18,18 +18,22 @@ export default function Home() {
       {/* En desktop el hero queda pegado (sticky) bajo el navbar y la sección
           siguiente sube por encima tapándolo (overlap progresivo). overflow-x-clip
           en el wrapper —no hidden— para no romper el sticky. */}
-      <section className="relative z-0 -mt-16 flex items-center overflow-hidden min-h-[100svh] pt-16 lg:sticky lg:top-0">
-        {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial */}
+      <section className="relative z-0 -mt-16 flex items-center overflow-hidden min-h-[100svh] pt-16 sticky top-0">
+        {/* Atmósfera de marca: gradiente navy + glows cyan/coral + grid con máscara radial.
+            Los glows son radial-gradients (NO filter: blur) a propósito: iOS Safari promueve
+            los filtros blur permanentes dentro de un elemento sticky a capas compositadas y
+            falla el repaint cuando la lámina scrollea por encima (bandas negras). Los
+            radial-gradients dan el mismo look difuso sin filtro → iOS compositea limpio. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
           {/* Glow ancho arriba-centro: le da color al frosted del navbar sobre el hero */}
-          <div className="absolute -top-40 left-1/2 h-[30rem] w-[70rem] -translate-x-1/2 rounded-full bg-[#64D3DE]/15 blur-[130px] dark:bg-[#2E3A66]/70" />
+          <div className="absolute -top-40 left-1/2 h-[30rem] w-[70rem] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(100,211,222,0.18),transparent_70%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(46,58,102,0.75),transparent_70%)]" />
           {/* Glow detrás del titular (izquierda) — mata el vacío negro en desktop */}
-          <div className="absolute -left-40 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/15 blur-[150px] dark:bg-[#2E3A66]/70" />
+          <div className="absolute -left-40 -top-24 h-[44rem] w-[44rem] bg-[radial-gradient(circle,rgba(100,211,222,0.18),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(46,58,102,0.75),transparent_70%)]" />
           {/* Glow cyan arriba-derecha */}
-          <div className="absolute -right-24 -top-24 h-[44rem] w-[44rem] rounded-full bg-[#64D3DE]/30 blur-[140px] dark:bg-[#64D3DE]/22" />
+          <div className="absolute -right-24 -top-24 h-[44rem] w-[44rem] bg-[radial-gradient(circle,rgba(100,211,222,0.35),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(100,211,222,0.26),transparent_70%)]" />
           {/* Glow coral abajo, hacia el centro */}
-          <div className="absolute bottom-[-12rem] left-1/3 h-[34rem] w-[34rem] rounded-full bg-[#FF6B5C]/12 blur-[150px] dark:bg-[#FF6B5C]/12" />
+          <div className="absolute bottom-[-12rem] left-1/3 h-[34rem] w-[34rem] bg-[radial-gradient(circle,rgba(255,107,92,0.15),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(255,107,92,0.15),transparent_70%)]" />
           <div className="absolute inset-0 text-slate-900 opacity-[0.05] dark:text-white dark:opacity-[0.09] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:46px_46px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
         </div>
         <HeroParallax>
