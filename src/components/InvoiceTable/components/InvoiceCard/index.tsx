@@ -1,4 +1,5 @@
-import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { memo } from "react";
+
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { getCurrencyBadgeClasses, getTypeBadgeClasses } from "../../utils/badges";
@@ -6,10 +7,11 @@ import { calculateTotalPesos, formatCurrency, formatInvoiceType, isForeignCurren
 
 interface InvoiceCardProps {
   invoice: AFIPInvoice;
+  // PERF-1: FX map via prop (not context) so React.memo genuinely gates re-renders.
+  manualExchangeRates?: Record<string, number>;
 }
 
-export function InvoiceCard({ invoice }: InvoiceCardProps) {
-  const { manualExchangeRates } = useInvoiceContext();
+function InvoiceCardComponent({ invoice, manualExchangeRates = {} }: InvoiceCardProps) {
   const isForeign = isForeignCurrency(invoice.moneda);
   const xmlRate = invoice.xmlData?.exchangeRate;
   const manualRate = isForeign ? manualExchangeRates[invoice.moneda] : undefined;
@@ -70,6 +72,8 @@ export function InvoiceCard({ invoice }: InvoiceCardProps) {
     </div>
   );
 }
+
+export const InvoiceCard = memo(InvoiceCardComponent);
 
 function CurrencyBadge({ moneda }: { moneda: string }) {
   return (

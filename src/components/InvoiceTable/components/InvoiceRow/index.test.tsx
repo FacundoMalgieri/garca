@@ -42,6 +42,16 @@ const mockInvoiceUSD: AFIPInvoice = {
   xmlData: { exchangeRate: 1000 },
 };
 
+const mockInvoiceUSDNoRate: AFIPInvoice = {
+  ...mockInvoiceUSD,
+  numero: 102,
+  numeroCompleto: "00001-00000102",
+  xmlData: undefined,
+};
+
+// PERF-1: InvoiceRow no longer subscribes to InvoiceContext. It receives the FX
+// map as a prop, so it must render fully outside any provider. The provider here
+// only exercises that the component still works when nested in the real tree.
 const renderInTable = (children: React.ReactNode) => {
   return render(
     <InvoiceProvider>
@@ -49,6 +59,14 @@ const renderInTable = (children: React.ReactNode) => {
         <tbody>{children}</tbody>
       </table>
     </InvoiceProvider>
+  );
+};
+
+const renderRowStandalone = (children: React.ReactNode) => {
+  return render(
+    <table>
+      <tbody>{children}</tbody>
+    </table>
   );
 };
 
@@ -105,6 +123,27 @@ describe("InvoiceRow", () => {
       renderInTable(<InvoiceRow invoice={mockInvoiceUSD} index={0} />);
       // 2000 USD * 1000 = 2.000.000 ARS
       expect(screen.getByText(/2.*000.*000/)).toBeInTheDocument();
+    });
+  });
+
+  describe("manualExchangeRates prop (no context)", () => {
+    it("renders standalone without an InvoiceProvider", () => {
+      renderRowStandalone(<InvoiceRow invoice={mockInvoiceARS} index={0} />);
+      expect(screen.getByText("00001-00000100")).toBeInTheDocument();
+    });
+
+    it("applies a manual FX rate passed via prop for a rate-less foreign invoice", () => {
+      renderRowStandalone(
+        <InvoiceRow invoice={mockInvoiceUSDNoRate} index={0} manualExchangeRates={{ USD: 900 }} />
+      );
+      // Manual rate flagged and total-in-pesos computed (2000 * 900 = 1.800.000)
+      expect(screen.getByText(/\(manual\)/)).toBeInTheDocument();
+      expect(screen.getByText(/1.*800.*000/)).toBeInTheDocument();
+    });
+
+    it("shows 'Sin TC' when no rate is provided for a foreign invoice", () => {
+      renderRowStandalone(<InvoiceRow invoice={mockInvoiceUSDNoRate} index={0} />);
+      expect(screen.getByText(/Sin TC/)).toBeInTheDocument();
     });
   });
 
