@@ -339,23 +339,35 @@ export default function CalculadoraMonotributoPage() {
 
                 {/* Category + Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                  <div className={cn(
-                    "sm:col-span-2 rounded-xl p-6 flex flex-col items-center justify-center",
-                    projectionResult.excedeObjetivo
-                      ? "bg-destructive/10 border-2 border-destructive/30"
-                      : "bg-blue-500/10 border-2 border-blue-500/30"
-                  )}>
-                    <p className="text-xs text-muted-foreground">Categoría resultante</p>
-                    <p className={cn(
-                      "text-5xl font-bold my-2",
-                      projectionResult.excedeObjetivo ? "text-destructive" : "text-blue-600 dark:text-blue-400"
+                  {projectionResult.excluido ? (
+                    <div className="sm:col-span-2 rounded-xl p-6 flex flex-col items-center justify-center bg-destructive/10 border-2 border-destructive/30">
+                      <p className="text-xs text-muted-foreground">Categoría resultante</p>
+                      <p className="text-2xl sm:text-3xl font-bold my-2 text-destructive text-center">
+                        Excluido
+                      </p>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Superás el tope del Monotributo — Responsable Inscripto
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      "sm:col-span-2 rounded-xl p-6 flex flex-col items-center justify-center",
+                      projectionResult.excedeObjetivo
+                        ? "bg-destructive/10 border-2 border-destructive/30"
+                        : "bg-blue-500/10 border-2 border-blue-500/30"
                     )}>
-                      {projectionResult.categoriaResultante}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Tope: ${formatARS(projectionResult.topeCategoria)}
-                    </p>
-                  </div>
+                      <p className="text-xs text-muted-foreground">Categoría resultante</p>
+                      <p className={cn(
+                        "text-5xl font-bold my-2",
+                        projectionResult.excedeObjetivo ? "text-destructive" : "text-blue-600 dark:text-blue-400"
+                      )}>
+                        {projectionResult.categoriaResultante}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tope: ${formatARS(projectionResult.topeCategoria)}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="sm:col-span-3 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-muted/50 p-4 flex flex-col justify-center">
@@ -395,6 +407,17 @@ export default function CalculadoraMonotributoPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Exclusion warning — total over the Monotributo ceiling (BUG-3) */}
+                {projectionResult.excluido && (
+                  <div className="rounded-xl border-2 border-destructive/50 bg-gradient-to-br from-destructive/10 to-destructive/5 p-5 text-center">
+                    <p className="text-destructive text-lg font-bold mb-1">⛔ Superás el tope del Monotributo</p>
+                    <p className="text-sm text-muted-foreground">
+                      Con esta proyección quedarías <strong className="text-foreground">excluido del Monotributo</strong> y
+                      deberías pasar a <strong className="text-foreground">Responsable Inscripto</strong>.
+                    </p>
+                  </div>
+                )}
 
                 {/* Progress Bar */}
                 <div className="space-y-2">
@@ -509,7 +532,7 @@ export default function CalculadoraMonotributoPage() {
                     key={cat.categoria}
                     className={cn(
                       "border-t border-border transition-colors",
-                      projectionResult?.categoriaResultante === cat.categoria
+                      !projectionResult?.excluido && projectionResult?.categoriaResultante === cat.categoria
                         ? "bg-blue-500/10 font-medium"
                         : i % 2 === 0 ? "bg-background" : "bg-muted/20"
                     )}
@@ -519,7 +542,7 @@ export default function CalculadoraMonotributoPage() {
                         href={`/monotributo/categoria/${cat.categoria.toLowerCase()}`}
                         className={cn(
                           "inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all hover:scale-110 hover:shadow-md",
-                          projectionResult?.categoriaResultante === cat.categoria
+                          !projectionResult?.excluido && projectionResult?.categoriaResultante === cat.categoria
                             ? "bg-primary text-primary-foreground hover:bg-primary/90"
                             : "bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary"
                         )}

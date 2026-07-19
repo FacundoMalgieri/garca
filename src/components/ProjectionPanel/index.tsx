@@ -281,6 +281,17 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
           </div>
         </div>
 
+        {/* Exclusion warning — total over the Monotributo ceiling (BUG-3) */}
+        {projectionResult.excluido && (
+          <div className="rounded-xl border-2 border-destructive/50 bg-gradient-to-br from-destructive/10 to-destructive/5 p-5 text-center">
+            <div className="text-destructive text-xl font-bold mb-2">⛔ Superás el tope del Monotributo</div>
+            <p className="text-sm text-muted-foreground">
+              Con esta proyección quedarías <strong className="text-foreground">excluido del Monotributo</strong> y
+              deberías pasar a <strong className="text-foreground">Responsable Inscripto</strong>.
+            </p>
+          </div>
+        )}
+
         {/* Recommendation Card */}
         {projectionResult.excedeObjetivo && projectionResult.totalProyectado === 0 ? (
           <div className="rounded-xl border-2 border-destructive/50 bg-gradient-to-br from-destructive/10 to-destructive/5 p-5 text-center">
