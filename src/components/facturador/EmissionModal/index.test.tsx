@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { saveClientHint } from "@/lib/facturador/client-memory";
 import type { EmissionPreview, EmissionResult, Plantilla } from "@/types/facturador";
 
 import { EmissionModal } from "./index";
@@ -52,6 +53,7 @@ const ncProps = { isOpen: true, mode: "creditNote" as const, cuit: "20301234563"
 beforeEach(() => {
   vi.clearAllMocks();
   mockState = { phase: "idle", preview: null, result: null, error: null };
+  window.localStorage.clear();
 });
 
 describe("EmissionModal", () => {
@@ -128,6 +130,17 @@ describe("EmissionModal", () => {
     render(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} />);
     expect(screen.getByText(/para deshacer/i)).toBeInTheDocument();
     expect(screen.getByTestId("nc-cond-iva")).toBeInTheDocument();
+  });
+
+  it("[bug fix] NC monta sin target (invoiceToVoid=null) y luego recibe la fila real: el selector sincroniza a la condición IVA recordada, no queda en Consumidor Final", () => {
+    mockState = { phase: "idle", preview: null, result: null, error: null };
+    saveClientHint(BASE_INV.cuitReceptor, { condicionIVA: "1" });
+    // Reproduce el orden de montaje real de /facturar: el modal NC se monta
+    // primero sin invoiceToVoid (el useState initializer ve doc vacío → CF)...
+    const { rerender } = render(<EmissionModal {...ncProps} invoiceToVoid={null} isOpen={false} />);
+    // ...y luego el usuario clickea una fila en AnularTab, que setea invoiceToVoid + abre el modal.
+    rerender(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} isOpen />);
+    expect(screen.getByTestId("nc-cond-iva")).toHaveValue("1");
   });
 
   it("modo NC emitida por GARCA (idle): NO muestra selector de condición IVA", () => {
