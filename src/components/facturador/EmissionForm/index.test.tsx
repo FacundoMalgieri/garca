@@ -161,3 +161,24 @@ describe("EmissionForm", () => {
     expect(screen.getByRole("button", { name: /previsualizar y emitir/i })).toBeDisabled();
   });
 });
+
+describe("EmissionForm — cliente autocompletar", () => {
+  it("no muestra inputs de razón social ni email", () => {
+    render(<EmissionForm initial={null} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    expect(screen.queryByTestId("razon-social")).toBeNull();
+    expect(screen.queryByTestId("email")).toBeNull();
+  });
+
+  it("al tipear un doc conocido, prefila condición IVA + venta y muestra el nombre", () => {
+    const hints = { "30707915281": { razonSocial: "GSA SA", condicionIVA: "1", condicionVenta: ["1"] } };
+    render(<EmissionForm initial={null} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} clientHints={hints} />);
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281" } });
+    expect(screen.getByTestId("cliente-resuelto")).toHaveTextContent("GSA SA");
+  });
+
+  it("doc desconocido muestra el aviso de que AFIP completará", () => {
+    render(<EmissionForm initial={null} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} clientHints={{}} />);
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "99999999999" } });
+    expect(screen.getByTestId("cliente-resuelto")).toHaveTextContent(/AFIP/i);
+  });
+});
