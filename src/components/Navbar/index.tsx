@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
@@ -162,6 +163,14 @@ export function Navbar() {
               </button>
             )}
 
+            <Link
+              href="/facturar"
+              className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-primary dark:hover:text-primary-foreground transition-colors"
+              title="Emitir Factura C y Notas de Crédito"
+            >
+              Facturar
+            </Link>
+
             {showIngresarCta && (
               <Link
                 href="/ingresar"
@@ -203,8 +212,11 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu — full screen overlay */}
-        {isOpen && (
+        {/* Mobile Menu — full screen overlay.
+            Se portalea al <body>: el <nav> tiene backdrop-filter, que crea un
+            containing block para position:fixed → si el menú vive dentro del nav,
+            el "fixed inset-0" queda relativo al nav (64px de alto) y colapsa. */}
+        {isOpen && createPortal(
           <div className="fixed inset-0 top-16 z-50 bg-background overflow-y-auto md:hidden">
             <div className="flex flex-col gap-1 px-2 py-4 border-t border-border">
               {/* Navigation actions */}
@@ -220,6 +232,10 @@ export function Navbar() {
 
               <MobileNavLink href="/calculadora-monotributo" icon={<CalculatorIcon />} onClick={() => setIsOpen(false)}>
                 Calculadora Monotributo
+              </MobileNavLink>
+
+              <MobileNavLink href="/facturar" icon={<ReceiptIcon />} onClick={() => setIsOpen(false)}>
+                Facturar
               </MobileNavLink>
 
               {mounted && (
@@ -277,7 +293,8 @@ export function Navbar() {
                 </>
               )}
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 
@@ -471,6 +488,18 @@ function HomeIcon() {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"
+      />
+    </svg>
+  );
+}
+
+function ReceiptIcon() {
+  return (
+    <svg className="h-5 w-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 14l2 2 4-4M7 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3h6M9 3a2 2 0 000 4h6a2 2 0 000-4"
       />
     </svg>
   );

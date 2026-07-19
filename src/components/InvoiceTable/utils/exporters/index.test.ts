@@ -122,6 +122,7 @@ describe("exporters", () => {
   const mockCompany = {
     cuit: "20345678901",
     razonSocial: "Mi Empresa SA",
+    index: 0,
   };
 
   let mockCreateElement: ReturnType<typeof vi.fn>;
@@ -557,6 +558,7 @@ describe("exporters", () => {
       const companyWithSpecialChars = {
         cuit: "20345678901",
         razonSocial: "Empresa Ñoña & Cía. S.A.",
+        index: 0,
       };
 
       exportToCSV(mockInvoices, companyWithSpecialChars);
@@ -572,6 +574,7 @@ describe("exporters", () => {
       const companyWithLongName = {
         cuit: "20345678901",
         razonSocial: `${"A".repeat(100)  } Very Long Company Name That Should Be Truncated`,
+        index: 0,
       };
 
       exportToCSV(mockInvoices, companyWithLongName);
