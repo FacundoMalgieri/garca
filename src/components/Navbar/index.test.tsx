@@ -560,6 +560,14 @@ describe("Navbar", () => {
     expect(links[0]).toHaveAttribute("href", "/facturar");
   });
 
+  it("incluye un link a /guias en desktop y mobile", () => {
+    // Guías siempre visible (no session-gated), como /calculadora-monotributo
+    render(<Navbar />);
+    const links = screen.getAllByRole("link", { name: /gu[íi]as/i });
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0]).toHaveAttribute("href", "/guias");
+  });
+
   it("invokes scrollTo for each mobile navigation target", async () => {
     mockInvoices = [
       {
