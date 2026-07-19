@@ -40,4 +40,20 @@ describe("FacturarPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /emitidas/i }));
     expect(screen.getByText("emitidas-tab")).toBeInTheDocument();
   });
+  it("avisa cuando hay comprobantes en moneda extranjera sin cotización", () => {
+    // Un mes atrás: siempre cae dentro de la ventana de recategorización (12 meses previos).
+    const lastMonth = new Date();
+    lastMonth.setDate(1);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const fecha = `15/${String(lastMonth.getMonth() + 1).padStart(2, "0")}/${lastMonth.getFullYear()}`;
+    ctx.state.invoices = [
+      { fecha, tipo: "FACTURA C", moneda: "USD", importeTotal: 100 },
+    ];
+    render(<FacturarPage />);
+    expect(screen.getByText(/moneda extranjera sin cotización/i)).toBeInTheDocument();
+  });
+  it("no avisa cuando no hay comprobantes sin cotización", () => {
+    render(<FacturarPage />);
+    expect(screen.queryByText(/moneda extranjera sin cotización/i)).not.toBeInTheDocument();
+  });
 });
