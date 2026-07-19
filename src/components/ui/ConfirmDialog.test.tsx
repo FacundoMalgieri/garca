@@ -122,5 +122,51 @@ describe("ConfirmDialog", () => {
     rerender(<ConfirmDialog {...defaultProps} isOpen={false} />);
     expect(document.documentElement.style.overflow).toBe("");
   });
+
+  it("moves focus inside the dialog when opened", () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    // First focusable is the Cancelar button (safe default for a destructive dialog)
+    expect(document.activeElement).toBe(screen.getByText("Cancelar"));
+  });
+
+  it("traps focus within the dialog (Tab from last wraps to first)", () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    const cancelBtn = screen.getByText("Cancelar");
+    const confirmBtn = screen.getByText("Confirmar");
+
+    // Move focus to the last focusable, then Tab should wrap back to the first
+    confirmBtn.focus();
+    expect(document.activeElement).toBe(confirmBtn);
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(cancelBtn);
+
+    // Shift+Tab from the first wraps back to the last
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(confirmBtn);
+  });
+
+  it("restores focus to the trigger when closed", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { rerender } = render(<ConfirmDialog {...defaultProps} isOpen={false} />);
+    rerender(<ConfirmDialog {...defaultProps} isOpen={true} />);
+    // Focus moved into the dialog
+    expect(document.activeElement).not.toBe(trigger);
+
+    rerender(<ConfirmDialog {...defaultProps} isOpen={false} />);
+    // Focus restored to the trigger element
+    expect(document.activeElement).toBe(trigger);
+
+    document.body.removeChild(trigger);
+  });
+
+  it("dialog container is focusable as a fallback (tabIndex -1)", () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    expect(screen.getByRole("dialog")).toHaveAttribute("tabindex", "-1");
+  });
 });
 

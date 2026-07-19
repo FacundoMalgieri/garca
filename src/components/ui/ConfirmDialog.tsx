@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+
+import { useModalA11y } from "@/hooks/useModalA11y";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -27,42 +29,37 @@ export function ConfirmDialog({
   cancelText = "Cancelar",
   variant = "default",
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Handle escape key
-  const handleKeyDown = useCallback(
-    (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  // Focus trap + initial focus + focus restore + Escape are owned by the hook.
+  // Gate on `isOpen && mounted` (not raw `isOpen`): this component returns null
+  // until `mounted`, and the hook's effect deps are `[isOpen]`, so gating on the
+  // same condition that mounts the dialog guarantees the trap arms against a real
+  // container. Mirrors EmissionModal.
+  const dialogRef = useModalA11y<HTMLDivElement>(isOpen && mounted, onClose);
 
+  // Scroll-lock lives in its own effect so removing the local Escape handler
+  // (now the hook's job) doesn't drop the lock.
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      // Use scrollbar-gutter to prevent layout shift
-      const html = document.documentElement;
-      const originalPaddingRight = html.style.paddingRight;
-      const originalOverflow = html.style.overflow;
-      const scrollbarWidth = window.innerWidth - html.clientWidth;
-      
-      html.style.paddingRight = `${scrollbarWidth}px`;
-      html.style.overflow = "hidden";
+    if (!isOpen) return;
+    // Use scrollbar-gutter to prevent layout shift
+    const html = document.documentElement;
+    const originalPaddingRight = html.style.paddingRight;
+    const originalOverflow = html.style.overflow;
+    const scrollbarWidth = window.innerWidth - html.clientWidth;
 
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-        html.style.paddingRight = originalPaddingRight;
-        html.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen, handleKeyDown]);
+    html.style.paddingRight = `${scrollbarWidth}px`;
+    html.style.overflow = "hidden";
+
+    return () => {
+      html.style.paddingRight = originalPaddingRight;
+      html.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
@@ -94,6 +91,7 @@ export function ConfirmDialog({
       {/* Dialog - solid background, no opacity */}
       <div
         ref={dialogRef}
+        tabIndex={-1}
         className="relative z-10 w-full max-w-md rounded-xl bg-white dark:bg-zinc-900 border border-border shadow-2xl"
         role="dialog"
         aria-modal="true"
