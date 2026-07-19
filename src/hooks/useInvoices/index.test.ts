@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { trackUmamiEvent } from "@/lib/analytics/umami";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
 import { useInvoices } from "./index";
@@ -500,6 +501,71 @@ describe("useInvoices", () => {
         },
       };
     };
+
+    const successSSE = () =>
+      createMockSSEResponse([
+        {
+          type: "result",
+          message: "ok",
+          data: { success: true, invoices: [], company: { cuit: "123", razonSocial: "Test" } },
+        },
+      ]);
+    const failSSE = (errorCode = "FETCH_ERROR") =>
+      createMockSSEResponse([
+        { type: "result", message: "e", data: { success: false, error: "x", errorCode } },
+      ]);
+
+    it("returns true when the fetch succeeds", async () => {
+      mockFetch.mockResolvedValueOnce(successSSE());
+      const { result } = renderHook(() => useInvoices());
+      let ret: unknown;
+      await act(async () => {
+        ret = await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+      expect(ret).toBe(true);
+    });
+
+    it("returns false when the fetch fails (so the caller can re-arm Turnstile)", async () => {
+      mockFetch.mockResolvedValueOnce(failSSE());
+      const { result } = renderHook(() => useInvoices());
+      let ret: unknown;
+      await act(async () => {
+        ret = await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+      expect(ret).toBe(false);
+    });
+
+    it("tags the fail event reused=false on first submit, reused=true on a retry with the same token", async () => {
+      const { result } = renderHook(() => useInvoices());
+
+      mockFetch.mockResolvedValueOnce(failSSE("TURNSTILE_FAILED_timeout_or_duplicate"));
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany(
+          "20345678901", "password", 0, { from: "2025-01-01", to: "2025-11-29" }, "EMISOR", "tok-abc"
+        );
+      });
+      expect(trackUmamiEvent).toHaveBeenLastCalledWith(
+        "funnel_arc_invoices_fail",
+        expect.objectContaining({ reused: false })
+      );
+
+      mockFetch.mockResolvedValueOnce(failSSE("TURNSTILE_FAILED_timeout_or_duplicate"));
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany(
+          "20345678901", "password", 0, { from: "2025-01-01", to: "2025-11-29" }, "EMISOR", "tok-abc"
+        );
+      });
+      expect(trackUmamiEvent).toHaveBeenLastCalledWith(
+        "funnel_arc_invoices_fail",
+        expect.objectContaining({ reused: true })
+      );
+    });
 
     it("should call SSE stream endpoint", async () => {
       const mockResponse = createMockSSEResponse([
