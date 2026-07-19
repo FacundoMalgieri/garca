@@ -97,7 +97,7 @@ export interface UseInvoicesReturn {
     dateRange?: DateRange,
     rol?: "EMISOR" | "RECEPTOR",
     turnstileToken?: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   clearInvoices: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
@@ -187,6 +187,21 @@ export function useInvoices(): UseInvoicesReturn {
   // Track the latest invoices/company so the flush-on-unmount cleanup can
   // write the most recent values synchronously without re-running the effect.
   const pendingSaveRef = useRef<{ invoices: AFIPInvoice[]; company: CompanyInfo | null } | null>(null);
+
+  // Turnstile tokens are single-use. If the SAME token is submitted more than
+  // once (a retry after a failed fetch), Cloudflare rejects the reuse as
+  // `timeout-or-duplicate`. We can't tell a stale-token *timeout* apart from a
+  // reused-token *duplicate* from Cloudflare's bundled error code, but the
+  // client CAN: a token it has already sent is, by definition, a duplicate.
+  // We remember every submitted token (in memory only, never persisted) and tag
+  // the fail metric with `reused`, so analytics can split the two root causes.
+  const submittedTokensRef = useRef<Set<string>>(new Set());
+  const markTokenReuse = (token?: string): boolean => {
+    if (!token) return false;
+    const reused = submittedTokensRef.current.has(token);
+    submittedTokensRef.current.add(token);
+    return reused;
+  };
 
   useEffect(() => {
     // Gate on hasQueried, not invoice count: a successful empty query must be
@@ -329,6 +344,7 @@ export function useInvoices(): UseInvoicesReturn {
    * Returns true if successful, false otherwise.
    */
   const fetchCompanies = async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
+    const tokenReused = markTokenReuse(turnstileToken);
     // Abort any existing request
     companiesAbortRef.current?.abort();
     companiesAbortRef.current = new AbortController();
@@ -431,7 +447,7 @@ export function useInvoices(): UseInvoicesReturn {
         if (finalResult) {
           if (!finalResult.success) {
             const failCode = (finalResult as { errorCode?: string }).errorCode;
-            trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(failCode) });
+            trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(failCode), reused: tokenReused });
             setCompaniesState({
               companies: [],
               isLoading: false,
@@ -468,7 +484,7 @@ export function useInvoices(): UseInvoicesReturn {
         const data = await response.json();
 
         if (!data.success) {
-          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(data.errorCode) });
+          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: sanitizeErrorCode(data.errorCode), reused: tokenReused });
           setCompaniesState({
             companies: [],
             isLoading: false,
@@ -509,7 +525,7 @@ export function useInvoices(): UseInvoicesReturn {
         error instanceof TypeError && /fetch|network|load failed/i.test(errorMessage)
           ? "NETWORK"
           : "CLIENT";
-      trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: clientCode });
+      trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesFail, { code: clientCode, reused: tokenReused });
       setCompaniesState({
         companies: [],
         isLoading: false,
@@ -532,7 +548,8 @@ export function useInvoices(): UseInvoicesReturn {
     dateRange?: DateRange,
     rol: "EMISOR" | "RECEPTOR" = "EMISOR",
     turnstileToken?: string
-  ) => {
+  ): Promise<boolean> => {
+    const tokenReused = markTokenReuse(turnstileToken);
     // Abort any existing request
     invoicesAbortRef.current?.abort();
     invoicesAbortRef.current = new AbortController();
@@ -649,6 +666,7 @@ export function useInvoices(): UseInvoicesReturn {
           if (!finalResult.success) {
             trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, {
               code: sanitizeErrorCode(finalResult.errorCode),
+              reused: tokenReused,
             });
             setState((prev) => ({
               ...prev,
@@ -659,7 +677,7 @@ export function useInvoices(): UseInvoicesReturn {
               company: null,
               progress: null,
             }));
-            return;
+            return false;
           }
 
           const invoices = finalResult.invoices || [];
@@ -701,6 +719,7 @@ export function useInvoices(): UseInvoicesReturn {
 
           trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
           clearCompanies();
+          return true;
         } else {
           throw new Error("No se recibió resultado del servidor");
         }
@@ -709,7 +728,7 @@ export function useInvoices(): UseInvoicesReturn {
         const data = await response.json();
 
         if (!data.success) {
-          trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: sanitizeErrorCode(data.errorCode) });
+          trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: sanitizeErrorCode(data.errorCode), reused: tokenReused });
           setState((prev) => ({
             ...prev,
             invoices: [],
@@ -719,7 +738,7 @@ export function useInvoices(): UseInvoicesReturn {
             company: null,
             progress: null,
           }));
-          return;
+          return false;
         }
 
         const invoices = data.invoices || [];
@@ -759,11 +778,12 @@ export function useInvoices(): UseInvoicesReturn {
 
         trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
         clearCompanies();
+        return true;
       }
     } catch (error) {
       // Don't update state if request was aborted
       if (error instanceof Error && error.name === "AbortError") {
-        return;
+        return false;
       }
 
       const errorMessage = error instanceof Error ? error.message : "Error desconocido al consultar facturas";
@@ -771,7 +791,7 @@ export function useInvoices(): UseInvoicesReturn {
         error instanceof TypeError && /fetch|network|load failed/i.test(errorMessage)
           ? "NETWORK"
           : "CLIENT";
-      trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: clientCode });
+      trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: clientCode, reused: tokenReused });
 
       setState({
         invoices: [],
@@ -785,6 +805,7 @@ export function useInvoices(): UseInvoicesReturn {
         hasQueried: false,
       });
     }
+    return false;
   };
 
   /**

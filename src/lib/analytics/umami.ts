@@ -54,9 +54,15 @@ export const UMAMI_EVENTS = {
    * @example data: { context: 'invoices'|'projection', format: 'pdf'|'csv'|'json' }
    */
   PanelExport: "funnel_panel_export",
-  /** ARCA: fallo al listar empresas (código de API, sin mensaje de usuario). */
+  /**
+   * ARCA: fallo al listar empresas (código de API, sin mensaje de usuario).
+   * `data: { code, reused }`. reused=true significa que el token Turnstile ya se
+   * había enviado (retry), por lo que Cloudflare lo rechaza como "duplicate";
+   * reused=false con code Turnstile significa token vencido ("timeout"/dwell).
+   * Separa las dos causas que Cloudflare agrupa bajo `timeout-or-duplicate`.
+   */
   ArcCompaniesFail: "funnel_arc_companies_fail",
-  /** ARCA: fallo al obtener comprobantes. */
+  /** ARCA: fallo al obtener comprobantes. `data: { code, reused }` (ver ArcCompaniesFail). */
   ArcInvoicesFail: "funnel_arc_invoices_fail",
   /** Home: click en CTA hacia /ingresar o /calculadora-monotributo. @example { target: 'ingresar' | 'calculadora' } */
   LandingCta: "funnel_landing_cta",

@@ -66,8 +66,8 @@ export default function IngresoPage() {
     companyIndex: number,
     dateRange: { from: string; to: string },
     turnstileToken?: string
-  ) => {
-    await fetchInvoicesWithCompany(cuit, password, companyIndex, dateRange, "EMISOR", turnstileToken);
+  ): Promise<boolean> => {
+    return await fetchInvoicesWithCompany(cuit, password, companyIndex, dateRange, "EMISOR", turnstileToken);
   };
 
   // Handle exit confirmation

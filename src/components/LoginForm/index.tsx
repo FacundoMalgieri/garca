@@ -20,14 +20,14 @@ type FlowStep = "credentials" | "company-select";
 interface LoginFormProps {
   /** Called when user submits credentials (step 1) */
   onFetchCompanies: (cuit: string, password: string, turnstileToken?: string) => Promise<boolean>;
-  /** Called when user selects a company (step 2) */
+  /** Called when user selects a company (step 2). Resolves true on success, false on failure. */
   onSelectCompany: (
     cuit: string,
     password: string,
     companyIndex: number,
     dateRange: { from: string; to: string },
     turnstileToken?: string
-  ) => void;
+  ) => Promise<boolean>;
   /** Loading state for step 1 (fetching companies) */
   isLoadingCompanies: boolean;
   /** Loading state for step 2 (fetching invoices) */
@@ -134,16 +134,32 @@ export function LoginForm({
 
     // Step 1: Fetch companies
     const success = await onFetchCompanies(cuit, password, turnstileToken || undefined);
+    // Whether it succeeded or failed, the token was consumed server-side and is
+    // now single-use-spent. Re-arm Turnstile so the next request (step 2, or a
+    // retry after failure) gets a FRESH token; otherwise a retry reuses the
+    // spent token and bounces as TURNSTILE_FAILED_timeout_or_duplicate.
+    turnstileRef.current?.reset();
+    setTurnstileToken(null);
     if (success) {
-      // Reset Turnstile to get a fresh token for the next request
-      turnstileRef.current?.reset();
-      setTurnstileToken(null);
       setStep("company-select");
     }
   };
 
-  const handleCompanySelect = (company: AFIPCompany) => {
-    onSelectCompany(cuit, password, company.index, { from: fechaDesde, to: fechaHasta }, turnstileToken || undefined);
+  const handleCompanySelect = async (company: AFIPCompany) => {
+    const ok = await onSelectCompany(
+      cuit,
+      password,
+      company.index,
+      { from: fechaDesde, to: fechaHasta },
+      turnstileToken || undefined
+    );
+    // On failure we stay on the company-select step; re-arm Turnstile so the
+    // user can pick again (or pick another company) with a fresh token instead
+    // of reusing the spent one.
+    if (!ok) {
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
+    }
   };
 
   const handleBackToCredentials = () => {

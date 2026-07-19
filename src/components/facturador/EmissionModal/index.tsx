@@ -42,6 +42,16 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
   const passwordRef = useRef<string>("");
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
+  // Turnstile tokens expire after ~5 min. On expiry/error, drop the stale token
+  // AND re-arm the invisible widget so a fresh one is minted; without the reset
+  // the widget goes idle and the preview/confirm button stays disabled until the
+  // modal is reopened. Re-arming only refreshes the anti-bot token — it does NOT
+  // touch useEmission's idempotencyKey, so the confirm-retry contract is intact.
+  const rearmTurnstile = () => {
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+  };
+
   useEffect(() => setMounted(true), []);
   // El useState initializer de ncCondIVA solo corre una vez, al montar. En
   // /facturar el modal NC se monta sin target (invoiceToVoid=null) y luego el
@@ -50,7 +60,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
   // recordada del cliente real.
   useEffect(() => {
     if (isOpen) setNcCondIVA(defaultNcCondIVA());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isOpen, invoiceToVoid?.cuitReceptor]);
   const target = mode === "creditNote" ? invoiceToVoid : plantilla;
   const esNC = mode === "creditNote";
@@ -143,7 +153,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
             )}
             <label className="block text-xs text-muted-foreground mb-1">Clave fiscal</label>
             <input data-testid="clave-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-4" />
-            <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
+            <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={rearmTurnstile} onError={rearmTurnstile} />
             <div className="flex gap-2 mt-4">
               <button onClick={handleClose} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Cancelar</button>
               <button onClick={handleGeneratePreview} disabled={!password || !turnstileToken} className="flex-[2] rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer">Generar preview →</button>
@@ -224,7 +234,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
               </label>
               <label className="block text-xs text-muted-foreground mb-1">Escribí <b>EMITIR</b> para habilitar:</label>
               <input data-testid="confirm-typed" value={typed} onChange={(e) => setTyped(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-3" />
-              <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
+              <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={rearmTurnstile} onError={rearmTurnstile} />
               <div className="flex gap-2 mt-3">
                 <button onClick={handleClose} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted cursor-pointer">Cancelar</button>
                 <button onClick={handleConfirm} disabled={!canConfirm} className="flex-[2] rounded-lg bg-[#FF6B5C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#FF6B5C]/90 disabled:opacity-50 cursor-pointer">{esNC ? "Emitir Nota de Crédito" : "Emitir factura"}</button>
@@ -271,7 +281,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
                 <p className="text-xs text-muted-foreground mb-3">
                   Reintentando no se vuelve a emitir: si el comprobante ya se emitió, se recupera automáticamente.
                 </p>
-                <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={() => setTurnstileToken(null)} onError={() => setTurnstileToken(null)} />
+                <TurnstileWidget ref={turnstileRef} onSuccess={setTurnstileToken} onExpired={rearmTurnstile} onError={rearmTurnstile} />
               </>
             )}
             <div className="flex gap-2 mt-3">

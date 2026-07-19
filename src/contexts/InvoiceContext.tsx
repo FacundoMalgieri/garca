@@ -38,7 +38,7 @@ interface InvoiceContextType {
     dateRange?: DateRange,
     rol?: "EMISOR" | "RECEPTOR",
     turnstileToken?: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   clearInvoices: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
