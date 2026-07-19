@@ -14,19 +14,9 @@ import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 import { useTour } from "@/hooks/useTour";
+import { computeAnnualIncome } from "@/lib/facturador/annual-income";
 import { getNextRecategorizacionDates } from "@/lib/projection";
 import { getPanelTourSteps, PANEL_TOUR_KEY } from "@/lib/tours/panel-tour";
-
-function parseInvoiceDate(fecha: string): Date {
-  const [day, month, year] = fecha.split("/");
-  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-}
-
-function getInvoiceMultiplier(tipo: string): number {
-  const lower = tipo.toLowerCase();
-  if (lower.includes("nota de credito") || lower.includes("nota de crédito")) return -1;
-  return 1;
-}
 
 interface FxCurrencyInfo {
   count: number;
@@ -50,12 +40,8 @@ export default function PanelPage() {
     if (state.invoices.length === 0)
       return { ingresosAnuales: 0, hasCurrentYearData: false, fxCurrenciesNeedingRate: {} as Record<string, FxCurrencyInfo>, recategWindow: nextRecateg };
 
-    const ventana = nextRecateg.ventana;
-    const windowMonths = new Set(ventana);
-
-    let total = 0;
-    let hasRecent = false;
-
+    // FX banner: cuenta TODAS las facturas en moneda extranjera sin cotización
+    // (cualquier mes), independientemente de la ventana de recategorización.
     const needingRate: Record<string, FxCurrencyInfo> = {};
     for (const inv of state.invoices) {
       if (inv.moneda !== "ARS" && !inv.xmlData?.exchangeRate) {
@@ -65,24 +51,13 @@ export default function PanelPage() {
       }
     }
 
-    for (const inv of state.invoices) {
-      const d = parseInvoiceDate(inv.fecha);
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (windowMonths.has(monthKey)) {
-        hasRecent = true;
-        const multiplier = getInvoiceMultiplier(inv.tipo);
-        if (inv.moneda === "ARS") {
-          total += inv.importeTotal * multiplier;
-        } else if (inv.xmlData?.exchangeRate) {
-          total += inv.importeTotal * inv.xmlData.exchangeRate * multiplier;
-        } else {
-          const manualRate = manualExchangeRates[inv.moneda];
-          if (manualRate && manualRate > 0) {
-            total += inv.importeTotal * manualRate * multiplier;
-          }
-        }
-      }
-    }
+    // Ingreso anual en la ventana: única fuente de verdad compartida con el
+    // facturador (evita duplicar el loop de conversión/monthKey acá).
+    const { ingresosAnuales: total, hasCurrentYearData: hasRecent } = computeAnnualIncome(
+      state.invoices,
+      manualExchangeRates,
+      nextRecateg.ventana
+    );
     return { ingresosAnuales: total, hasCurrentYearData: hasRecent, fxCurrenciesNeedingRate: needingRate, recategWindow: nextRecateg };
   }, [state.invoices, manualExchangeRates, nextRecateg]);
 
