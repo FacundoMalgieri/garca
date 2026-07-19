@@ -81,6 +81,9 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   const [form, setForm] = useState<Plantilla>(initial ?? blankForm());
   const [lineKeys, setLineKeys] = useState<number[]>(() => (initial ?? blankForm()).lineas.map((_, i) => i));
   const nextKey = useRef((initial ?? blankForm()).lineas.length);
+  // Doc sobre el que ya aplicamos un hint (prefill de condicionIVA/condicionVenta/razonSocial).
+  // Evita re-clobberear un override manual del usuario cuando re-tipea el mismo doc.
+  const lastPrefilledDoc = useRef<string | null>(null);
 
   useEffect(() => {
     const base = initial ?? blankForm();
@@ -132,10 +135,14 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
     setForm((f) => {
       const h = clientHints ? resolveClient(clientHints, nroDoc) : null;
       const cliente = { ...f.cliente, nroDoc };
-      if (h) {
+      // Solo prefillear cuando el doc recién resuelve a un hint que no aplicamos
+      // todavía en esta instancia del form. Si no, re-tipear el mismo doc después
+      // de que el usuario pisó manualmente condicionIVA/condicionVenta lo clobberea.
+      if (h && nroDoc !== lastPrefilledDoc.current) {
         if (h.razonSocial !== undefined) cliente.razonSocial = h.razonSocial;
         if (h.condicionIVA !== undefined) cliente.condicionIVA = h.condicionIVA;
         if (h.condicionVenta !== undefined) cliente.condicionVenta = h.condicionVenta;
+        lastPrefilledDoc.current = nroDoc;
       }
       return { ...f, cliente };
     });
