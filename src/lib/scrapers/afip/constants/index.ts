@@ -87,6 +87,7 @@ export const TIMING = {
   ROW_SCROLL_WAIT: 100,
   TABLE_SCROLL_WAIT: 500,
   JS_PROCESS_WAIT: 1000,
+  LOOKUP_WAIT: 8000,
 } as const;
 
 // ============================================================================

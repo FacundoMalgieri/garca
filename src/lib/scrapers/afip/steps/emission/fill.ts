@@ -41,14 +41,19 @@ export async function applyAction(page: Page, a: FillAction): Promise<void> {
     case "lookup":
       await page.fill(a.selector, a.value);
       await page.press(a.selector, "Enter");
-      // Wait until the padrón lookup populates #razonsocialreceptor
-      await page.waitForFunction(
-        () => {
-          const el = document.querySelector<HTMLInputElement>("#razonsocialreceptor");
-          return el !== null && el.value.trim().length > 0;
-        },
-        { timeout: ELEMENT_TIMEOUT },
-      );
+      // Esperar que el padrón llene #razonsocialreceptor, pero acotado y tolerante:
+      // un DNI/CUIT no registrado no responde, y no debe colgar ni abortar la emisión.
+      try {
+        await page.waitForFunction(
+          () => {
+            const el = document.querySelector<HTMLInputElement>("#razonsocialreceptor");
+            return el !== null && el.value.trim().length > 0;
+          },
+          { timeout: TIMING.LOOKUP_WAIT },
+        );
+      } catch {
+        // sin resolución de padrón: seguir con lo tipeado (RCEL acepta CF sin razón social)
+      }
       break;
   }
 }
