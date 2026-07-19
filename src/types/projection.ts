@@ -36,6 +36,13 @@ export interface ProjectionResult {
   totalProyectado: number
   /** Resulting category based on total */
   categoriaResultante: string
+  /**
+   * Whether the total exceeds the Monotributo ceiling (top category's
+   * ingresosBrutos). When true the taxpayer would be excluded from
+   * Monotributo and must move to Responsable Inscripto — distinct from
+   * merely landing in the highest category (K).
+   */
+  excluido: boolean
   /** Target category used for calculations (explicit or auto-detected) */
   categoriaObjetivo: string
   /** Category threshold (tope) */

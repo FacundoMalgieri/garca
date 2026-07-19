@@ -179,6 +179,24 @@ export function getCategoriaForTotal(
 }
 
 /**
+ * Whether a total exceeds the Monotributo ceiling (the highest category's
+ * ingresosBrutos limit). At equality the taxpayer still fits in the top
+ * category, so this returns false — only a strictly greater total means
+ * exclusion (mandatory exit to Responsable Inscripto).
+ *
+ * Pure/side-effect-free. Intentionally separate from getCategoriaForTotal,
+ * whose return semantics (always a real category) must stay unchanged for
+ * getAutoTargetCategory and the recommendation path.
+ */
+export function excedeMonotributo(
+  total: number,
+  categorias: CategoriaMonotributo[]
+): boolean {
+  const max = Math.max(...categorias.map(c => c.ingresosBrutos))
+  return total > max
+}
+
+/**
  * Get a category by its letter
  */
 export function getCategoriaByLetter(
@@ -272,6 +290,7 @@ export function calculateProjection(
   const { total, historico, proyectado } = sumWindow(ventana, historical, projections, today)
   
   const categoriaResultante = getCategoriaForTotal(total, categorias)
+  const excluido = excedeMonotributo(total, categorias)
   const currentMonth = formatMonthKey(today)
   
   // Count future months in the window
@@ -307,6 +326,7 @@ export function calculateProjection(
     totalHistorico: historico,
     totalProyectado: proyectado,
     categoriaResultante: categoriaResultante?.categoria || "K",
+    excluido,
     categoriaObjetivo: effectiveTarget?.categoria || "K",
     topeCategoria,
     margenRestante,
@@ -325,7 +345,11 @@ export function distributeEvenly(
   futureMonths: MonthKey[]
 ): Record<MonthKey, number> {
   if (futureMonths.length === 0) return {}
-  
+
+  // BUG-6: Math.floor drops up to (futureMonths.length - 1) pesos of the
+  // remainder. This is a deliberate safe-direction rounding — it can only
+  // under-distribute, never push the projected total over the target. See the
+  // "bounded remainder" test in index.test.ts. Do not switch to round/ceil.
   const perMonth = Math.floor(amount / futureMonths.length)
   const result: Record<MonthKey, number> = {}
   

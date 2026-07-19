@@ -6,6 +6,7 @@ import {
   addMonths,
   calculateProjection,
   distributeEvenly,
+  excedeMonotributo,
   formatMonthKey,
   getAutoTargetCategory,
   getCategoriaByLetter,
@@ -161,6 +162,23 @@ describe("projection utilities", () => {
       const categorias = MONOTRIBUTO_DATA.categorias
       const cat = getCategoriaForTotal(999999999999, categorias)
       expect(cat?.categoria).toBe("K")
+    })
+  })
+
+  describe("excedeMonotributo (BUG-3)", () => {
+    const categorias = MONOTRIBUTO_DATA.categorias
+    const maxIngresos = Math.max(...categorias.map(c => c.ingresosBrutos))
+
+    it("returns false at exactly the K ceiling (equality is not exclusion)", () => {
+      expect(excedeMonotributo(maxIngresos, categorias)).toBe(false)
+    })
+
+    it("returns true just above the K ceiling", () => {
+      expect(excedeMonotributo(maxIngresos + 1, categorias)).toBe(true)
+    })
+
+    it("returns false well under the ceiling", () => {
+      expect(excedeMonotributo(1000, categorias)).toBe(false)
     })
   })
 
@@ -324,11 +342,35 @@ describe("projection utilities", () => {
     })
   })
 
+  describe("calculateProjection exclusion (BUG-3)", () => {
+    const categorias = MONOTRIBUTO_DATA.categorias
+    const maxIngresos = Math.max(...categorias.map(c => c.ingresosBrutos))
+    const today = new Date(2027, 0, 15) // whole window is in the past
+    const ventana = getRecategorizacionWindow("2026-07") // 2025-07 .. 2026-06
+
+    it("marks excluido when total exceeds the K ceiling", () => {
+      const historical = [{ month: "2025-07", totalArs: maxIngresos + 1000, invoiceCount: 1 }]
+      const result = calculateProjection(ventana, historical, {}, null, 0, categorias, today)
+
+      expect(result.totalVentana).toBe(maxIngresos + 1000)
+      expect(result.excluido).toBe(true)
+    })
+
+    it("does NOT mark excluido at exactly the K ceiling and stays in category K", () => {
+      const historical = [{ month: "2025-07", totalArs: maxIngresos, invoiceCount: 1 }]
+      const result = calculateProjection(ventana, historical, {}, null, 0, categorias, today)
+
+      expect(result.totalVentana).toBe(maxIngresos)
+      expect(result.excluido).toBe(false)
+      expect(result.categoriaResultante).toBe("K")
+    })
+  })
+
   describe("distributeEvenly", () => {
     it("distributes amount across months", () => {
       const months = ["2026-02", "2026-03", "2026-04", "2026-05", "2026-06"]
       const result = distributeEvenly(10000000, months)
-      
+
       expect(Object.keys(result).length).toBe(5)
       expect(result["2026-02"]).toBe(2000000)
       expect(result["2026-06"]).toBe(2000000)
@@ -336,6 +378,18 @@ describe("projection utilities", () => {
 
     it("returns empty object for no months", () => {
       expect(distributeEvenly(10000000, [])).toEqual({})
+    })
+
+    // BUG-6: Math.floor drops up to (months-1) pesos of the remainder.
+    // Direction is safe — it can only under-distribute, never over-recommend.
+    it("never distributes more than the amount and leaves a bounded remainder", () => {
+      const months = ["2026-02", "2026-03", "2026-04"]
+      const amount = 10000001 // not divisible by 3
+      const result = distributeEvenly(amount, months)
+
+      const sum = Object.values(result).reduce((a, b) => a + b, 0)
+      expect(sum).toBeLessThanOrEqual(amount)
+      expect(amount - sum).toBeLessThan(months.length)
     })
   })
 
