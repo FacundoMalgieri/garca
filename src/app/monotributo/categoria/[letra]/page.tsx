@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
+import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
 import { SupportBanner } from "@/components/ui/SupportBanner";
@@ -372,15 +373,17 @@ export default async function CategoriaPage({
               Calculá si con tu facturación actual te corresponde esta categoría o conviene planificar para mantenerte
               en otra. <strong className="text-slate-900 dark:text-white">La calculadora de GARCA es gratis y no guarda tus datos.</strong>
             </p>
-            <Link
+            <TrackedGuideCtaLink
               href="/calculadora-monotributo"
+              target="calculadora"
+              guide="categoria"
               className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
             >
               Abrir calculadora
               <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </TrackedGuideCtaLink>
           </div>
         </section>
 

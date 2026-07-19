@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
+import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -207,9 +208,14 @@ export default function VsRelacionDependenciaPage() {
             tabla de Monotributo vigente
           </Link>{" "}
           o usá la{" "}
-          <Link href="/calculadora-monotributo" className="text-primary hover:underline">
+          <TrackedGuideCtaLink
+            href="/calculadora-monotributo"
+            target="calculadora"
+            guide="vs-relacion-dependencia"
+            className="text-primary hover:underline"
+          >
             calculadora de categoría
-          </Link>
+          </TrackedGuideCtaLink>
           .
         </p>
         <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -278,9 +284,14 @@ export default function VsRelacionDependenciaPage() {
             tabla de Monotributo
           </Link>{" "}
           y, para tu actividad independiente, simulá la cuota con la{" "}
-          <Link href="/calculadora-monotributo" className="text-primary hover:underline">
+          <TrackedGuideCtaLink
+            href="/calculadora-monotributo"
+            target="calculadora"
+            guide="vs-relacion-dependencia"
+            className="text-primary hover:underline"
+          >
             calculadora
-          </Link>
+          </TrackedGuideCtaLink>
           .
         </p>
       </section>
@@ -398,9 +409,14 @@ export default function VsRelacionDependenciaPage() {
           La categoría del Monotributo en este caso se determina solo por la{" "}
           <strong className="text-foreground">facturación de la actividad independiente</strong>, no por el
           sueldo. Para ver en qué categoría caés según lo que facturás aparte, usá la{" "}
-          <Link href="/calculadora-monotributo" className="text-primary hover:underline">
+          <TrackedGuideCtaLink
+            href="/calculadora-monotributo"
+            target="calculadora"
+            guide="vs-relacion-dependencia"
+            className="text-primary hover:underline"
+          >
             calculadora de categoría
-          </Link>
+          </TrackedGuideCtaLink>
           .
         </p>
       </section>

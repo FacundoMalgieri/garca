@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
+import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -82,12 +83,14 @@ export default function Monotributo2026Page() {
         <strong className="text-foreground">recategorización en enero y julio</strong>. El principal
         cambio fue de marca: AFIP pasó a llamarse ARCA (portal en arca.gob.ar), sin cambios en las
         obligaciones ni en las fechas. Podés{" "}
-        <Link
+        <TrackedGuideCtaLink
           href="/calculadora-monotributo"
+          target="calculadora"
+          guide="2026"
           className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
         >
           calcular tu categoría 2026
-        </Link>{" "}
+        </TrackedGuideCtaLink>{" "}
         con los valores actualizados.
       </p>
 
@@ -348,15 +351,17 @@ export default function Monotributo2026Page() {
             recategorización.{" "}
             <strong className="text-slate-900 dark:text-white">Gratis, sin registro, sin guardar datos.</strong>
           </p>
-          <Link
+          <TrackedGuideCtaLink
             href="/calculadora-monotributo"
+            target="calculadora"
+            guide="2026"
             className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
           >
             Abrir calculadora
             <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </TrackedGuideCtaLink>
         </div>
       </section>
 
