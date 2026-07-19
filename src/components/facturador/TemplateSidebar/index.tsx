@@ -1,7 +1,7 @@
 "use client";
 
-import { totalImporte } from "@/lib/facturador/validation";
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
+import { totalImporte } from "@/lib/facturador/validation";
 import { cn } from "@/lib/utils";
 import type { Plantilla } from "@/types/facturador";
 

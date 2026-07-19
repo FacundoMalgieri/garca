@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+
 import type { AFIPInvoice } from "@/types/afip-scraper";
+
 import { computeAnnualIncome } from "./annual-income";
 
 function inv(over: Partial<AFIPInvoice>): AFIPInvoice {
