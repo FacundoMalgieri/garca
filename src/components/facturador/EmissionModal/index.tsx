@@ -9,6 +9,7 @@ import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/Turnstile
 import { useEmission } from "@/hooks/useEmission";
 import { useModalA11y } from "@/hooks/useModalA11y";
 import { encryptCredentials } from "@/lib/crypto";
+import { loadClientMemory } from "@/lib/facturador/client-memory";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { formatDMY } from "@/lib/facturador/dates";
 import { computeTopeAlert } from "@/lib/facturador/tope";
@@ -32,7 +33,12 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [agree, setAgree] = useState(false);
   const [typed, setTyped] = useState("");
-  const [ncCondIVA, setNcCondIVA] = useState<string>(COND_IVA_RECEPTOR.consumidorFinal);
+  const defaultNcCondIVA = () => {
+    const doc = invoiceToVoid?.cuitReceptor ?? "";
+    const remembered = doc ? loadClientMemory()[doc]?.condicionIVA : undefined;
+    return remembered ?? COND_IVA_RECEPTOR.consumidorFinal;
+  };
+  const [ncCondIVA, setNcCondIVA] = useState<string>(defaultNcCondIVA);
   const passwordRef = useRef<string>("");
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
@@ -66,7 +72,7 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
     // Defense-in-depth: descartar la clave en plano también al "emitir otra",
     // no solo al cerrar. Se re-ingresa en el próximo preview.
     passwordRef.current = "";
-    setPassword(""); setAgree(false); setTyped(""); setTurnstileToken(null); setNcCondIVA(COND_IVA_RECEPTOR.consumidorFinal);
+    setPassword(""); setAgree(false); setTyped(""); setTurnstileToken(null); setNcCondIVA(defaultNcCondIVA());
     turnstileRef.current?.reset();
     reset();
   };

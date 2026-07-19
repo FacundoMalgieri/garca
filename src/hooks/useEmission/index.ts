@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { saveClientHint } from "@/lib/facturador/client-memory";
 import { TIPO_OFICIAL } from "@/lib/facturador/codes";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 import type { EmissionPreview, EmissionResult, Plantilla, StoredInvoice } from "@/types/facturador";
@@ -238,6 +239,21 @@ export function useEmission(): UseEmissionReturn {
         // Consultas) NO es error: seguimos a "done" y la UI (WS5) deriva el
         // estado "CAE pendiente" desde el cae vacío.
         addEmittedInvoice(afipInvoice);
+
+        // [Task 6] Recordar el cliente (razón social real + condición IVA/venta)
+        // para autocompletar la próxima vez. Solo facturas, no NC (no hay "cliente
+        // nuevo" en una NC — es la misma factura original que se anula).
+        if (target.kind !== "notaCreditoC") {
+          const c = target.plantilla?.cliente;
+          if (c?.nroDoc) {
+            saveClientHint(c.nroDoc, {
+              razonSocial: emissionResult.receptor.razonSocial || c.razonSocial,
+              condicionIVA: c.condicionIVA,
+              condicionVenta: c.condicionVenta,
+            });
+          }
+        }
+
         setPhase("done");
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error de red al confirmar la emisión";
