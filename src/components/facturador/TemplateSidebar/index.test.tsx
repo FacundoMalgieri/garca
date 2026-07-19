@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+
 import type { Plantilla } from "@/types/facturador";
+
 import { TemplateSidebar } from "./index";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 
 const T = (id: string, nombre: string, pv = "3", total = 180000): Plantilla => ({
   id, nombre, puntoDeVenta: pv, concepto: "servicios",
