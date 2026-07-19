@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { InvoiceProvider, useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useEmission } from "@/hooks/useEmission";
+import { loadClientMemory } from "@/lib/facturador/client-memory";
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 
@@ -41,6 +42,32 @@ describe("useEmission", () => {
     await act(async () => { await result.current.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
     await waitFor(() => expect(result.current.phase).toBe("done"));
     expect(result.current.result?.cae).toBe("123");
+  });
+
+  it("guarda el hint del cliente al emitir una factura C", async () => {
+    localStorage.clear();
+    const resultObj = {
+      ...previewObj,
+      receptor: { ...previewObj.receptor, cuit: "30707915281", razonSocial: "GSA SA" },
+      numeroCompleto: "00003-00000089",
+      cae: "123",
+      vencimientoCae: "13/07/2026",
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(resultObj), { status: 200 }));
+    const { result } = renderHook(() => useEmission(), { wrapper });
+    const plantilla = {
+      cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "30707915281", condicionVenta: ["6"] },
+    } as never;
+    await act(async () => {
+      await result.current.confirm({ kind: "facturaC", plantilla }, {} as never);
+    });
+    await waitFor(() => expect(result.current.phase).toBe("done"));
+
+    expect(loadClientMemory()["30707915281"]).toMatchObject({
+      razonSocial: "GSA SA",
+      condicionIVA: "1",
+      condicionVenta: ["6"],
+    });
   });
 
   it("reenvía turnstileToken como header x-turnstile-token y no en el body", async () => {
