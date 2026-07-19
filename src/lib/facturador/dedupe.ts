@@ -39,7 +39,10 @@ function isSameComprobante(e: AFIPInvoice, f: AFIPInvoice): boolean {
   return (
     e.tipoComprobante === f.tipoComprobante &&
     Number(e.puntoVenta) === Number(f.puntoVenta) &&
-    e.importeTotal === f.importeTotal &&
+    // Tolerancia: absorbe el ruido de coma flotante de round2/parseARNumber
+    // (~1e-6). Dinero a 2 decimales no puede diferir legítimamente por <0.01,
+    // así que <0.005 nunca colapsa comprobantes realmente distintos.
+    Math.abs(e.importeTotal - f.importeTotal) < 0.005 &&
     e.fecha === f.fecha
   );
 }
@@ -64,17 +67,43 @@ function isSameComprobante(e: AFIPInvoice, f: AFIPInvoice): boolean {
  * No resucita comprobantes borrados: solo re-emite lo que ya estaba en `emitted`.
  */
 export function mergeFetchedInvoices(emitted: AFIPInvoice[], fetched: AFIPInvoice[]): AFIPInvoice[] {
+  // Matcheo greedy 1:1. Cada `fetched` consume ≤1 placeholder y cada placeholder
+  // se consume ≤1 vez. Se busca CAE-primero (inequívoco) y luego fallback en
+  // orden de lista, para que duplicados genuinos (mismo tipo/pv/importe/fecha)
+  // no colapsen: dos placeholders y un solo `fetched` reconcilian UNO y
+  // preservan el otro. Un Set de índices consumidos evita el doble-drop que
+  // producían los `.some()` independientes del `.map` y el `.filter`.
+  const consumed = new Set<number>();
+
+  const findPlaceholder = (f: AFIPInvoice): number => {
+    // CAE-primero: match inequívoco por CAE real.
+    const fCae = f.cae?.trim();
+    if (fCae) {
+      for (let i = 0; i < emitted.length; i++) {
+        if (consumed.has(i)) continue;
+        if (emitted[i].cae?.trim() === fCae) return i;
+      }
+    }
+    // Fallback en orden de lista: tipo+pv+importe(±0.005)+fecha.
+    for (let i = 0; i < emitted.length; i++) {
+      if (consumed.has(i)) continue;
+      if (isSameComprobante(emitted[i], f)) return i;
+    }
+    return -1;
+  };
+
   // Rows autoritativos; si reconcilian un placeholder de GARCA, heredan el marcador.
   const reconciled: AFIPInvoice[] = fetched.map((f) => {
-    const matched = emitted.some((e) => isSameComprobante(e, f));
-    if (matched) {
+    const idx = findPlaceholder(f);
+    if (idx !== -1) {
+      consumed.add(idx);
       return { ...f, emittedByGarca: true } as MaybeEmitted;
     }
     return f;
   });
 
-  // Emitidas que AFIP todavía no indexó → se conservan al frente.
-  const notYetIndexed = emitted.filter((e) => !fetched.some((f) => isSameComprobante(e, f)));
+  // Emitidas que AFIP todavía no indexó (no consumidas) → se conservan al frente.
+  const notYetIndexed = emitted.filter((_, i) => !consumed.has(i));
 
   return [...notYetIndexed, ...reconciled];
 }
