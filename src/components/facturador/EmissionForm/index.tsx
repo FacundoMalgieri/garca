@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { resolveClient, type ClientIndex } from "@/lib/facturador/client-index";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { defaultVtoPago,previousMonthPeriod } from "@/lib/facturador/dates";
 import {
@@ -57,6 +58,8 @@ interface EmissionFormProps {
   onSaveAsNew: (plantilla: Omit<Plantilla, "id">) => void;
   /** Puntos de venta scrapeados (best-effort). Si viene null/vacío, se usa input de texto. */
   puntosDeVenta?: PuntoDeVenta[] | null;
+  /** Índice de clientes conocidos (historial + memoria) para autocompletar por documento. */
+  clientHints?: ClientIndex;
 }
 
 function blankForm(): Plantilla {
@@ -74,7 +77,7 @@ function stripId(p: Plantilla): Omit<Plantilla, "id"> {
   return rest;
 }
 
-export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew, puntosDeVenta }: EmissionFormProps) {
+export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew, puntosDeVenta, clientHints }: EmissionFormProps) {
   const [form, setForm] = useState<Plantilla>(initial ?? blankForm());
   const [lineKeys, setLineKeys] = useState<number[]>(() => (initial ?? blankForm()).lineas.map((_, i) => i));
   const nextKey = useRef((initial ?? blankForm()).lineas.length);
@@ -85,6 +88,9 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
     setLineKeys(base.lineas.map((_, i) => i));
     nextKey.current = base.lineas.length;
   }, [initial?.id]); // only re-run when the selected template changes
+
+  const hint = clientHints ? resolveClient(clientHints, form.cliente.nroDoc) : null;
+  const resolvedName = form.cliente.razonSocial || hint?.razonSocial || "";
 
   const total = useMemo(() => totalImporte(form), [form]);
   const validation = useMemo(() => validateEmissionInput(form, new Date()), [form]);
@@ -119,6 +125,17 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
         cliente.nroDoc = "";
       } else if (f.cliente.tipoDoc === TIPO_DOC_DNI && !f.cliente.nroDoc.trim()) {
         cliente.tipoDoc = TIPO_DOC_CUIT;
+      }
+      return { ...f, cliente };
+    });
+  const setNroDoc = (nroDoc: string) =>
+    setForm((f) => {
+      const h = clientHints ? resolveClient(clientHints, nroDoc) : null;
+      const cliente = { ...f.cliente, nroDoc };
+      if (h) {
+        if (h.razonSocial !== undefined) cliente.razonSocial = h.razonSocial;
+        if (h.condicionIVA !== undefined) cliente.condicionIVA = h.condicionIVA;
+        if (h.condicionVenta !== undefined) cliente.condicionVenta = h.condicionVenta;
       }
       return { ...f, cliente };
     });
@@ -215,10 +232,16 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
           </div>
           <div>
             <label className={labelCls}>Nro documento</label>
-            <input data-testid="nro-doc" className={inputCls} value={form.cliente.nroDoc} onChange={(e) => setCliente({ nroDoc: e.target.value })} />
+            <input data-testid="nro-doc" className={inputCls} value={form.cliente.nroDoc} onChange={(e) => setNroDoc(e.target.value)} />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+          <div className="sm:col-span-2">
+            <label className={labelCls}>Cliente</label>
+            <p data-testid="cliente-resuelto" className="text-sm px-3 py-2 rounded-md bg-muted/40 text-muted-foreground">
+              {resolvedName ? `AFIP: ${resolvedName}` : "AFIP completa la razón social al emitir"}
+            </p>
+          </div>
           <div>
             <label className={labelCls}>Condición de venta</label>
             <Dropdown options={FORMA_PAGO_OPTIONS} value={form.cliente.condicionVenta[0] ?? "6"} onChange={(v) => setCliente({ condicionVenta: [v] })} />
