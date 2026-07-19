@@ -181,4 +181,29 @@ describe("EmissionForm — cliente autocompletar", () => {
     fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "99999999999" } });
     expect(screen.getByTestId("cliente-resuelto")).toHaveTextContent(/AFIP/i);
   });
+
+  // [Task 4 fix] El prefill de condicionIVA solo debe aplicar una vez por doc recién
+  // resuelto. Si el usuario re-tipea el mismo doc después de pisar manualmente la
+  // condición IVA, no debe volver a clobberearla con el hint.
+  it("no re-clobberea la condición IVA elegida a mano al re-tipear el mismo doc", () => {
+    const hints = { "30707915281": { razonSocial: "GSA SA", condicionIVA: "1", condicionVenta: ["1"] } };
+    render(<EmissionForm initial={null} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} clientHints={hints} />);
+
+    // 1. Tipear el doc conocido: prefila Responsable Inscripto (hint condicionIVA "1").
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281" } });
+    expect(screen.getByText("Responsable Inscripto")).toBeInTheDocument();
+
+    // 2. El usuario pisa manualmente la condición IVA a Exento.
+    fireEvent.click(screen.getByText("Responsable Inscripto"));
+    fireEvent.click(screen.getByText("Exento"));
+    expect(screen.getByText("Exento")).toBeInTheDocument();
+
+    // 3. Re-tipear (ej. borrar un dígito y volver a escribirlo) terminando en el mismo doc.
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "3070791528" } });
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281" } });
+
+    // El override manual debe sobrevivir: NO vuelve a Responsable Inscripto.
+    expect(screen.queryByText("Responsable Inscripto")).toBeNull();
+    expect(screen.getByText("Exento")).toBeInTheDocument();
+  });
 });
