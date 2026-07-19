@@ -43,6 +43,15 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   useEffect(() => setMounted(true), []);
+  // El useState initializer de ncCondIVA solo corre una vez, al montar. En
+  // /facturar el modal NC se monta sin target (invoiceToVoid=null) y luego el
+  // usuario elige una fila desde AnularTab: sin este effect, ncCondIVA queda
+  // pegado al default (Consumidor Final) y nunca refleja la condición IVA
+  // recordada del cliente real.
+  useEffect(() => {
+    if (isOpen) setNcCondIVA(defaultNcCondIVA());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, invoiceToVoid?.cuitReceptor]);
   const target = mode === "creditNote" ? invoiceToVoid : plantilla;
   const esNC = mode === "creditNote";
   const necesitaCondIVA = esNC && invoiceToVoid !== null && invoiceToVoid !== undefined && !invoiceToVoid.emittedByGarca;
