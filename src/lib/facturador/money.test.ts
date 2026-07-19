@@ -10,8 +10,20 @@ describe("money", () => {
     expect(round2(0.1 + 0.2)).toBe(0.3);
   });
 
+  it("round2 es half-away-from-zero en casos límite (.005/.255/.675)", () => {
+    expect(round2(1.005)).toBe(1.01);
+    expect(round2(1.255)).toBe(1.26);
+    expect(round2(2.675)).toBe(2.68);
+  });
+
+  it("round2 no sobre-redondea cerca del techo de la categoría K", () => {
+    // ~1.083e8 + .005: el string-round no depende de un nudge de magnitud fija.
+    expect(round2(108300000.005)).toBe(108300000.01);
+  });
+
   it("round2 es simétrico en negativos", () => {
     expect(round2(-53.975)).toBe(-53.98);
+    expect(round2(-1.005)).toBe(-1.01);
     expect(round2(-200)).toBe(-200);
     expect(round2(-0)).toBe(0);
   });
@@ -47,6 +59,8 @@ describe("money", () => {
     expect(parseARNumber("0.00")).toBe(0);
     // Decisión documentada: "1.500" (un punto, sin coma) se interpreta como decimal.
     expect(parseARNumber("1.500")).toBe(1.5);
+    // Con coma decimal explícita el entero de miles real llega bien (caso de negocio RCEL).
+    expect(parseARNumber("1.500,00")).toBe(1500);
   });
 
   it("parseARNumber: múltiples puntos sin coma → miles (NO NaN)", () => {
