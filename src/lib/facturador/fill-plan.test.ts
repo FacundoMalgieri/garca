@@ -110,4 +110,26 @@ describe("buildFillPlan", () => {
     const plan = buildFillPlan(p, {});
     expect(plan.pantalla2.some((a) => a.selector === "#cmp_asoc_tipo")).toBe(false);
   });
+
+  it("dispara lookup para DNI (96) con número", () => {
+    const p = {
+      id: "x", nombre: "x", puntoDeVenta: "3", concepto: "productos" as const,
+      cliente: { condicionIVA: "5", tipoDoc: "96", nroDoc: "30123456", condicionVenta: ["1"] },
+      lineas: [{ descripcion: "a", cantidad: 1, unidad: "7", precioUnitario: 1 }],
+    };
+    const plan = buildFillPlan(p);
+    const nroAction = plan.pantalla2.find((a) => a.selector === "#nrodocreceptor");
+    expect(nroAction?.action).toBe("lookup");
+  });
+
+  it("NO dispara lookup para DNI sin número (consumidor final sin doc)", () => {
+    const p = {
+      id: "x", nombre: "x", puntoDeVenta: "3", concepto: "productos" as const,
+      cliente: { condicionIVA: "5", tipoDoc: "96", nroDoc: "", condicionVenta: ["1"] },
+      lineas: [{ descripcion: "a", cantidad: 1, unidad: "7", precioUnitario: 1 }],
+    };
+    const plan = buildFillPlan(p);
+    const nroAction = plan.pantalla2.find((a) => a.selector === "#nrodocreceptor");
+    expect(nroAction?.action).toBe("fill");
+  });
 });
