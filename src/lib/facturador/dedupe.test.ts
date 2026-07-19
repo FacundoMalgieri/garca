@@ -110,4 +110,72 @@ describe("mergeFetchedInvoices", () => {
     const merged = mergeFetchedInvoices([emitida], [distinta]);
     expect(merged).toHaveLength(2);
   });
+
+  it("(a) matchea por fallback aunque el importe difiera por <0.005 (ruido de round2/parseARNumber)", () => {
+    // Placeholder emitido: importe con ruido de coma flotante.
+    const pendiente = {
+      ...inv({ cae: "", numero: 0, numeroCompleto: "", importeTotal: 3500000.0001 }),
+      emittedByGarca: true,
+    } as AFIPInvoice;
+    // Row real posterior: mismo comprobante, importe autoritativo.
+    const real = inv({
+      cae: "70000000000011",
+      numero: 88,
+      numeroCompleto: "00003-00000088",
+      importeTotal: 3500000,
+    });
+    const merged = mergeFetchedInvoices([pendiente], [real]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].cae).toBe("70000000000011");
+    expect((merged[0] as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);
+  });
+
+  it("(b) dos emitidas distintas mismo día/importe + un fetched: reconcilia UNA, preserva la otra (nada se pierde)", () => {
+    // Dos placeholders CAE-pendientes idénticos en tipo/pv/importe/fecha.
+    const pendiente1 = {
+      ...inv({ cae: "", numero: 0, numeroCompleto: "" }),
+      emittedByGarca: true,
+    } as AFIPInvoice;
+    const pendiente2 = {
+      ...inv({ cae: "", numero: 0, numeroCompleto: "" }),
+      emittedByGarca: true,
+    } as AFIPInvoice;
+    // Un solo row real de AFIP que matchea el fallback.
+    const real = inv({
+      cae: "70000000000012",
+      numero: 88,
+      numeroCompleto: "00003-00000088",
+    });
+    const merged = mergeFetchedInvoices([pendiente1, pendiente2], [real]);
+    // Exactamente 2 rows: el reconciliado + la otra emitida preservada.
+    expect(merged).toHaveLength(2);
+    // Exactamente UN reconciliado (con CAE real).
+    const reconciliados = merged.filter((i) => i.cae === "70000000000012");
+    expect(reconciliados).toHaveLength(1);
+    // Exactamente UNA emitida sin consumir preservada en notYetIndexed.
+    const preservadas = merged.filter((i) => i.cae === "");
+    expect(preservadas).toHaveLength(1);
+    expect((preservadas[0] as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);
+  });
+
+  it("(c) el path CAE gana cuando ambos tienen CAE, aunque el fallback también matchee", () => {
+    // Emitida con CAE que NO corresponde al fetched, pero tipo/pv/importe/fecha coinciden.
+    const emitida = {
+      ...inv({ cae: "70000000000001", numero: 88, numeroCompleto: "00003-00000088" }),
+      emittedByGarca: true,
+    } as AFIPInvoice;
+    // Fetched con CAE distinto → por CAE NO matchea → son 2 comprobantes distintos.
+    const fetched = inv({
+      cae: "70000000000099",
+      numero: 90,
+      numeroCompleto: "00003-00000090",
+    });
+    const merged = mergeFetchedInvoices([emitida], [fetched]);
+    // CAE manda: no colapsan pese a coincidir tipo/pv/importe/fecha.
+    expect(merged).toHaveLength(2);
+    const preservada = merged.find((i) => i.cae === "70000000000001");
+    expect(preservada).toBeDefined();
+    expect((preservada as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);
+    expect(merged.find((i) => i.cae === "70000000000099")).toBeDefined();
+  });
 });
