@@ -29,7 +29,7 @@ const PAGE_SIZE_OPTIONS = [
  * Presents invoice information in responsive tabular format with filters and sorting.
  */
 export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
-  const { state } = useInvoiceContext();
+  const { state, manualExchangeRates } = useInvoiceContext();
   const source = invoices ?? state.invoices;
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -53,19 +53,19 @@ export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
     uniqueTypes,
   } = useInvoiceFilters(source);
 
-  // Calculate visible invoices based on pagination
+  // Calculate visible invoices based on pagination.
+  // PERF-2 (Option B): always paginate — including when filters are active —
+  // so a large filtered result set never mounts an unbounded number of
+  // InvoiceRow/InvoiceCard nodes. The "Mostrar más / Mostrar todos" controls
+  // (below) are exposed under active filters too.
   const visibleInvoices = useMemo(() => {
-    // If filters are active, show all results
-    if (activeFiltersCount > 0) {
-      return filteredAndSortedInvoices;
-    }
     // If "all" is selected, show everything
     if (pageSize === "all") {
       return filteredAndSortedInvoices;
     }
     // Otherwise, show up to visibleCount
     return filteredAndSortedInvoices.slice(0, visibleCount);
-  }, [filteredAndSortedInvoices, visibleCount, pageSize, activeFiltersCount]);
+  }, [filteredAndSortedInvoices, visibleCount, pageSize]);
 
   const hasMoreToShow = visibleInvoices.length < filteredAndSortedInvoices.length;
   const remainingCount = filteredAndSortedInvoices.length - visibleInvoices.length;
@@ -178,6 +178,7 @@ export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
                       key={`${invoice.numeroCompleto}-${invoice.fecha}`}
                       invoice={invoice}
                       index={index}
+                      manualExchangeRates={manualExchangeRates}
                     />
                   ))}
                 </tbody>
@@ -190,7 +191,11 @@ export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
         {!state.isLoading && source.length > 0 && (
           <div className="space-y-4 md:hidden">
             {visibleInvoices.map((invoice) => (
-              <InvoiceCard key={`${invoice.numeroCompleto}-${invoice.fecha}`} invoice={invoice} />
+              <InvoiceCard
+                key={`${invoice.numeroCompleto}-${invoice.fecha}`}
+                invoice={invoice}
+                manualExchangeRates={manualExchangeRates}
+              />
             ))}
           </div>
         )}
@@ -198,8 +203,9 @@ export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
         {/* Show More / Pagination Footer */}
         {source.length > 0 && (
           <div className="mt-6 flex flex-col gap-4">
-            {/* Show More Button */}
-            {hasMoreToShow && activeFiltersCount === 0 && (
+            {/* Show More Button — available whether or not filters are active
+                (PERF-2 Option B: the filtered set is now paginated too). */}
+            {hasMoreToShow && (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={handleShowMore}
@@ -221,21 +227,14 @@ export function InvoiceTable({ invoices }: { invoices?: AFIPInvoice[] } = {}) {
             {/* Footer info */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-4 border-t border-border">
               <div className="text-xs text-muted-foreground">
-                {activeFiltersCount > 0 ? (
-                  <>
-                    Mostrando {filteredAndSortedInvoices.length} resultado
-                    {filteredAndSortedInvoices.length !== 1 ? "s" : ""} (filtrado de {source.length})
-                  </>
-                ) : (
-                  <>
-                    Mostrando {visibleInvoices.length} de {filteredAndSortedInvoices.length} comprobante
-                    {filteredAndSortedInvoices.length !== 1 ? "s" : ""}
-                  </>
-                )}
+                Mostrando {visibleInvoices.length} de {filteredAndSortedInvoices.length} comprobante
+                {filteredAndSortedInvoices.length !== 1 ? "s" : ""}
+                {activeFiltersCount > 0 && <> (filtrado de {source.length})</>}
               </div>
 
-              {/* Page Size Dropdown */}
-              {activeFiltersCount === 0 && filteredAndSortedInvoices.length > 10 && (
+              {/* Page Size Dropdown — shown once there is more than one page's
+                  worth of results, regardless of active filters. */}
+              {filteredAndSortedInvoices.length > 10 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Mostrar:</span>
                   <Dropdown value={pageSize} onChange={handlePageSizeChange} options={PAGE_SIZE_OPTIONS} className="w-24" />

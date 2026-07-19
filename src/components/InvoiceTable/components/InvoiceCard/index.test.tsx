@@ -8,6 +8,8 @@ import { InvoiceCard } from "./index";
 import { render, screen } from "@testing-library/react";
 
 const renderWithProvider = (ui: React.ReactNode) => render(<InvoiceProvider>{ui}</InvoiceProvider>);
+// PERF-1: InvoiceCard receives the FX map via prop and no longer reads context.
+const renderStandalone = (ui: React.ReactNode) => render(ui);
 
 const mockInvoiceARS: AFIPInvoice = {
   fecha: "15/01/2025",
@@ -106,6 +108,33 @@ describe("InvoiceCard", () => {
     it("should display total in USD", () => {
       renderWithProvider(<InvoiceCard invoice={mockInvoiceUSD} />);
       expect(screen.getByText("Total (USD):")).toBeInTheDocument();
+    });
+  });
+
+  describe("manualExchangeRates prop (no context)", () => {
+    const mockInvoiceUSDNoRate: AFIPInvoice = {
+      ...mockInvoiceUSD,
+      numero: 102,
+      numeroCompleto: "00001-00000102",
+      xmlData: undefined,
+    };
+
+    it("renders standalone without an InvoiceProvider", () => {
+      renderStandalone(<InvoiceCard invoice={mockInvoiceARS} />);
+      expect(screen.getByText("00001-00000100")).toBeInTheDocument();
+    });
+
+    it("applies a manual FX rate passed via prop for a rate-less foreign invoice", () => {
+      renderStandalone(
+        <InvoiceCard invoice={mockInvoiceUSDNoRate} manualExchangeRates={{ USD: 900 }} />
+      );
+      expect(screen.getByText(/\(manual\)/)).toBeInTheDocument();
+      expect(screen.getByText(/1.*800.*000/)).toBeInTheDocument();
+    });
+
+    it("shows 'Sin TC' when no rate is provided for a foreign invoice", () => {
+      renderStandalone(<InvoiceCard invoice={mockInvoiceUSDNoRate} />);
+      expect(screen.getByText("Sin TC")).toBeInTheDocument();
     });
   });
 

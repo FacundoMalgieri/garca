@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
@@ -239,7 +239,7 @@ export function useInvoices(): UseInvoicesReturn {
   /**
    * Loads invoices, company info, and monotributo info from localStorage.
    */
-  const loadFromStorage = () => {
+  const loadFromStorage = useCallback(() => {
     try {
       const storedTs = localStorage.getItem(STORAGE_TTL_KEY);
       if (storedTs && Date.now() - Number.parseInt(storedTs, 10) > TTL_MS) {
@@ -290,7 +290,7 @@ export function useInvoices(): UseInvoicesReturn {
       // Silently fail - localStorage might not be available
       setState((prev) => ({ ...prev, isHydrated: true }));
     }
-  };
+  }, []);
 
   /**
    * Saves invoices and company info to localStorage.
@@ -343,7 +343,7 @@ export function useInvoices(): UseInvoicesReturn {
    * Uses Server-Sent Events for real-time progress updates.
    * Returns true if successful, false otherwise.
    */
-  const fetchCompanies = async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
+  const fetchCompanies = useCallback(async (cuit: string, password: string, turnstileToken?: string): Promise<boolean> => {
     const tokenReused = markTokenReuse(turnstileToken);
     // Abort any existing request
     companiesAbortRef.current?.abort();
@@ -535,13 +535,13 @@ export function useInvoices(): UseInvoicesReturn {
       });
       return false;
     }
-  };
+  }, []);
 
   /**
    * Step 2 of two-step flow: Fetches invoices for selected company.
    * Uses Server-Sent Events for real-time progress updates.
    */
-  const fetchInvoicesWithCompany = async (
+  const fetchInvoicesWithCompany = useCallback(async (
     cuit: string,
     password: string,
     companyIndex: number,
@@ -806,7 +806,9 @@ export function useInvoices(): UseInvoicesReturn {
       });
     }
     return false;
-  };
+    // clearCompanies is a stable useCallback([]) declared below; referenced at
+    // call time (not render time), so no dep needed and no TDZ on the deps array.
+  }, []);
 
   /**
    * Cancels any in-progress operation and resets loading states.
@@ -842,7 +844,7 @@ export function useInvoices(): UseInvoicesReturn {
   /**
    * Clears invoice data from state and localStorage.
    */
-  const clearInvoices = () => {
+  const clearInvoices = useCallback(() => {
     // Drop any pending debounced save so we don't resurrect just-cleared data.
     clearTimeout(saveTimeoutRef.current);
     pendingSaveRef.current = null;
@@ -871,14 +873,14 @@ export function useInvoices(): UseInvoicesReturn {
       isHydrated: true,
       hasQueried: false,
     });
-  };
+  }, []);
 
   /**
    * Loads pre-baked demo data into state + persists it. Used by the landing
    * page's "Ver demo" button so it goes through the provider instead of
    * writing to localStorage behind the hook's back.
    */
-  const loadDemoData = (
+  const loadDemoData = useCallback((
     invoices: AFIPInvoice[],
     company: CompanyInfo | null,
     info: MonotributoAFIPInfo | null
@@ -897,7 +899,7 @@ export function useInvoices(): UseInvoicesReturn {
     setMonotributoInfo(info);
     saveMonotributoToStorage(info);
     trackUmamiEvent(UMAMI_EVENTS.LandingDemoOpen, { count: invoices.length });
-  };
+  }, []);
 
   /**
    * Prepends an emitted invoice to the invoice list, deduplicating against the
@@ -915,7 +917,7 @@ export function useInvoices(): UseInvoicesReturn {
    * Clears companies state (used after selecting a company).
    * Note: Does NOT clear monotributoInfo as it should persist.
    */
-  const clearCompanies = () => {
+  const clearCompanies = useCallback(() => {
     setCompaniesState({
       companies: [],
       isLoading: false,
@@ -923,24 +925,47 @@ export function useInvoices(): UseInvoicesReturn {
       progress: null,
       monotributoInfo: null,
     });
-  };
+  }, []);
 
-  return {
-    state,
-    companiesState,
-    monotributoInfo,
-    manualExchangeRates,
-    setManualExchangeRate,
-    fetchCompanies,
-    fetchInvoicesWithCompany,
-    clearInvoices,
-    clearCompanies,
-    loadFromStorage,
-    loadDemoData,
-    cancelOperation,
-    isOperationInProgress,
-    addEmittedInvoice,
-  };
+  // Memoize the hook's return so the context value keeps a stable identity
+  // across unrelated re-renders. Every callback above is a stable useCallback,
+  // so this object's identity changes only when the actual data
+  // (state/companiesState/monotributoInfo/manualExchangeRates) or the derived
+  // isOperationInProgress flag changes — not on every provider render tick.
+  return useMemo(
+    () => ({
+      state,
+      companiesState,
+      monotributoInfo,
+      manualExchangeRates,
+      setManualExchangeRate,
+      fetchCompanies,
+      fetchInvoicesWithCompany,
+      clearInvoices,
+      clearCompanies,
+      loadFromStorage,
+      loadDemoData,
+      cancelOperation,
+      isOperationInProgress,
+      addEmittedInvoice,
+    }),
+    [
+      state,
+      companiesState,
+      monotributoInfo,
+      manualExchangeRates,
+      setManualExchangeRate,
+      fetchCompanies,
+      fetchInvoicesWithCompany,
+      clearInvoices,
+      clearCompanies,
+      loadFromStorage,
+      loadDemoData,
+      cancelOperation,
+      isOperationInProgress,
+      addEmittedInvoice,
+    ]
+  );
 }
 
 /**
