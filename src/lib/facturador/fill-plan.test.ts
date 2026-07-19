@@ -5,7 +5,7 @@ import type { Plantilla } from "@/types/facturador";
 
 const p: Plantilla = {
   id: "t1", nombre: "GSA", puntoDeVenta: "3", concepto: "servicios",
-  cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "30707915281", razonSocial: "GSA", domicilio: "Belgrano 2687", condicionVenta: ["6"] },
+  cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "30707915281", razonSocial: "GSA", condicionVenta: ["6"] },
   periodo: { desde: "01/06/2026", hasta: "30/06/2026", vtoPago: "13/07/2026" },
   lineas: [{ descripcion: "Por 120 horas", cantidad: 1, unidad: "7", precioUnitario: 3500000 }],
 };

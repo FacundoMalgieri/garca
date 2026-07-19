@@ -27,12 +27,8 @@ export interface ClienteFactura {
   tipoDoc: string;
   /** Número de documento. */
   nroDoc: string;
-  /** Razón social (cacheada del padrón; se revalida al emitir). */
-  razonSocial: string;
-  /** Domicilio comercial (selección del combo o texto). */
-  domicilio?: string;
-  /** Email del receptor. */
-  email?: string;
+  /** Razón social — cache de display/almacenamiento; AFIP la resuelve al emitir. */
+  razonSocial?: string;
   /** Códigos de condición de venta (RCEL formaDePago, ej. ["6"] = Transferencia). */
   condicionVenta: string[];
 }
