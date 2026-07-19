@@ -34,7 +34,7 @@ export default function FacturarPage() {
   const [ncOpen, setNcOpen] = useState(false);
 
   const ventana = useMemo(() => getNextRecategorizacionDates()[0].ventana, []);
-  const { ingresosAnuales, hasCurrentYearData } = useMemo(
+  const { ingresosAnuales, hasCurrentYearData, droppedForeignCount } = useMemo(
     () => computeAnnualIncome(state.invoices, manualExchangeRates, ventana),
     [state.invoices, manualExchangeRates, ventana]
   );
@@ -79,6 +79,15 @@ export default function FacturarPage() {
         🏢 Vas a facturar como <b>{state.company.razonSocial}</b>.{" "}
         <span className="text-muted-foreground">¿Otra empresa? Cerrá sesión o usá otra ventana / incógnito para tener otra sesión.</span>
       </div>
+
+      {droppedForeignCount > 0 && (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
+        >
+          ⚠️ {droppedForeignCount} {droppedForeignCount === 1 ? "comprobante" : "comprobantes"} en moneda extranjera sin cotización — cargá el tipo de cambio para un cálculo correcto.
+        </div>
+      )}
 
       <div className="flex gap-2">{tabBtn("emitir", "Emitir")}{tabBtn("emitidas", "Emitidas")}{tabBtn("anular", "Anular")}</div>
 

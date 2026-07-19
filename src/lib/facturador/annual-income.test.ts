@@ -39,8 +39,32 @@ describe("computeAnnualIncome", () => {
     const ventana = ["2026-06"];
     const r = computeAnnualIncome([inv({ importeTotal: 100, moneda: "USD", fecha: "10/06/2026" })], { USD: 1000 }, ventana);
     expect(r.ingresosAnuales).toBe(100000);
+    expect(r.droppedForeignCount).toBe(0);
+  });
+  it("excluye moneda extranjera sin cotización pero marca actividad y la cuenta", () => {
+    const ventana = ["2026-06"];
+    const r = computeAnnualIncome([inv({ importeTotal: 100, moneda: "USD", fecha: "10/06/2026" })], {}, ventana);
+    expect(r.ingresosAnuales).toBe(0);
+    expect(r.droppedForeignCount).toBe(1);
+    expect(r.hasCurrentYearData).toBe(true);
+  });
+  it("mezcla ARS + extranjera sin rate: suma ARS, excluye extranjera y la cuenta", () => {
+    const ventana = ["2026-06"];
+    const r = computeAnnualIncome([
+      inv({ importeTotal: 100000, moneda: "ARS", fecha: "10/06/2026" }),
+      inv({ importeTotal: 100, moneda: "USD", fecha: "12/06/2026" }),
+    ], {}, ventana);
+    expect(r.ingresosAnuales).toBe(100000);
+    expect(r.droppedForeignCount).toBe(1);
+    expect(r.hasCurrentYearData).toBe(true);
+  });
+  it("no cuenta como dropped la extranjera fuera de la ventana", () => {
+    const ventana = ["2026-06"];
+    const r = computeAnnualIncome([inv({ importeTotal: 100, moneda: "USD", fecha: "10/01/2025" })], {}, ventana);
+    expect(r.droppedForeignCount).toBe(0);
+    expect(r.hasCurrentYearData).toBe(false);
   });
   it("sin facturas -> 0 y hasCurrentYearData false", () => {
-    expect(computeAnnualIncome([], {}, ["2026-06"])).toEqual({ ingresosAnuales: 0, hasCurrentYearData: false });
+    expect(computeAnnualIncome([], {}, ["2026-06"])).toEqual({ ingresosAnuales: 0, hasCurrentYearData: false, droppedForeignCount: 0 });
   });
 });
