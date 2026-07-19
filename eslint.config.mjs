@@ -56,6 +56,7 @@ export default [
                 process: 'readonly',
                 __dirname: 'readonly',
                 __filename: 'readonly',
+                Buffer: 'readonly',
                 // Browser APIs
                 localStorage: 'readonly',
                 fetch: 'readonly',
@@ -69,7 +70,13 @@ export default [
                 SVGSVGElement: 'readonly',
                 Document: 'readonly',
                 HTMLScriptElement: 'readonly',
+                HTMLInputElement: 'readonly',
+                HTMLSelectElement: 'readonly',
                 Node: 'readonly',
+                Element: 'readonly',
+                KeyboardEvent: 'readonly',
+                MediaQueryListEvent: 'readonly',
+                crypto: 'readonly',
                 // Web API types (for server-side code)
                 Request: 'readonly',
                 Response: 'readonly',

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import { trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 
-type Target = "ingresar" | "calculadora";
+type Target = "ingresar" | "calculadora" | "facturar";
 
 interface TrackedLandingCtaLinkProps {
   href: string;

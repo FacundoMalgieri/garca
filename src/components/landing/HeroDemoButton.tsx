@@ -11,6 +11,7 @@ import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 const DEMO_COMPANY = {
   cuit: "20345678901",
   razonSocial: "Tecnología Innovadora SRL (Demo)",
+  index: 0,
 };
 
 const getNextRecategorizacion = (): string => {

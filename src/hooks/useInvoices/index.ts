@@ -4,10 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
-import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
+import { dedupeInvoices, mergeFetchedInvoices } from "@/lib/facturador/dedupe";
+import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
+const PDV_STORAGE_KEY = "garca_pdv";
 const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 const STORAGE_TTL_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
@@ -19,6 +21,7 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 export interface CompanyInfo {
   cuit: string;
   razonSocial: string;
+  index: number;
 }
 
 /**
@@ -39,6 +42,10 @@ export interface InvoiceState {
   error: string | null;
   errorCode: string | null;
   company: CompanyInfo | null;
+  // Puntos de venta habilitados (con su universo de comprobantes), scrapeados
+  // best-effort junto con las facturas. null = no disponibles (sesión vieja o
+  // demo) → el facturador cae al input de texto libre para el PV.
+  puntosDeVenta: PuntoDeVenta[] | null;
   progress: ScraperProgress | null;
   // True once loadFromStorage has run on mount. Consumers (e.g. /panel and
   // /ingresar) must gate their "empty invoices → redirect" effects on this
@@ -101,6 +108,7 @@ export interface UseInvoicesReturn {
   ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
+  addEmittedInvoice: (inv: AFIPInvoice) => void;
 }
 
 /**
@@ -117,6 +125,7 @@ export function useInvoices(): UseInvoicesReturn {
     error: null,
     errorCode: null,
     company: null,
+    puntosDeVenta: null,
     progress: null,
     isHydrated: false,
     hasQueried: false,
@@ -221,6 +230,7 @@ export function useInvoices(): UseInvoicesReturn {
       if (storedTs && Date.now() - Number.parseInt(storedTs, 10) > TTL_MS) {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(COMPANY_STORAGE_KEY);
+        localStorage.removeItem(PDV_STORAGE_KEY);
         localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
         localStorage.removeItem(STORAGE_TTL_KEY);
         localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
@@ -231,6 +241,7 @@ export function useInvoices(): UseInvoicesReturn {
 
       const storedInvoices = localStorage.getItem(STORAGE_KEY);
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
+      const storedPdv = localStorage.getItem(PDV_STORAGE_KEY);
       const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
 
       if (storedInvoices !== null) {
@@ -239,8 +250,19 @@ export function useInvoices(): UseInvoicesReturn {
         // but still marks the session as queried so /panel renders the empty
         // state instead of bouncing back to /ingresar.
         const invoices = JSON.parse(storedInvoices);
-        const company = storedCompany ? JSON.parse(storedCompany) : extractCompanyInfo(invoices);
-        setState((prev) => ({ ...prev, invoices, company, isHydrated: true, hasQueried: true }));
+        const parsedCompany = storedCompany ? JSON.parse(storedCompany) : null;
+        const company: CompanyInfo | null = parsedCompany
+          ? { ...parsedCompany, index: parsedCompany.index ?? 0 }
+          : extractCompanyInfo(invoices);
+        // PDV va en su propio try/catch: si el JSON está corrupto no debe tirar
+        // toda la hidratación (que dejaría al usuario deslogueado). Default null.
+        let puntosDeVenta: PuntoDeVenta[] | null = null;
+        try {
+          puntosDeVenta = storedPdv ? JSON.parse(storedPdv) : null;
+        } catch {
+          puntosDeVenta = null;
+        }
+        setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true }));
       }
@@ -264,6 +286,22 @@ export function useInvoices(): UseInvoicesReturn {
       localStorage.setItem(STORAGE_TTL_KEY, String(Date.now()));
       if (company) {
         localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(company));
+      }
+    } catch {
+      // Silently fail - localStorage might be full or unavailable
+    }
+  };
+
+  /**
+   * Persiste (o limpia) los puntos de venta scrapeados. Se guardan aparte de
+   * saveToStorage porque solo cambian al hacer un fetch, no en cada flush.
+   */
+  const persistPuntosDeVenta = (puntosDeVenta: PuntoDeVenta[] | null) => {
+    try {
+      if (puntosDeVenta && puntosDeVenta.length > 0) {
+        localStorage.setItem(PDV_STORAGE_KEY, JSON.stringify(puntosDeVenta));
+      } else {
+        localStorage.removeItem(PDV_STORAGE_KEY);
       }
     } catch {
       // Silently fail - localStorage might be full or unavailable
@@ -550,7 +588,7 @@ export function useInvoices(): UseInvoicesReturn {
         }
 
         let buffer = "";
-        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; error?: string; errorCode?: string } | null = null;
+        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; puntosDeVenta?: PuntoDeVenta[]; error?: string; errorCode?: string } | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -631,20 +669,34 @@ export function useInvoices(): UseInvoicesReturn {
             company = {
               cuit: finalResult.company.cuit || cuit,
               razonSocial: finalResult.company.razonSocial,
+              index: companyIndex,
             };
           } else {
-            company = extractCompanyInfo(invoices, cuit);
+            company = extractCompanyInfo(invoices, cuit, companyIndex);
           }
 
-          setState({
-            invoices,
-            isLoading: false,
-            error: null,
-            errorCode: null,
-            company,
-            progress: null,
-            isHydrated: true,
-            hasQueried: true,
+          const puntosDeVenta = finalResult.puntosDeVenta ?? null;
+          persistPuntosDeVenta(puntosDeVenta);
+
+          setState((prev) => {
+            // Conservar las emitidas por GARCA a través del re-fetch: el row
+            // autoritativo de AFIP reemplaza al placeholder (sin duplicar) y las
+            // emitidas que AFIP todavía no indexó se mantienen. Ver mergeFetchedInvoices.
+            const emittedByGarca = prev.invoices.filter(
+              (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
+            );
+            return {
+              ...prev,
+              invoices: mergeFetchedInvoices(emittedByGarca, invoices),
+              isLoading: false,
+              error: null,
+              errorCode: null,
+              company,
+              puntosDeVenta,
+              progress: null,
+              isHydrated: true,
+              hasQueried: true,
+            };
           });
 
           trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
@@ -677,20 +729,32 @@ export function useInvoices(): UseInvoicesReturn {
           company = {
             cuit: data.company.cuit || cuit,
             razonSocial: data.company.razonSocial,
+            index: companyIndex,
           };
         } else {
-          company = extractCompanyInfo(invoices, cuit);
+          company = extractCompanyInfo(invoices, cuit, companyIndex);
         }
 
-        setState({
-          invoices,
-          isLoading: false,
-          error: null,
-          errorCode: null,
-          company,
-          progress: null,
-          isHydrated: true,
-          hasQueried: true,
+        const puntosDeVenta = (data.puntosDeVenta as PuntoDeVenta[] | undefined) ?? null;
+        persistPuntosDeVenta(puntosDeVenta);
+
+        setState((prev) => {
+          // Ver comentario en el success path del SSE (mergeFetchedInvoices).
+          const emittedByGarca = prev.invoices.filter(
+            (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
+          );
+          return {
+            ...prev,
+            invoices: mergeFetchedInvoices(emittedByGarca, invoices),
+            isLoading: false,
+            error: null,
+            errorCode: null,
+            company,
+            puntosDeVenta,
+            progress: null,
+            isHydrated: true,
+            hasQueried: true,
+          };
         });
 
         trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesOk, { count: invoices.length });
@@ -715,6 +779,7 @@ export function useInvoices(): UseInvoicesReturn {
         error: errorMessage,
         errorCode: "UNKNOWN",
         company: null,
+        puntosDeVenta: null,
         progress: null,
         isHydrated: true,
         hasQueried: false,
@@ -764,6 +829,7 @@ export function useInvoices(): UseInvoicesReturn {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(COMPANY_STORAGE_KEY);
+      localStorage.removeItem(PDV_STORAGE_KEY);
       localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
       localStorage.removeItem(STORAGE_TTL_KEY);
       localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
@@ -779,6 +845,7 @@ export function useInvoices(): UseInvoicesReturn {
       error: null,
       errorCode: null,
       company: null,
+      puntosDeVenta: null,
       progress: null,
       isHydrated: true,
       hasQueried: false,
@@ -801,6 +868,7 @@ export function useInvoices(): UseInvoicesReturn {
       error: null,
       errorCode: null,
       company,
+      puntosDeVenta: null,
       progress: null,
       isHydrated: true,
       hasQueried: true,
@@ -809,6 +877,18 @@ export function useInvoices(): UseInvoicesReturn {
     saveMonotributoToStorage(info);
     trackUmamiEvent(UMAMI_EVENTS.LandingDemoOpen, { count: invoices.length });
   };
+
+  /**
+   * Prepends an emitted invoice to the invoice list, deduplicating against the
+   * current list (emitted invoice wins on key collision). Persists via the same
+   * debounced saveToStorage path used after a successful fetch.
+   */
+  const addEmittedInvoice = useCallback((inv: AFIPInvoice) => {
+    setState((prev) => {
+      const merged = dedupeInvoices([inv], prev.invoices);
+      return { ...prev, invoices: merged, hasQueried: true };
+    });
+  }, []);
 
   /**
    * Clears companies state (used after selecting a company).
@@ -838,6 +918,7 @@ export function useInvoices(): UseInvoicesReturn {
     loadDemoData,
     cancelOperation,
     isOperationInProgress,
+    addEmittedInvoice,
   };
 }
 
@@ -845,7 +926,7 @@ export function useInvoices(): UseInvoicesReturn {
  * Extracts company info from invoices.
  * Tries multiple sources since table structure may vary.
  */
-function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string): CompanyInfo | null {
+function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string, index = 0): CompanyInfo | null {
   if (invoices.length === 0) return null;
 
   const firstInvoice = invoices[0];
@@ -877,6 +958,7 @@ function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string): Compan
   return {
     cuit: cuit.replace(/\D/g, ""), // Clean CUIT
     razonSocial: razonSocial || "Empresa", // Fallback name
+    index,
   };
 }
 

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { AFIPInvoice } from "@/types/afip-scraper";
+
 import { useInvoices } from "./index";
 
 import { act, renderHook } from "@testing-library/react";
@@ -53,6 +55,7 @@ describe("useInvoices", () => {
         error: null,
         errorCode: null,
         company: null,
+        puntosDeVenta: null,
         progress: null,
         isHydrated: true,
         hasQueried: false,
@@ -91,7 +94,7 @@ describe("useInvoices", () => {
           cae: "12345678901234",
         },
       ];
-      const mockCompany = { cuit: "20345678901", razonSocial: "Mi Empresa SA" };
+      const mockCompany = { cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 };
 
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
       localStorage.setItem("garca_company", JSON.stringify(mockCompany));
@@ -125,7 +128,7 @@ describe("useInvoices", () => {
         },
       ];
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
-      localStorage.setItem("garca_company", JSON.stringify({ cuit: "123", razonSocial: "Test" }));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "123", razonSocial: "Test", index: 0 }));
 
       const { result } = renderHook(() => useInvoices());
 
@@ -185,7 +188,7 @@ describe("useInvoices", () => {
           cae: "111",
         },
       ];
-      const demoCompany = { cuit: "20345678901", razonSocial: "Demo SA" };
+      const demoCompany = { cuit: "20345678901", razonSocial: "Demo SA", index: 0 };
       const demoMonotributo = {
         categoria: "G",
         tipoActividad: "servicios" as const,
@@ -251,7 +254,7 @@ describe("useInvoices", () => {
         },
       ];
       localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
-      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA" }));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 }));
 
       // Call loadFromStorage
       act(() => {
@@ -259,7 +262,7 @@ describe("useInvoices", () => {
       });
 
       expect(result.current.state.invoices).toHaveLength(1);
-      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA" });
+      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 });
     });
 
     it("should extract company info from invoices if not stored separately", () => {
@@ -288,7 +291,7 @@ describe("useInvoices", () => {
       const { result } = renderHook(() => useInvoices());
 
       // Company should be extracted from invoice
-      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA" });
+      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 });
     });
 
     it("should handle invalid JSON in localStorage gracefully", () => {
@@ -298,6 +301,40 @@ describe("useInvoices", () => {
 
       // Should not throw, should have empty state
       expect(result.current.state.invoices).toEqual([]);
+    });
+
+    it("hidrata invoices y company aunque garca_pdv esté corrupto", () => {
+      const mockInvoices = [
+        {
+          fecha: "15/11/2025",
+          tipo: "Factura C",
+          tipoComprobante: 11,
+          puntoVenta: 2,
+          numero: 150,
+          numeroCompleto: "0002-00000150",
+          cuitEmisor: "20345678901",
+          razonSocialEmisor: "Mi Empresa SA",
+          cuitReceptor: "30709876543",
+          razonSocialReceptor: "Cliente SA",
+          importeNeto: 80000,
+          importeIVA: 20000,
+          importeTotal: 100000,
+          moneda: "ARS",
+          cae: "12345678901234",
+        },
+      ];
+      localStorage.setItem("garca_invoices", JSON.stringify(mockInvoices));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 }));
+      // PDV corrupto: NO debe tumbar toda la hidratación.
+      localStorage.setItem("garca_pdv", "{ esto no es json valido");
+
+      const { result } = renderHook(() => useInvoices());
+
+      // invoices y company hidratan igual; PDV cae a null.
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.company).toEqual({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 });
+      expect(result.current.state.puntosDeVenta).toBeNull();
+      expect(result.current.state.hasQueried).toBe(true);
     });
   });
 
@@ -642,6 +679,7 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toEqual({
         cuit: "20345678901",
         razonSocial: "From JSON Co",
+        index: 0,
       });
       expect(result.current.state.invoices).toHaveLength(1);
       expect(result.current.companiesState.companies).toEqual([]);
@@ -692,6 +730,7 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toEqual({
         cuit: "20987654321",
         razonSocial: "Empresa",
+        index: 0,
       });
     });
 
@@ -804,6 +843,30 @@ describe("useInvoices", () => {
 
       expect(result.current.state.error).toBeNull();
       expect(result.current.state.isLoading).toBe(true);
+    });
+
+    it("should store companyIndex in state.company.index after successful fetch", async () => {
+      const mockResponse = createMockSSEResponse([
+        { type: "start", message: "Iniciando..." },
+        {
+          type: "result",
+          message: "Proceso completado",
+          data: { success: true, invoices: [], company: { cuit: "20345678901", razonSocial: "Empresa Test" } },
+        },
+      ]);
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 3, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.company).toMatchObject({ index: 3 });
     });
 
     it("should set UNKNOWN error code on unexpected failure", async () => {
@@ -1023,6 +1086,108 @@ describe("useInvoices", () => {
       const { result } = renderHook(() => useInvoices());
 
       expect(result.current.state.company?.razonSocial).toBe("Recovered From Second");
+    });
+  });
+
+  describe("merge de emitidas en re-fetch", () => {
+    const createMockSSEResponse = (events: Array<{ type: string; message: string; data?: unknown }>) => {
+      const encoder = new TextEncoder();
+      const chunks = events.map((e) => encoder.encode(`data: ${JSON.stringify(e)}\n\n`));
+      let i = 0;
+      return {
+        ok: true,
+        headers: { get: (n: string) => (n === "content-type" ? "text/event-stream" : null) },
+        body: {
+          getReader: () => ({
+            read: async () => (i < chunks.length ? { done: false, value: chunks[i++] } : { done: true, value: undefined }),
+          }),
+        },
+      };
+    };
+
+    const baseEmitted = {
+      fecha: "03/07/2026",
+      tipo: "Factura C",
+      tipoComprobante: 11,
+      puntoVenta: 3,
+      numero: 88,
+      numeroCompleto: "00003-00000088",
+      cuitEmisor: "",
+      razonSocialEmisor: "YO",
+      cuitReceptor: "30707915281",
+      razonSocialReceptor: "GSA",
+      importeNeto: 3500000,
+      importeIVA: 0,
+      importeTotal: 3500000,
+      moneda: "PES",
+      cae: "70000000000001",
+      emittedByGarca: true,
+    } as AFIPInvoice;
+
+    it("una emitida por GARCA sobrevive a un re-fetch que NO la incluye", async () => {
+      const { result } = renderHook(() => useInvoices());
+      act(() => result.current.addEmittedInvoice(baseEmitted));
+      expect(result.current.state.invoices).toHaveLength(1);
+
+      // Re-fetch trae otra factura, no la emitida.
+      const otra = { ...baseEmitted, numero: 89, numeroCompleto: "00003-00000089", cae: "70000000000002", emittedByGarca: undefined };
+      mockFetch.mockResolvedValueOnce(
+        createMockSSEResponse([
+          { type: "result", message: "ok", data: { success: true, invoices: [otra], company: { cuit: "20301234563", razonSocial: "YO" } } },
+        ])
+      );
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+      });
+
+      // La emitida persiste + la nueva scrapeada = 2, sin perder el marcador.
+      expect(result.current.state.invoices).toHaveLength(2);
+      const survived = result.current.state.invoices.find((i) => i.cae === "70000000000001");
+      expect((survived as { emittedByGarca?: boolean } | undefined)?.emittedByGarca).toBe(true);
+    });
+
+    it("el row autoritativo de AFIP reemplaza al placeholder sin duplicar", async () => {
+      const { result } = renderHook(() => useInvoices());
+      act(() => result.current.addEmittedInvoice(baseEmitted));
+
+      // AFIP devuelve la MISMA factura (mismo CAE) con datos reales.
+      const autoritativo = { ...baseEmitted, cuitEmisor: "20301234563", importeIVA: 12345, emittedByGarca: undefined };
+      mockFetch.mockResolvedValueOnce(
+        createMockSSEResponse([
+          { type: "result", message: "ok", data: { success: true, invoices: [autoritativo], company: { cuit: "20301234563", razonSocial: "YO" } } },
+        ])
+      );
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.invoices[0].cuitEmisor).toBe("20301234563");
+      expect(result.current.state.invoices[0].importeIVA).toBe(12345);
+      expect((result.current.state.invoices[0] as { emittedByGarca?: boolean }).emittedByGarca).toBe(true);
+    });
+
+    it("el placeholder CAE-pendiente se reconcilia con el row real vía fallback sin duplicar", async () => {
+      const { result } = renderHook(() => useInvoices());
+      const pendiente = { ...baseEmitted, cae: "", numero: 0, numeroCompleto: "" } as AFIPInvoice;
+      act(() => result.current.addEmittedInvoice(pendiente));
+
+      const real = { ...baseEmitted, cae: "70000000000009", emittedByGarca: undefined };
+      mockFetch.mockResolvedValueOnce(
+        createMockSSEResponse([
+          { type: "result", message: "ok", data: { success: true, invoices: [real], company: { cuit: "20301234563", razonSocial: "YO" } } },
+        ])
+      );
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20301234563", "pw", 0, { from: "2026-01-01", to: "2026-07-31" });
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.invoices[0].cae).toBe("70000000000009");
+      expect(result.current.state.invoices[0].numero).toBe(88);
     });
   });
 
