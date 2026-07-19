@@ -1,11 +1,15 @@
 /**
  * Redondea a 2 decimales, half-away-from-zero (simétrico en negativos).
- * Nota: sujeto a la representación binaria de floats; para importes AR de hasta
- * 2 decimales es suficiente. RCEL recomputa server-side, así que esto es para
- * preview/cálculos internos, no la fuente fiscal de verdad.
+ * Usa el shift exponencial vía string: `${n}e2` reusa la repr. decimal más corta
+ * de JS (`String(1.005) === "1.005"` → `Number("1.005e2") === 100.5` exacto), así
+ * `Math.round` ve el valor "escrito" y no la sombra binaria (evita 1.005→1 con
+ * el nudge de Number.EPSILON, que quedaba por debajo del ULP en importes grandes).
+ * Los importes AR estringifican en decimal plano, muy por debajo del corte de
+ * notación exponencial (~1e21), así que es correcto en todo el rango. RCEL
+ * recomputa server-side: esto es para preview/cálculos internos.
  */
 export function round2(n: number): number {
-  const r = Math.round(Math.abs(n) * 100 + Number.EPSILON) / 100;
+  const r = Number(`${Math.round(Number(`${Math.abs(n)}e2`))}e-2`);
   return n < 0 ? -r : r;
 }
 
@@ -23,6 +27,11 @@ export function round2(n: number): number {
  * coma como decimal, así que un entero de miles real llega como "1.500,00" (cae en la
  * primera regla), cubriendo el caso de negocio; el caso de puro entero de miles con miles
  * separados por punto siempre trae 2+ puntos ("1.234.567") y cae en la última regla.
+ *
+ * El único consumidor de Consultas (`consulta-parser.ts:38-40`, `importeNeto`/`importeTotal`)
+ * pasa importes que siempre traen coma decimal o 2+ puntos de miles, así que la ambigüedad
+ * del punto único no se manifiesta ahí; no cambiar este parseo salvo que Consultas emita
+ * enteros de miles con punto único y sin coma.
  */
 export function parseARNumber(s: string): number {
   const clean = s.replace(/[^\d,.-]/g, "");
