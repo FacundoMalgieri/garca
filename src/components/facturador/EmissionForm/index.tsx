@@ -62,7 +62,7 @@ interface EmissionFormProps {
 function blankForm(): Plantilla {
   return {
     id: "", nombre: "", puntoDeVenta: "1", concepto: "servicios",
-    cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "", razonSocial: "", email: "", condicionVenta: ["6"] },
+    cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "", condicionVenta: ["6"] },
     periodo: {},
     lineas: [{ descripcion: "", cantidad: 1, unidad: "7", precioUnitario: 0 }],
   };
@@ -104,7 +104,7 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
     total > 0 ||
     form.lineas.some((l) => l.descripcion.trim() !== "") ||
     form.cliente.nroDoc.trim() !== "" ||
-    form.cliente.razonSocial.trim() !== "";
+    false;
 
   const set = (patch: Partial<Plantilla>) => setForm((f) => ({ ...f, ...patch }));
   const setCliente = (patch: Partial<Plantilla["cliente"]>) => setForm((f) => ({ ...f, cliente: { ...f.cliente, ...patch } }));
@@ -219,14 +219,6 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-          <div>
-            <label className={labelCls}>Razón social</label>
-            <input data-testid="razon-social" className={inputCls} value={form.cliente.razonSocial} onChange={(e) => setCliente({ razonSocial: e.target.value })} />
-          </div>
-          <div>
-            <label className={labelCls}>Email (opcional)</label>
-            <input data-testid="email" className={inputCls} value={form.cliente.email ?? ""} onChange={(e) => setCliente({ email: e.target.value })} />
-          </div>
           <div>
             <label className={labelCls}>Condición de venta</label>
             <Dropdown options={FORMA_PAGO_OPTIONS} value={form.cliente.condicionVenta[0] ?? "6"} onChange={(v) => setCliente({ condicionVenta: [v] })} />

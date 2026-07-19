@@ -65,7 +65,7 @@ async function main() {
     const rcel = await navigateToEmission(page, context);
 
     console.log("→ fill (pantallas 0-3)...");
-    await fillComprobante(rcel, buildFillPlan(plantilla), { domicilio: plantilla.cliente.domicilio });
+    await fillComprobante(rcel, buildFillPlan(plantilla));
 
     console.log("→ capturePreview (pantalla 4, sin confirmar)...");
     const preview = await capturePreview(rcel, {

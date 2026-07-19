@@ -67,7 +67,7 @@ async function main() {
     const { plantilla, opts } = buildCreditNote({ original, condicionIVA: "1" });
 
     console.log("→ fill NC (pantallas 0-3, universo 4 + asociado)...");
-    await fillComprobante(rcel, buildFillPlan(plantilla, opts), { domicilio: plantilla.cliente.domicilio });
+    await fillComprobante(rcel, buildFillPlan(plantilla, opts));
 
     console.log("→ capturePreview (Resumen, sin confirmar)...");
     const preview = await capturePreview(rcel, {

@@ -108,7 +108,7 @@ export async function buildEmissionPreview(
     const rcelPage = await navigateToEmission(bundle.page, bundle.context, companyIndex);
 
     const plan = buildFillPlan(plantilla, { fecha, universo, asociado });
-    await fillComprobante(rcelPage, plan, { domicilio: plantilla.cliente.domicilio });
+    await fillComprobante(rcelPage, plan);
 
     const preview = await capturePreview(rcelPage, {
       puntoVenta: plantilla.puntoDeVenta,
@@ -162,7 +162,7 @@ export async function confirmEmissionFlow(
     const rcelPage = await navigateToEmission(bundle.page, bundle.context, companyIndex);
 
     const plan = buildFillPlan(plantilla, { fecha, universo, asociado });
-    await fillComprobante(rcelPage, plan, { domicilio: plantilla.cliente.domicilio });
+    await fillComprobante(rcelPage, plan);
 
     // Capture preview data (needed for the EmissionResult spread)
     const preview = await capturePreview(rcelPage, {
