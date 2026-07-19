@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
+import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -82,12 +83,14 @@ export default function ServiciosVsBienesPage() {
           <strong className="text-foreground">vender bienes</strong> comparten los mismos topes de
           facturación anual, pero la cuota mensual difiere: el impuesto integrado cambia según la
           actividad. Por eso dos personas en la misma categoría pueden pagar cuotas distintas.{" "}
-          <Link
+          <TrackedGuideCtaLink
             href="/calculadora-monotributo"
+            target="calculadora"
+            guide="servicios-vs-bienes"
             className="text-emerald-700 dark:text-emerald-400 font-semibold underline underline-offset-2 hover:opacity-80"
           >
             Calculá tu cuota según tu actividad
-          </Link>
+          </TrackedGuideCtaLink>
           .
         </p>
 
@@ -279,15 +282,17 @@ export default function ServiciosVsBienesPage() {
               En la calculadora podés alternar entre servicios y venta de bienes y ver en tiempo real cuánto cambia
               tu cuota mensual según tu categoría actual.
             </p>
-            <Link
+            <TrackedGuideCtaLink
               href="/calculadora-monotributo"
+              target="calculadora"
+              guide="servicios-vs-bienes"
               className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
             >
               Abrir calculadora
               <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </TrackedGuideCtaLink>
           </div>
         </section>
 

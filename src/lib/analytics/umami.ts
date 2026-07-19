@@ -66,6 +66,12 @@ export const UMAMI_EVENTS = {
   ArcInvoicesFail: "funnel_arc_invoices_fail",
   /** Home: click en CTA hacia /ingresar o /calculadora-monotributo. @example { target: 'ingresar' | 'calculadora' } */
   LandingCta: "funnel_landing_cta",
+  /**
+   * Guías (/monotributo/*): click en un CTA hacia la app. Mide qué guía convierte
+   * a uso real → base para priorizar contenido y, a futuro, ubicar afiliados.
+   * @example data: { guide: 'recategorizacion', target: 'calculadora' | 'ingresar' | 'facturar' }
+   */
+  GuideCta: "funnel_guide_cta",
 } as const;
 
 declare global {

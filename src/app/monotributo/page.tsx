@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
+import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -66,8 +67,10 @@ export default function MonotributoIndexPage() {
         {/* Primary action — la calculadora se lleva el lugar principal porque
             es el paso de menor fricción para quien llega desde buscadores. */}
         <section className="mb-4">
-          <Link
+          <TrackedGuideCtaLink
             href="/calculadora-monotributo"
+            target="calculadora"
+            guide="index"
             className="group relative overflow-hidden block rounded-2xl border border-emerald-200 dark:border-emerald-800/40 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50/80 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/20 p-6 md:p-7 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all"
           >
             <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-400/15 to-cyan-400/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
@@ -88,7 +91,7 @@ export default function MonotributoIndexPage() {
                 </svg>
               </span>
             </div>
-          </Link>
+          </TrackedGuideCtaLink>
         </section>
 
         {/* Secondary navigation — guía ARCA y el índice completo de guías. */}
@@ -221,15 +224,17 @@ export default function MonotributoIndexPage() {
               categoría vas a caer en tu próxima recategorización. <strong className="text-slate-900 dark:text-white">Sin registro, sin datos guardados.</strong>
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <Link
+              <TrackedGuideCtaLink
                 href="/calculadora-monotributo"
+                target="calculadora"
+                guide="index"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 transition-all"
               >
                 Abrir calculadora
                 <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
-              </Link>
+              </TrackedGuideCtaLink>
               <TrackedLandingCtaLink
                 href="/ingresar"
                 target="ingresar"
