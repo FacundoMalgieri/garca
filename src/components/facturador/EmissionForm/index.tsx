@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { resolveClient, type ClientIndex } from "@/lib/facturador/client-index";
+import { type ClientIndex,resolveClient } from "@/lib/facturador/client-index";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { defaultVtoPago,previousMonthPeriod } from "@/lib/facturador/dates";
 import {
