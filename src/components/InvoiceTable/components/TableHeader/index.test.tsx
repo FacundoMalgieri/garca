@@ -135,4 +135,74 @@ describe("TableHeader", () => {
 
     expect(screen.getByText("Fecha")).toBeInTheDocument();
   });
+
+  it("renders each sort control as a button", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} />
+      </table>
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(6);
+    buttons.forEach((btn) => expect(btn).toHaveAttribute("type", "button"));
+  });
+
+  it("triggers onSort via keyboard (Enter/Space) since the control is a button", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} />
+      </table>
+    );
+
+    const fechaButton = screen.getByRole("button", { name: /Fecha/ });
+    // Native <button> fires click on Enter/Space; simulate the resulting activation
+    fireEvent.click(fechaButton);
+    expect(mockOnSort).toHaveBeenCalledWith("fecha");
+  });
+
+  it("gives every column header scope='col'", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} />
+      </table>
+    );
+
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers).toHaveLength(6);
+    headers.forEach((th) => expect(th).toHaveAttribute("scope", "col"));
+  });
+
+  it("marks the active column with aria-sort='descending' when sorted desc", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} sortField="fecha" sortDirection="desc" />
+      </table>
+    );
+
+    const activeHeader = screen.getByText("Fecha").closest("th");
+    expect(activeHeader).toHaveAttribute("aria-sort", "descending");
+  });
+
+  it("marks the active column with aria-sort='ascending' when sorted asc", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} sortField="total" sortDirection="asc" />
+      </table>
+    );
+
+    const activeHeader = screen.getByText("Total (Extranjera/ARS)").closest("th");
+    expect(activeHeader).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("marks non-active columns with aria-sort='none'", () => {
+    render(
+      <table>
+        <TableHeader {...defaultProps} sortField="fecha" sortDirection="desc" />
+      </table>
+    );
+
+    const inactiveHeader = screen.getByText("Tipo").closest("th");
+    expect(inactiveHeader).toHaveAttribute("aria-sort", "none");
+  });
 });

@@ -28,20 +28,33 @@ export function TableHeader({ sortField, sortDirection, onSort }: TableHeaderPro
   return (
     <thead>
       <tr className="border-b border-t border-border text-left text-xs h-[61px]">
-        {columns.map((column) => (
-          <th
-            key={column.field}
-            className={`py-3 px-4 font-semibold cursor-pointer hover:bg-muted/50 transition-colors ${
-              column.align === "right" ? "text-right" : ""
-            }`}
-            onClick={() => onSort(column.field)}
-          >
-            <div className={`flex items-center gap-1 ${column.align === "right" ? "justify-end" : ""}`}>
-              {column.label}
-              <SortIcon field={column.field} currentField={sortField} direction={sortDirection} />
-            </div>
-          </th>
-        ))}
+        {columns.map((column) => {
+          const isActive = sortField === column.field;
+          const ariaSort = isActive
+            ? sortDirection === "asc"
+              ? "ascending"
+              : "descending"
+            : "none";
+          return (
+            <th
+              key={column.field}
+              scope="col"
+              aria-sort={ariaSort}
+              className={`py-3 px-4 font-semibold ${column.align === "right" ? "text-right" : ""}`}
+            >
+              <button
+                type="button"
+                onClick={() => onSort(column.field)}
+                className={`w-full flex items-center gap-1 cursor-pointer hover:bg-muted/50 transition-colors ${
+                  column.align === "right" ? "justify-end" : ""
+                }`}
+              >
+                {column.label}
+                <SortIcon field={column.field} currentField={sortField} direction={sortDirection} />
+              </button>
+            </th>
+          );
+        })}
       </tr>
     </thead>
   );
