@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AnularTab } from "@/components/facturador/AnularTab";
 import { EmissionForm } from "@/components/facturador/EmissionForm";
@@ -14,6 +14,8 @@ import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 import { useTemplates } from "@/hooks/useTemplates";
 import { computeAnnualIncome } from "@/lib/facturador/annual-income";
+import { buildClientIndex } from "@/lib/facturador/client-index";
+import { type ClientMemory, loadClientMemory } from "@/lib/facturador/client-memory";
 import { getNextRecategorizacionDates } from "@/lib/projection";
 import { cn } from "@/lib/utils";
 import type { Plantilla, StoredInvoice } from "@/types/facturador";
@@ -38,6 +40,13 @@ export default function FacturarPage() {
   );
   const { status } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
   const margenDisponible = status?.margenDisponible ?? null;
+
+  const [clientMemory, setClientMemory] = useState<ClientMemory>({});
+  useEffect(() => { setClientMemory(loadClientMemory()); }, [state.invoices]);
+  const clientHints = useMemo(
+    () => buildClientIndex(state.invoices, clientMemory),
+    [state.invoices, clientMemory]
+  );
 
   const initial = activeId ? templates.find((t) => t.id === activeId) ?? null : null;
 
@@ -98,9 +107,10 @@ export default function FacturarPage() {
             key={activeId ?? "blank"}
             initial={initial}
             puntosDeVenta={state.puntosDeVenta}
+            clientHints={clientHints}
             onPreview={(p) => { setPlantillaAEmitir(p); setEmitOpen(true); }}
             onUpdateTemplate={(id, p) => save({ ...p, id })}
-            onSaveAsNew={(p) => { const nombre = p.nombre || (p.cliente.razonSocial ? `Factura ${p.cliente.razonSocial}` : "Nueva plantilla"); save({ ...p, nombre }); }}
+            onSaveAsNew={(p) => { const nombre = p.nombre || (p.cliente.razonSocial ? `Factura ${p.cliente.razonSocial}` : (p.cliente.nroDoc ? `Factura ${p.cliente.nroDoc}` : "Nueva plantilla")); save({ ...p, nombre }); }}
           />
         </div>
       )}
