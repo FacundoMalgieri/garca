@@ -1,11 +1,14 @@
 name: Update Monotributo Data
 
 on:
-  # Run twice a year: January 20 and July 20 at 10:00 UTC
-  # (After recategorization periods which are typically Jan 1-20 and Jul 1-20)
+  # Recategorización semestral (deadline el 20 de ene/jul). ARCA publica las
+  # escalas nuevas por esas fechas, dentro del mismo mes. Corremos TODOS los días
+  # del 20 a fin de mes: el workflow no-opea si el dato no cambió (git diff), así
+  # que reintenta a diario hasta que ARCA publique y recién ahí commitea+deploya.
+  # Si algún semestre publicaran después de fin de mes, extender la ventana.
   schedule:
-    - cron: "0 10 20 1 *" # January 20
-    - cron: "0 10 20 7 *" # July 20
+    - cron: "0 10 20-31 1 *" # enero, del 20 al 31 (diario)
+    - cron: "0 10 20-31 7 *" # julio, del 20 al 31 (diario)
   # Allow manual trigger
   workflow_dispatch:
 
