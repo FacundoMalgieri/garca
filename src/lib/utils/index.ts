@@ -33,18 +33,6 @@ export function formatCurrencyUSD(amount: number): string {
 }
 
 /**
- * Formats a date string to a localized format for Argentina.
- */
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('es-AR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
-}
-
-/**
  * Calculates the remaining margin for Monotributo category.
  */
 export function calculateRemainingMargin(

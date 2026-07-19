@@ -7,7 +7,6 @@ import {
   fileToBase64,
   formatCurrencyARS,
   formatCurrencyUSD,
-  formatDate,
   generateId,
   validateFileExtension,
 } from "./index";
@@ -79,18 +78,6 @@ describe("formatCurrencyUSD", () => {
   it("formats zero", () => {
     const result = formatCurrencyUSD(0);
     expect(result).toContain("0");
-  });
-});
-
-describe("formatDate", () => {
-  it("formats ISO date string", () => {
-    const result = formatDate("2025-11-15");
-    expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
-  });
-
-  it("formats date with time", () => {
-    const result = formatDate("2025-11-15T10:30:00");
-    expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
   });
 });
 
