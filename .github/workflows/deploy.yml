@@ -49,6 +49,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Capture currently-served build version
+        id: prev_version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          prev=$(curl -sf "https://garca.app/api/health?cb=$(date +%s)" | jq -r '.version // "none"' 2>/dev/null || echo "none")
+          echo "Currently serving version: $prev"
+          echo "version=$prev" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Dokploy
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -63,9 +71,28 @@ jobs:
           fi
           echo "Deploy triggered successfully"
 
-      - name: Wait for Dokploy to finish serving new build
+      # Espera activa: pollea /api/health hasta que el BUILD_ID cambie respecto
+      # del que servía antes del deploy. Si Dokploy no llega a servir un build
+      # nuevo dentro del timeout, FALLA (antes era un `sleep 600` ciego que daba
+      # falso-verde aunque Dokploy sirviera el build viejo). cache-bust en la URL
+      # para no leer una respuesta cacheada por Cloudflare.
+      - name: Wait for Dokploy to serve the new build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: sleep 600
+        run: |
+          prev="${{ steps.prev_version.outputs.version }}"
+          echo "Previous version: $prev"
+          deadline=$(( SECONDS + 900 )) # 15 min
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            cur=$(curl -sf "https://garca.app/api/health?cb=$(date +%s)" | jq -r '.version // "error"' 2>/dev/null || echo "error")
+            if [ "$cur" != "error" ] && [ "$cur" != "none" ] && [ "$cur" != "unknown" ] && [ "$cur" != "$prev" ]; then
+              echo "✓ New build is serving: $cur"
+              exit 0
+            fi
+            echo "still serving '$cur' (prev '$prev'), waiting..."
+            sleep 20
+          done
+          echo "::error::Dokploy did not serve a new build within 15 min (still '$prev'). Revisar el checkout/caché de build en Dokploy."
+          exit 1
 
       - name: Purge Cloudflare cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
