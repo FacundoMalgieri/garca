@@ -53,6 +53,16 @@ function generateFileContent(data: MonotributoData): string {
 import type { MonotributoData } from "@/types/monotributo";
 
 export const MONOTRIBUTO_DATA: MonotributoData = ${JSON.stringify(payload, null, 2).replace(/"([^"]+)":/g, "$1:")};
+
+/**
+ * Año vigente del régimen, derivado de la data (no del reloj): cuando GitHub
+ * Actions actualiza \`lastUpdated\` al refrescar las categorías, este año se
+ * mueve solo y arrastra todos los labels/SEO que lo referencian. Usar esto en
+ * lugar de hardcodear el año en copy, títulos o metadata.
+ */
+export const MONOTRIBUTO_YEAR = Number(
+  (MONOTRIBUTO_DATA.lastUpdated || new Date().toISOString()).slice(0, 4),
+);
 `;
 }
 
