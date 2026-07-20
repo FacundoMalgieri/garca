@@ -143,19 +143,20 @@ describe("projection utilities", () => {
 
   describe("getCategoriaForTotal", () => {
     it("returns correct category for income", () => {
+      // Derivado de la data (no montos hardcodeados) para que no rompa en cada
+      // recategorización semestral cuando ARCA actualiza las escalas.
       const categorias = MONOTRIBUTO_DATA.categorias
-      
-      // Under category A limit
-      const catA = getCategoriaForTotal(5000000, categorias)
-      expect(catA?.categoria).toBe("A")
-      
-      // Under category B limit but over A
-      const catB = getCategoriaForTotal(12000000, categorias)
-      expect(catB?.categoria).toBe("B")
-      
-      // High income
-      const catH = getCategoriaForTotal(65000000, categorias)
-      expect(catH?.categoria).toBe("H")
+      const A = getCategoriaByLetter("A", categorias)!
+      const G = getCategoriaByLetter("G", categorias)!
+
+      // Justo bajo el tope de A → A (el límite es inclusivo)
+      expect(getCategoriaForTotal(A.ingresosBrutos - 1, categorias)?.categoria).toBe("A")
+
+      // Justo arriba del tope de A → la categoría siguiente, B
+      expect(getCategoriaForTotal(A.ingresosBrutos + 1, categorias)?.categoria).toBe("B")
+
+      // Justo arriba del tope de G → H
+      expect(getCategoriaForTotal(G.ingresosBrutos + 1, categorias)?.categoria).toBe("H")
     })
 
     it("returns highest category when exceeding all limits", () => {
@@ -246,9 +247,10 @@ describe("projection utilities", () => {
 
     it("returns the minimum category that accommodates the income", () => {
       const categorias = MONOTRIBUTO_DATA.categorias
-      
-      // 40M exceeds F (38.6M) but fits in G (46.2M) → target is G
-      const target = getAutoTargetCategory(40000000, categorias)
+      const F = getCategoriaByLetter("F", categorias)!
+
+      // Un ingreso apenas por encima del tope de F entra en G → target es G
+      const target = getAutoTargetCategory(F.ingresosBrutos + 1, categorias)
       expect(target?.categoria).toBe("G")
     })
 
@@ -276,10 +278,12 @@ describe("projection utilities", () => {
         totalHistorico,
         categorias
       )
-      
-      // Expected: (70113407.33 - 200000 - 50000000) / 5 = ~3982681
+
+      // (tope de H - margen - histórico) / mesesFuturos, con floor. Derivado de
+      // la data para no romper cuando ARCA actualiza las escalas.
+      const expected = Math.floor(((targetCat?.ingresosBrutos ?? 0) - margen - totalHistorico) / mesesFuturos)
       expect(recommended).toBeGreaterThan(0)
-      expect(recommended).toBeLessThan(5000000)
+      expect(recommended).toBe(expected)
     })
 
     it("returns 0 when already over limit", () => {
