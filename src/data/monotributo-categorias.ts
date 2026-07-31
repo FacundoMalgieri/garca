@@ -5,7 +5,7 @@
  * To update manually, run: npm run update-monotributo
  *
  * Source: https://www.arca.gob.ar/monotributo/categorias.asp
- * Last updated: 2026-07-30
+ * Last updated: 2026-07-31
  */
 
 import type { MonotributoData } from "@/types/monotributo";
@@ -212,7 +212,7 @@ export const MONOTRIBUTO_DATA: MonotributoData = {
     }
   ],
   fechaVigencia: "1/08/2026",
-  lastUpdated: "2026-07-30"
+  lastUpdated: "2026-07-31"
 };
 
 /**
