@@ -10,9 +10,27 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 let ctx: any;
 vi.mock("@/contexts/InvoiceContext", () => ({ useInvoiceContext: () => ctx }));
 vi.mock("@/hooks/useTemplates", () => ({ useTemplates: () => ({ templates: [], save: vi.fn(), remove: vi.fn() }) }));
-vi.mock("@/hooks/useMonotributo", () => ({ useMonotributo: () => ({ status: { margenDisponible: 1000000 } }) }));
+vi.mock("@/hooks/useMonotributo", () => ({
+  useMonotributo: () => ({
+    data: {
+      categorias: [
+        { categoria: "A", ingresosBrutos: 12_009_410.45, total: { servicios: 28883.93, venta: 28721.91 } },
+        { categoria: "H", ingresosBrutos: 81_924_660.37, total: { servicios: 400000, venta: 390000 } },
+      ],
+      fechaVigencia: "1/08/2026",
+    },
+    status: { margenDisponible: 1000000 },
+  }),
+}));
 vi.mock("@/components/facturador/EmissionForm", () => ({ EmissionForm: ({ onPreview }: any) => <button onClick={() => onPreview({ id: "x" })}>form-preview</button> }));
-vi.mock("@/components/facturador/EmissionModal", () => ({ EmissionModal: ({ isOpen }: any) => (isOpen ? <div>modal-abierto</div> : null) }));
+vi.mock("@/components/facturador/EmissionModal", () => ({
+  EmissionModal: ({ isOpen, margenDisponible }: any) => (
+    <>
+      {isOpen ? <div>modal-abierto</div> : null}
+      <span data-testid="margen">{margenDisponible === null ? "null" : String(margenDisponible)}</span>
+    </>
+  ),
+}));
 vi.mock("@/components/facturador/EmittedTab", () => ({ EmittedTab: () => <div>emitidas-tab</div> }));
 
 beforeEach(() => {
@@ -21,6 +39,35 @@ beforeEach(() => {
 });
 
 describe("FacturarPage", () => {
+  it("mide el margen contra la categoría vigente de ARCA, no contra la ventana parcial", () => {
+    // Ventana en curso (Ene-Dic 2026) parcial: $14M. Sin este fix el margen se
+    // calculaba contra el tope de la categoría del parcial, no contra H.
+    vi.setSystemTime(new Date(2026, 7, 4));
+    ctx.monotributoInfo = { categoria: "H" };
+    ctx.state.invoices = [
+      { fecha: "05/03/2026", tipo: "Factura C", moneda: "ARS", importeTotal: 14_000_000 },
+    ];
+
+    render(<FacturarPage />);
+
+    expect(screen.getAllByTestId("margen")[0]).toHaveTextContent(String(81_924_660.37 - 14_000_000));
+    vi.useRealTimers();
+  });
+
+  it("sin categoría de ARCA ni datos en la ventana cerrada no informa margen", () => {
+    vi.setSystemTime(new Date(2026, 7, 4));
+    // Jul 2026 entra en la ventana en curso (Ene-Dic 2026) pero no en la cerrada
+    // (Jul 2025 - Jun 2026): no hay de dónde derivar la categoría vigente.
+    ctx.state.invoices = [
+      { fecha: "10/07/2026", tipo: "Factura C", moneda: "ARS", importeTotal: 14_000_000 },
+    ];
+
+    render(<FacturarPage />);
+
+    expect(screen.getAllByTestId("margen")[0]).toHaveTextContent("null");
+    vi.useRealTimers();
+  });
+
   it("muestra el banner con la empresa de la sesión", () => {
     render(<FacturarPage />);
     expect(screen.getByText(/GSA SA/)).toBeInTheDocument();

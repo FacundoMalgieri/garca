@@ -101,6 +101,58 @@ export function getNextRecategorizacionDates(today: Date = new Date()): Recatego
 }
 
 /**
+ * Get the most recent recategorization (January or July) that already happened,
+ * together with its 12-month window — which is always fully elapsed.
+ *
+ * That window is what defines the category in force today, so it's the only
+ * honest source for "tu categoría actual" when ARCA data isn't available.
+ * The window currently in progress (see getNextRecategorizacionDates) is
+ * partial until it closes and must never be read as a current category.
+ *
+ * Example: on 04/08/2026 the last recategorization was July 2026, whose window
+ * is July 2025 - June 2026.
+ */
+export function getLastRecategorizacionDate(today: Date = new Date()): RecategorizacionInfo {
+  // Enero y Julio son meses de recategorización: al llegar el mes, la ventana
+  // de 12 meses previos ya cerró, así que cuenta como "ya ocurrida".
+  const month = today.getMonth() <= 5 ? 0 : 6
+  const monthKey = `${today.getFullYear()}-${String(month + 1).padStart(2, "0")}`
+
+  return {
+    month: monthKey,
+    label: getMonthLabel(monthKey),
+    ventana: getRecategorizacionWindow(monthKey),
+  }
+}
+
+/**
+ * Count how many months of a window have already elapsed (are before the
+ * current month). A window in progress reports less than its full length —
+ * that's the signal that its total is partial.
+ */
+export function countClosedMonths(ventana: MonthKey[], today: Date = new Date()): number {
+  const currentMonth = formatMonthKey(today)
+  return ventana.filter((month) => month < currentMonth).length
+}
+
+/**
+ * Extrapolate the total of a partial window to the full window length, so a
+ * mid-window accumulation can be compared against yearly category caps.
+ *
+ * Returns null when there are no closed months to extrapolate from (the window
+ * just opened) — there is nothing to estimate with yet.
+ */
+export function annualizeWindowTotal(
+  total: number,
+  closedMonths: number,
+  windowLength = 12
+): number | null {
+  if (closedMonths <= 0) return null
+  if (closedMonths >= windowLength) return total
+  return (total / closedMonths) * windowLength
+}
+
+/**
  * Get the 12-month window for a recategorization date.
  * The window includes the 12 months BEFORE the recategorization month.
  * 

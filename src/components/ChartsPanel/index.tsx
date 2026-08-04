@@ -18,11 +18,15 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
-import type { MonotributoData } from "@/types/monotributo";
+import type { CategoriaMonotributo } from "@/types/monotributo";
 
 interface ChartsPanelProps {
-  monotributoData: MonotributoData | null;
-  ingresosAnuales: number;
+  /**
+   * Categoría vigente, cuyo tope se dibuja como línea de referencia. Viene del
+   * panel para no derivarla del acumulado del gráfico: ese acumulado es del
+   * período consultado, que no coincide con la ventana de recategorización.
+   */
+  categoriaLimite: CategoriaMonotributo | null;
   isCurrentYearData?: boolean;
 }
 
@@ -34,16 +38,12 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: "mensual", label: "Mensual", icon: <BarChartIcon /> },
 ];
 
-export function ChartsPanel({ monotributoData, ingresosAnuales, isCurrentYearData = true }: ChartsPanelProps) {
+export function ChartsPanel({ categoriaLimite, isCurrentYearData = true }: ChartsPanelProps) {
   const { state, manualExchangeRates } = useInvoiceContext();
   const [activeTab, setActiveTab] = useState<TabType>("progreso");
 
   const monthlyData = useMemo(() => prepareMonthlyData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
   const distributionData = useMemo(() => prepareDistributionData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
-  const currentCategory = useMemo(
-    () => getCurrentCategory(monotributoData, ingresosAnuales),
-    [monotributoData, ingresosAnuales]
-  );
 
   if (!isCurrentYearData) {
     return <NoDataMessage />;
@@ -79,7 +79,7 @@ export function ChartsPanel({ monotributoData, ingresosAnuales, isCurrentYearDat
 
         {/* Chart Content */}
         <div className="min-h-[400px]">
-          {activeTab === "progreso" && <ProgresoChart monthlyData={monthlyData} currentCategory={currentCategory} />}
+          {activeTab === "progreso" && <ProgresoChart monthlyData={monthlyData} currentCategory={categoriaLimite} />}
           {activeTab === "distribucion" && <DistribucionChart distributionData={distributionData} />}
           {activeTab === "mensual" && <MensualChart monthlyData={monthlyData} />}
         </div>
@@ -288,12 +288,6 @@ function prepareDistributionData(
     .sort((a, b) => b.value - a.value); // Sort by value descending
 }
 
-function getCurrentCategory(monotributoData: MonotributoData | null, ingresosAnuales: number) {
-  if (!monotributoData) return null;
-  const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
-  return categorias.find((cat) => ingresosAnuales <= cat.ingresosBrutos) || categorias[categorias.length - 1];
-}
-
 // ============================================================================
 // Chart components
 // ============================================================================
@@ -377,7 +371,13 @@ function ProgresoChart({
 
   return (
     <div id="chart-progreso" className="h-[400px] md:h-[500px] flex flex-col">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4 flex-none">Ingresos Acumulados vs Límites de Categorías</h3>
+      <div className="mb-4 flex-none">
+        <h3 className="text-sm font-medium text-muted-foreground">Ingresos Acumulados vs Límites de Categorías</h3>
+        <p className="text-xs text-muted-foreground/70">
+          Acumulado del período consultado
+          {currentCategory ? ` · la línea es el tope de tu categoría ${currentCategory.categoria}` : ""}
+        </p>
+      </div>
       <ChartReady>
         {({ width, height }) => (
           <AreaChart width={width} height={height} data={monthlyData}>

@@ -181,6 +181,9 @@ const mockMonotributoData: MonotributoData = {
   fechaVigencia: "01/2025",
 };
 
+/** Categoría vigente cuyo tope dibuja la línea de referencia del gráfico */
+const mockCategoriaLimite = mockMonotributoData.categorias[1]; // B
+
 describe("ChartsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -193,8 +196,7 @@ describe("ChartsPanel", () => {
   it("renders the component with title", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -205,8 +207,7 @@ describe("ChartsPanel", () => {
   it("renders all three tabs", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -219,8 +220,7 @@ describe("ChartsPanel", () => {
   it("shows NoDataMessage when isCurrentYearData is false", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={false}
       />
     );
@@ -234,8 +234,7 @@ describe("ChartsPanel", () => {
   it("switches tabs when clicked", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -258,8 +257,7 @@ describe("ChartsPanel", () => {
   it("renders progreso chart by default", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -270,8 +268,7 @@ describe("ChartsPanel", () => {
   it("renders distribucion chart when tab is clicked", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -283,8 +280,7 @@ describe("ChartsPanel", () => {
   it("renders mensual chart when tab is clicked", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -293,11 +289,10 @@ describe("ChartsPanel", () => {
     expect(screen.getByText("Ingresos por Mes")).toBeInTheDocument();
   });
 
-  it("handles null monotributoData gracefully", () => {
+  it("handles a null categoriaLimite gracefully", () => {
     render(
       <ChartsPanel
-        monotributoData={null}
-        ingresosAnuales={5000000}
+        categoriaLimite={null}
         isCurrentYearData={true}
       />
     );
@@ -306,11 +301,10 @@ describe("ChartsPanel", () => {
     expect(screen.getByText("Análisis Visual")).toBeInTheDocument();
   });
 
-  it("handles zero ingresosAnuales", () => {
+  it("renders with the category cap line", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={0}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -321,8 +315,7 @@ describe("ChartsPanel", () => {
   it("renders reference line labels when category is available", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );
@@ -333,8 +326,7 @@ describe("ChartsPanel", () => {
   it("uses fallback colors for unknown currencies in distribución", () => {
     render(
       <ChartsPanel
-        monotributoData={mockMonotributoData}
-        ingresosAnuales={5000000}
+        categoriaLimite={mockCategoriaLimite}
         isCurrentYearData={true}
       />
     );

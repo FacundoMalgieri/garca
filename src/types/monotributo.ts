@@ -29,6 +29,34 @@ export interface MonotributoData {
   lastUpdated?: string; // ISO date, e.g. "2026-01-20"
 }
 
+/**
+ * Ingresos de una ventana de recategorización de 12 meses.
+ *
+ * `completa: false` significa que la ventana está en curso: `ingresos` es un
+ * acumulado parcial y NO puede leerse como categoría. Para estimar se usa
+ * `ingresosAnualizados` (extrapolación de los meses cerrados a 12).
+ */
+export interface VentanaRecategorizacion {
+  /** Recategorización que evalúa esta ventana, ej. "Enero 2027" */
+  label: string;
+  /** Primer mes de la ventana (YYYY-MM) */
+  desde: string;
+  /** Último mes de la ventana (YYYY-MM) */
+  hasta: string;
+  /** Ingresos en pesos acumulados en los meses ya cerrados de la ventana */
+  ingresos: number;
+  /** Meses de la ventana ya cerrados (anteriores al mes actual) */
+  mesesCerrados: number;
+  /** Largo total de la ventana (12) */
+  totalMeses: number;
+  /** true cuando la ventana ya cerró por completo */
+  completa: boolean;
+  /** `ingresos` extrapolados a 12 meses; null si no hay meses cerrados */
+  ingresosAnualizados: number | null;
+  /** Hubo comprobantes del período consultado dentro de esta ventana */
+  tieneDatos: boolean;
+}
+
 export interface MonotributoStatus {
   categoriaActual: CategoriaMonotributo | null;
   categoriaSiguiente: CategoriaMonotributo | null;

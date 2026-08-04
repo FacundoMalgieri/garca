@@ -10,6 +10,7 @@ import { trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { downloadPdfFile, sharePdfFile } from "@/lib/pdf-save";
 
 import { exportToCSV, exportToJSON, exportToPDF } from "../InvoiceTable/utils/exporters";
+import { computeHeaderStats } from "./stats";
 
 /**
  * Displays company information header with summary stats and export actions.
@@ -19,44 +20,10 @@ export function CompanyHeader() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfReady, setPdfReady] = useState<File | null>(null);
 
-  const stats = useMemo(() => {
-    if (state.invoices.length === 0) return null;
-
-    // Calculate date range
-    const dates = state.invoices.map((inv) => {
-      const [day, month, year] = inv.fecha.split("/");
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    });
-    const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
-
-    // Calculate total in pesos
-    let totalPesos = 0;
-    state.invoices.forEach((inv) => {
-      const exchangeRate = inv.xmlData?.exchangeRate || 0;
-      const isForeign = inv.moneda !== "ARS";
-      totalPesos += isForeign && exchangeRate ? inv.importeTotal * exchangeRate : inv.importeTotal;
-    });
-
-    // Count by currency
-    const currencies = state.invoices.reduce(
-      (acc, inv) => {
-        acc[inv.moneda] = (acc[inv.moneda] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return {
-      dateRange: {
-        from: minDate,
-        to: maxDate,
-      },
-      totalPesos,
-      currencies,
-      count: state.invoices.length,
-    };
-  }, [state.invoices]);
+  const stats = useMemo(
+    () => computeHeaderStats(state.invoices, manualExchangeRates),
+    [state.invoices, manualExchangeRates]
+  );
 
   const handleExportPDF = async () => {
     setIsGeneratingPDF(true);

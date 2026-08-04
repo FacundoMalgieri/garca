@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
+import type { RecategorizacionOutlook } from "@/lib/monotributo/outlook";
+import { getRecategorizacionOutlook } from "@/lib/monotributo/outlook";
 import { cn } from "@/lib/utils";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
+import type { CategoriaMonotributo, TipoActividad, VentanaRecategorizacion } from "@/types/monotributo";
 
 const MONTH_NAMES_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -17,16 +20,99 @@ function formatWindowMonth(monthKey: string): string {
   return `${MONTH_NAMES_SHORT[month - 1]} ${year}`;
 }
 
-interface MonotributoPanelProps {
-  ingresosAnuales: number;
-  isCurrentYearData?: boolean;
-  recategorizacionLabel?: string;
-  ventanaDesde?: string;
-  ventanaHasta?: string;
+function formatPesos(amount: number): string {
+  return `$${amount.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
 }
 
-export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, recategorizacionLabel, ventanaDesde, ventanaHasta }: MonotributoPanelProps) {
-  const { data, tipoActividad, updateTipoActividad, status } = useMonotributo(ingresosAnuales);
+function pagoMensualDe(categoria: CategoriaMonotributo, tipoActividad: TipoActividad): number {
+  return tipoActividad === "servicios" ? categoria.total.servicios : categoria.total.venta;
+}
+
+type OutlookTone = "amber" | "success" | "muted";
+
+const TONE_CLASSES: Record<OutlookTone, { box: string; accent: string; detail: string }> = {
+  amber: {
+    box: "border-amber-500/50 bg-amber-500/10",
+    accent: "text-amber-500",
+    detail: "text-amber-600 dark:text-amber-400",
+  },
+  success: {
+    box: "border-success/50 bg-success/10",
+    accent: "text-success",
+    detail: "text-success dark:text-emerald-400",
+  },
+  muted: {
+    box: "border-muted bg-muted/30",
+    accent: "text-foreground",
+    detail: "text-muted-foreground",
+  },
+};
+
+/**
+ * Tono y texto según lo que le va a pasar a la categoría. Una baja sólo se
+ * presenta como oportunidad ("pagás menos") cuando la ventana ya cerró: con
+ * datos parciales los ingresos todavía pueden subir.
+ */
+function describeOutlook(
+  outlook: RecategorizacionOutlook,
+  categoriaVigente: CategoriaMonotributo,
+  ventana: VentanaRecategorizacion
+): { tone: OutlookTone; detail: string } {
+  const estimada = outlook.categoriaEstimada?.categoria ?? "—";
+  const mesesFaltantes = ventana.totalMeses - ventana.mesesCerrados;
+
+  switch (outlook.kind) {
+    case "suba-confirmada":
+      return {
+        tone: "amber",
+        detail: `Ya superaste el tope de ${categoriaVigente.categoria} por ${formatPesos(outlook.excedente)} en esta ventana: te recategorizás a ${estimada} en ${ventana.label}.`,
+      };
+    case "suba-proyectada":
+      return {
+        tone: "amber",
+        detail: `Si seguís a este ritmo, la ventana cierra en ${estimada} y tenés que recategorizarte en ${ventana.label}.`,
+      };
+    case "baja-confirmada":
+      return {
+        tone: "success",
+        detail: `La ventana cerró en ${estimada}: podés recategorizarte y pagar menos.`,
+      };
+    case "baja-posible":
+      return {
+        tone: "muted",
+        detail: `Al ritmo actual cerrarías en ${estimada}, pero faltan ${mesesFaltantes} ${mesesFaltantes === 1 ? "mes" : "meses"} de la ventana. Esperá el cierre antes de bajar de categoría.`,
+      };
+    case "estable":
+      return {
+        tone: "success",
+        detail: `Al ritmo actual te mantenés en ${categoriaVigente.categoria}.`,
+      };
+    case "sin-datos":
+    default:
+      return {
+        tone: "muted",
+        detail: `La ventana ${formatWindowMonth(ventana.desde)} a ${formatWindowMonth(ventana.hasta)} recién arrancó: todavía no hay meses cerrados para estimar.`,
+      };
+  }
+}
+
+interface MonotributoPanelProps {
+  /** Última ventana de recategorización cerrada: define la categoría vigente */
+  ventanaVigente: VentanaRecategorizacion;
+  /** Ventana en curso, la que se evalúa en la próxima recategorización */
+  ventanaProxima: VentanaRecategorizacion;
+  /** Categoría vigente (ARCA o derivada de la ventana cerrada) */
+  categoriaVigente: CategoriaMonotributo | null;
+  isCurrentYearData?: boolean;
+}
+
+export function MonotributoPanel({
+  ventanaVigente,
+  ventanaProxima,
+  categoriaVigente,
+  isCurrentYearData = true,
+}: MonotributoPanelProps) {
+  const { data, tipoActividad, updateTipoActividad } = useMonotributo(ventanaVigente.ingresos);
   const { clearInvoices, monotributoInfo } = useInvoiceContext();
 
   // Use scraped activity type if available, otherwise allow manual selection
@@ -40,16 +126,36 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, re
   }, [hasScrapedActivity, monotributoInfo?.tipoActividad, tipoActividad, updateTipoActividad]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  const outlook = useMemo(
+    () =>
+      getRecategorizacionOutlook({
+        categoriaVigente,
+        ventana: ventanaProxima,
+        categorias: data.categorias,
+      }),
+    [categoriaVigente, ventanaProxima, data.categorias]
+  );
+
+  const acumulado = ventanaProxima.ingresos;
+  const topeVigente = categoriaVigente?.ingresosBrutos ?? 0;
+  const porcentajeUtilizado = topeVigente > 0 ? (acumulado / topeVigente) * 100 : 0;
+  const margenDisponible = topeVigente - acumulado;
+  const categoriaEstimada = outlook.categoriaEstimada;
+  const outlookCopy = categoriaVigente ? describeOutlook(outlook, categoriaVigente, ventanaProxima) : null;
+  const tone = outlookCopy ? TONE_CLASSES[outlookCopy.tone] : null;
+
   return (
-    <Card className={cn("h-full flex flex-col", isCurrentYearData ? "min-h-[352px]" : "min-h-[352px]")}>
+    <Card className="h-full flex flex-col min-h-[352px]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ClipboardIcon />
           Monotributo
         </CardTitle>
-        {isCurrentYearData && ventanaDesde && ventanaHasta && (
+        {isCurrentYearData && (
           <p className="text-xs text-muted-foreground -mt-1">
-            Recategorización {recategorizacionLabel} — ventana {formatWindowMonth(ventanaDesde)} a {formatWindowMonth(ventanaHasta)}
+            {monotributoInfo
+              ? `Categoría vigente informada por ARCA · próxima recategorización ${ventanaProxima.label}`
+              : `Categoría vigente según ${formatWindowMonth(ventanaVigente.desde)} a ${formatWindowMonth(ventanaVigente.hasta)} · próxima recategorización ${ventanaProxima.label}`}
           </p>
         )}
       </CardHeader>
@@ -81,7 +187,7 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, re
         )}
 
         {/* Normal content when current year data exists */}
-        {isCurrentYearData && status && status.categoriaActual && (
+        {isCurrentYearData && (
           <div className="space-y-4">
             {/* Scraped Monotributo info from AFIP - includes current monthly payment */}
             {monotributoInfo && (
@@ -110,171 +216,174 @@ export function MonotributoPanel({ ingresosAnuales, isCurrentYearData = true, re
               </div>
             )}
 
-            {/* Category comparison: Current vs Suggested */}
-            {monotributoInfo && monotributoInfo.categoria !== status.categoriaActual.categoria ? (
-              (() => {
-                const catRegistrada = data.categorias.find(c => c.categoria === monotributoInfo.categoria)
-                const catCalculada = data.categorias.find(c => c.categoria === status?.categoriaActual?.categoria)
-                const isDowngrade = catRegistrada && catCalculada && catCalculada.ingresosBrutos < catRegistrada.ingresosBrutos
-                const excedente = catRegistrada ? status.ingresosAcumulados - catRegistrada.ingresosBrutos : 0
-
-                const borderColor = isDowngrade ? "border-success/50" : "border-amber-500/50"
-                const bgColor = isDowngrade ? "bg-success/10" : "bg-amber-500/10"
-                const accentColor = isDowngrade ? "text-success" : "text-amber-500"
-                const detailColor = isDowngrade ? "text-success dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
-
-                return (
-                  <div className={`rounded-lg border-2 ${borderColor} ${bgColor} p-4 space-y-3`}>
-                    <div className="flex items-center justify-center gap-6">
-                      <div className="text-center flex flex-col items-center">
-                        <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">CATEGORÍA ACTUAL</span>
-                        <span className="text-2xl font-bold text-foreground leading-none">
-                          {monotributoInfo.categoria}
-                        </span>
-                      </div>
-                      
-                      <svg className={`w-5 h-5 ${accentColor} mt-4`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                      
-                      <div className="text-center flex flex-col items-center">
-                        <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">PRÓXIMA RECATEGORIZACIÓN</span>
-                        <span className={`text-2xl font-bold ${accentColor} leading-none`}>
-                          {status.categoriaActual.categoria}
-                        </span>
-                      </div>
-                    </div>
-
-                    {!isDowngrade && catRegistrada && excedente > 0 && (
-                      <div className={`text-center text-xs ${detailColor}`}>
-                        Superaste el límite de {monotributoInfo.categoria} (${catRegistrada.ingresosBrutos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}) por ${excedente.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                      </div>
-                    )}
-
-                    <div className="text-xs text-muted-foreground text-center">
-                      {isDowngrade
-                        ? `Podrías recategorizarte a ${status.categoriaActual.categoria} y pagar menos`
-                        : `Deberás recategorizarte a ${status.categoriaActual.categoria} en tu próxima recategorización`}
-                    </div>
-                  </div>
-                )
-              })()
-            ) : (
-              // Show simple view when no recategorization needed or no AFIP info
-              <div className="rounded-lg bg-success/10 p-4 border-2 border-success/30">
-                <div className="text-center mb-2">
-                  <span className="text-xs text-muted-foreground block mb-1">
-                    {monotributoInfo ? "Tu categoría está correcta" : "Categoría según tus ingresos"}
-                  </span>
-                  <span className="text-3xl font-bold text-success">
-                    {status.categoriaActual.categoria}
-                  </span>
-                  {monotributoInfo && (
-                    <span className="text-xs text-success block mt-1">✓ No necesitás recategorizarte</span>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground text-center">
-                  Límite: ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                </div>
+            {!categoriaVigente && (
+              <div className="rounded-lg border-2 border-muted bg-muted/30 p-4 text-center space-y-1">
+                <p className="text-sm font-medium text-foreground">Categoría vigente no disponible</p>
+                <p className="text-xs text-muted-foreground">
+                  No pudimos leerla de ARCA y el período consultado no cubre la última ventana cerrada (
+                  {formatWindowMonth(ventanaVigente.desde)} a {formatWindowMonth(ventanaVigente.hasta)}).
+                </p>
               </div>
             )}
 
-            {/* Progress */}
-            <div>
-              <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>Progreso en categoría {status.categoriaActual.categoria}</span>
-                <span>{status.porcentajeUtilizado.toFixed(1)}%</span>
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    status.porcentajeUtilizado > 100
-                      ? "bg-destructive"
-                      : status.porcentajeUtilizado > 85
-                        ? "bg-amber-500"
-                        : "bg-success"
-                  }`}
-                  style={{ width: `${Math.min(status.porcentajeUtilizado, 100)}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-xs mt-1">
-                <span className="font-mono text-muted-foreground">
-                  ${status.ingresosAcumulados.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                </span>
-                <span className="font-mono text-muted-foreground">
-                  ${status.categoriaActual.ingresosBrutos.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                </span>
-              </div>
-            </div>
+            {/* Categoría vigente vs estimada al cierre de la ventana en curso */}
+            {categoriaVigente && outlookCopy && tone && (
+              <div className={`rounded-lg border-2 ${tone.box} p-4 space-y-3`}>
+                <div className="flex items-center justify-center gap-6">
+                  <div className="text-center flex flex-col items-center">
+                    <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">
+                      CATEGORÍA ACTUAL
+                    </span>
+                    <span className="text-2xl font-bold text-foreground leading-none">
+                      {categoriaVigente.categoria}
+                    </span>
+                  </div>
 
-            {/* Available margin */}
-            <div className="text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {status.margenDisponible > 0
-                    ? `Podés facturar hasta sin pasar de ${status.categoriaActual.categoria}:`
-                    : `Excediste el límite de ${status.categoriaActual.categoria}`}
-                </span>
-                {status.margenDisponible > 0 && (
-                  <span className="font-mono font-medium">
-                    ${status.margenDisponible.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                  </span>
+                  <svg className={`w-5 h-5 ${tone.accent} mt-4`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+
+                  <div className="text-center flex flex-col items-center">
+                    <span className="text-[10px] font-medium text-muted-foreground mb-1 tracking-wide">
+                      ESTIMADA {ventanaProxima.label.toUpperCase()}
+                    </span>
+                    <span className={`text-2xl font-bold ${tone.accent} leading-none`}>
+                      {categoriaEstimada?.categoria ?? "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={`text-center text-xs ${tone.detail}`}>{outlookCopy.detail}</div>
+
+                {!ventanaProxima.completa && ventanaProxima.mesesCerrados > 0 && (
+                  <div className="text-[11px] text-muted-foreground text-center">
+                    Estimación con {ventanaProxima.mesesCerrados} de {ventanaProxima.totalMeses} meses de la ventana,
+                    proyectados a 12 meses.
+                  </div>
                 )}
               </div>
-            </div>
+            )}
 
-            {status.margenDisponible < 0 && status.categoriaSiguiente === null && (
+            {outlook.excluido && (
               <div
                 className="rounded-lg border-2 border-destructive/50 bg-destructive/10 p-3 text-center text-sm text-destructive"
                 role="alert"
               >
-                Superaste el tope de la categoría más alta ({status.categoriaActual.categoria}). Consultá con un
-                contador o ARCA: podrías necesitar otro régimen o actualizar tu situación fiscal.
+                La estimación supera el tope del Monotributo. Consultá con un contador o ARCA: podrías necesitar pasar a
+                Responsable Inscripto.
               </div>
+            )}
+
+            {/* Acumulado de la ventana en curso */}
+            <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">
+                  Facturado en la ventana ({ventanaProxima.mesesCerrados}/{ventanaProxima.totalMeses} meses):
+                </span>
+                <span className="font-mono font-medium">{formatPesos(acumulado)}</span>
+              </div>
+              {!ventanaProxima.completa && ventanaProxima.ingresosAnualizados !== null && (
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground">Proyectado a 12 meses:</span>
+                  <span className="font-mono font-medium">{formatPesos(ventanaProxima.ingresosAnualizados)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Progreso del acumulado contra el tope de la categoría vigente */}
+            {categoriaVigente && (
+              <>
+                <div>
+                  <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                    <span>Progreso hacia el tope de {categoriaVigente.categoria}</span>
+                    <span>{porcentajeUtilizado.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full transition-all",
+                        porcentajeUtilizado > 100
+                          ? "bg-destructive"
+                          : porcentajeUtilizado > 85
+                            ? "bg-amber-500"
+                            : "bg-success"
+                      )}
+                      style={{ width: `${Math.min(porcentajeUtilizado, 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="font-mono text-muted-foreground">{formatPesos(acumulado)}</span>
+                    <span className="font-mono text-muted-foreground">{formatPesos(topeVigente)}</span>
+                  </div>
+                </div>
+
+                <div className="text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {margenDisponible > 0
+                        ? `Podés facturar hasta sin pasar de ${categoriaVigente.categoria}:`
+                        : `Excediste el tope de ${categoriaVigente.categoria}`}
+                    </span>
+                    {margenDisponible > 0 && (
+                      <span className="font-mono font-medium">{formatPesos(margenDisponible)}</span>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="border-t border-border my-3"></div>
 
-            {/* Monthly payments - calculated category */}
+            {/* Pagos: vigente y estimado al cierre de la ventana */}
             <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  {monotributoInfo
-                    ? `Pago mensual estimado (${status.categoriaActual.categoria}):`
-                    : "Pago mensual:"}
-                </span>
-                <span className="font-mono font-bold text-lg text-primary dark:text-white">
-                  ${status.pagoMensual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                </span>
-              </div>
+              {categoriaVigente && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Pago mensual actual ({categoriaVigente.categoria}):
+                  </span>
+                  <span className="font-mono font-bold text-lg text-primary dark:text-white">
+                    ${pagoMensualDe(categoriaVigente, tipoActividad).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {categoriaEstimada && categoriaEstimada.categoria !== categoriaVigente?.categoria && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Estimado en {ventanaProxima.label} ({categoriaEstimada.categoria}):
+                  </span>
+                  <span className="font-mono font-medium">
+                    ${pagoMensualDe(categoriaEstimada, tipoActividad).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
               <div className="text-xs text-muted-foreground text-center">
-                {ventanaDesde && ventanaHasta
-                  ? `Basado en ingresos de ${formatWindowMonth(ventanaDesde)} a ${formatWindowMonth(ventanaHasta)}`
-                  : "Basado en tus ingresos acumulados de los últimos 12 meses"}
+                Ventana {formatWindowMonth(ventanaProxima.desde)} a {formatWindowMonth(ventanaProxima.hasta)}
               </div>
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 items-center justify-center">
-              <Link
-                href={`/monotributo/categoria/${status.categoriaActual.categoria.toLowerCase()}`}
-                className="text-xs text-primary dark:text-blue-400 hover:text-primary/80 dark:hover:text-blue-300 transition-colors cursor-pointer flex items-center justify-center gap-1 font-medium"
-              >
-                Ver detalle categoría {status.categoriaActual.categoria}
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-              <a
-                href="https://www.arca.gob.ar/monotributo/categorias.asp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1"
-              >
-                Ver categorías oficiales
-                <ExternalLinkIcon />
-              </a>
-            </div>
+            {categoriaVigente && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 items-center justify-center">
+                <Link
+                  href={`/monotributo/categoria/${categoriaVigente.categoria.toLowerCase()}`}
+                  className="text-xs text-primary dark:text-blue-400 hover:text-primary/80 dark:hover:text-blue-300 transition-colors cursor-pointer flex items-center justify-center gap-1 font-medium"
+                >
+                  Ver detalle categoría {categoriaVigente.categoria}
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+                <a
+                  href="https://www.arca.gob.ar/monotributo/categorias.asp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center gap-1"
+                >
+                  Ver categorías oficiales
+                  <ExternalLinkIcon />
+                </a>
+              </div>
+            )}
 
             {/* Validity info and disclaimer */}
             <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border space-y-1">
@@ -316,16 +425,12 @@ function MonotributoInfoCard({
   tipoActividad,
 }: {
   monotributoInfo: MonotributoAFIPInfo;
-  categorias: import("@/types/monotributo").CategoriaMonotributo[];
-  tipoActividad: import("@/types/monotributo").TipoActividad;
+  categorias: CategoriaMonotributo[];
+  tipoActividad: TipoActividad;
 }) {
   // Find the current category from ARCA in the scraped data
   const categoriaActualARCA = categorias.find((cat) => cat.categoria === monotributoInfo.categoria);
-  const pagoMensualActual = categoriaActualARCA
-    ? tipoActividad === "servicios"
-      ? categoriaActualARCA.total.servicios
-      : categoriaActualARCA.total.venta
-    : null;
+  const pagoMensualActual = categoriaActualARCA ? pagoMensualDe(categoriaActualARCA, tipoActividad) : null;
 
   return (
     <div className="rounded-lg bg-muted/50 p-3 space-y-2">
