@@ -14,8 +14,8 @@ import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 import { useTour } from "@/hooks/useTour";
-import { computeAnnualIncome } from "@/lib/facturador/annual-income";
-import { getNextRecategorizacionDates } from "@/lib/projection";
+import { buildVentanaRecategorizacion, resolveCategoriaVigente } from "@/lib/monotributo/ventana";
+import { getLastRecategorizacionDate, getNextRecategorizacionDates } from "@/lib/projection";
 import { getPanelTourSteps, PANEL_TOUR_KEY } from "@/lib/tours/panel-tour";
 
 interface FxCurrencyInfo {
@@ -34,12 +34,16 @@ export default function PanelPage() {
     registerTour(startTour);
   }, [registerTour, startTour]);
 
-  const nextRecateg = useMemo(() => getNextRecategorizacionDates()[0], []);
+  // Dos ventanas distintas, a propósito: la última YA CERRADA define la
+  // categoría vigente, y la que está en curso es la que se evalúa en la próxima
+  // recategorización. Leer la ventana en curso como categoría actual la
+  // subestima (con 7 de 12 meses facturados, una H se ve como D).
+  const recategInfo = useMemo(
+    () => ({ vigente: getLastRecategorizacionDate(), proxima: getNextRecategorizacionDates()[0] }),
+    []
+  );
 
-  const { ingresosAnuales, hasCurrentYearData, fxCurrenciesNeedingRate, recategWindow } = useMemo(() => {
-    if (state.invoices.length === 0)
-      return { ingresosAnuales: 0, hasCurrentYearData: false, fxCurrenciesNeedingRate: {} as Record<string, FxCurrencyInfo>, recategWindow: nextRecateg };
-
+  const { ventanaVigente, ventanaProxima, hasCurrentYearData, fxCurrenciesNeedingRate } = useMemo(() => {
     // FX banner: cuenta TODAS las facturas en moneda extranjera sin cotización
     // (cualquier mes), independientemente de la ventana de recategorización.
     const needingRate: Record<string, FxCurrencyInfo> = {};
@@ -51,17 +55,30 @@ export default function PanelPage() {
       }
     }
 
-    // Ingreso anual en la ventana: única fuente de verdad compartida con el
-    // facturador (evita duplicar el loop de conversión/monthKey acá).
-    const { ingresosAnuales: total, hasCurrentYearData: hasRecent } = computeAnnualIncome(
-      state.invoices,
-      manualExchangeRates,
-      nextRecateg.ventana
-    );
-    return { ingresosAnuales: total, hasCurrentYearData: hasRecent, fxCurrenciesNeedingRate: needingRate, recategWindow: nextRecateg };
-  }, [state.invoices, manualExchangeRates, nextRecateg]);
+    const vigente = buildVentanaRecategorizacion(recategInfo.vigente, state.invoices, manualExchangeRates);
+    const proxima = buildVentanaRecategorizacion(recategInfo.proxima, state.invoices, manualExchangeRates);
 
-  const { data: monotributoData, tipoActividad } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
+    return {
+      ventanaVigente: vigente,
+      ventanaProxima: proxima,
+      hasCurrentYearData: vigente.tieneDatos || proxima.tieneDatos,
+      fxCurrenciesNeedingRate: needingRate,
+    };
+  }, [state.invoices, manualExchangeRates, recategInfo]);
+
+  const { data: monotributoData, tipoActividad } = useMonotributo(
+    hasCurrentYearData ? ventanaVigente.ingresos : 0
+  );
+
+  const categoriaVigente = useMemo(
+    () =>
+      resolveCategoriaVigente({
+        categoriaARCA: monotributoInfo?.categoria,
+        ventanaCerrada: ventanaVigente.tieneDatos ? ventanaVigente : null,
+        categorias: monotributoData.categorias,
+      }),
+    [monotributoInfo?.categoria, ventanaVigente, monotributoData.categorias]
+  );
 
   // Si no hubo ninguna consulta, redirigir a /ingresar. Se usa `!hasQueried`
   // en vez de `invoices.length === 0`: una consulta válida sin facturación
@@ -165,18 +182,16 @@ export default function PanelPage() {
       {/* Monotributo + Análisis Visual */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         <section id="monotributo">
-          <MonotributoPanel 
-            ingresosAnuales={ingresosAnuales} 
+          <MonotributoPanel
+            ventanaVigente={ventanaVigente}
+            ventanaProxima={ventanaProxima}
+            categoriaVigente={categoriaVigente}
             isCurrentYearData={hasCurrentYearData}
-            recategorizacionLabel={recategWindow.label}
-            ventanaDesde={recategWindow.ventana[0]}
-            ventanaHasta={recategWindow.ventana[recategWindow.ventana.length - 1]}
           />
         </section>
         <section id="graficos">
-          <ChartsPanel 
-            monotributoData={monotributoData} 
-            ingresosAnuales={ingresosAnuales}
+          <ChartsPanel
+            categoriaLimite={categoriaVigente}
             isCurrentYearData={hasCurrentYearData}
           />
         </section>

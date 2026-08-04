@@ -4,7 +4,9 @@ import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
 
 import {
   addMonths,
+  annualizeWindowTotal,
   calculateProjection,
+  countClosedMonths,
   distributeEvenly,
   excedeMonotributo,
   formatMonthKey,
@@ -13,6 +15,7 @@ import {
   getCategoriaForTotal,
   getCurrentMonth,
   getFutureMonths,
+  getLastRecategorizacionDate,
   getMonthLabel,
   getMonthShortLabel,
   getNextRecategorizacionDates,
@@ -96,10 +99,97 @@ describe("projection utilities", () => {
   describe("getRecategorizacionWindow", () => {
     it("returns 12 months before target", () => {
       const window = getRecategorizacionWindow("2026-07")
-      
+
       expect(window.length).toBe(12)
       expect(window[0]).toBe("2025-07")
       expect(window[11]).toBe("2026-06")
+    })
+  })
+
+  describe("getLastRecategorizacionDate", () => {
+    it("returns July of the current year when in second half", () => {
+      const info = getLastRecategorizacionDate(new Date(2026, 7, 4)) // 04/08/2026
+
+      expect(info.month).toBe("2026-07")
+      expect(info.label).toBe("Julio 2026")
+      expect(info.ventana[0]).toBe("2025-07")
+      expect(info.ventana[11]).toBe("2026-06")
+    })
+
+    it("returns January of the current year when in first half", () => {
+      const info = getLastRecategorizacionDate(new Date(2026, 2, 15)) // Mar 2026
+
+      expect(info.month).toBe("2026-01")
+      expect(info.ventana[0]).toBe("2025-01")
+      expect(info.ventana[11]).toBe("2025-12")
+    })
+
+    it("counts January itself as already recategorized (window Jan-Dec of previous year)", () => {
+      const info = getLastRecategorizacionDate(new Date(2026, 0, 5))
+
+      expect(info.month).toBe("2026-01")
+      expect(info.ventana[11]).toBe("2025-12")
+    })
+
+    it("counts July itself as already recategorized", () => {
+      const info = getLastRecategorizacionDate(new Date(2026, 6, 10))
+
+      expect(info.month).toBe("2026-07")
+      expect(info.ventana[11]).toBe("2026-06")
+    })
+
+    it("window is always fully closed (never includes the current month)", () => {
+      for (let month = 0; month < 12; month++) {
+        const today = new Date(2026, month, 15)
+        const info = getLastRecategorizacionDate(today)
+        const currentMonth = formatMonthKey(today)
+
+        expect(info.ventana.every((m) => m < currentMonth)).toBe(true)
+      }
+    })
+  })
+
+  describe("countClosedMonths", () => {
+    it("counts only months before the current one", () => {
+      const ventana = getRecategorizacionWindow("2027-01") // Ene-Dic 2026
+
+      expect(countClosedMonths(ventana, new Date(2026, 7, 4))).toBe(7) // Ene..Jul
+    })
+
+    it("returns 0 when the window just opened", () => {
+      const ventana = getRecategorizacionWindow("2027-01")
+
+      expect(countClosedMonths(ventana, new Date(2026, 0, 15))).toBe(0)
+    })
+
+    it("returns 12 for a fully elapsed window", () => {
+      const ventana = getRecategorizacionWindow("2026-07") // Jul 2025 - Jun 2026
+
+      expect(countClosedMonths(ventana, new Date(2026, 7, 4))).toBe(12)
+    })
+
+    it("never exceeds the window length", () => {
+      const ventana = getRecategorizacionWindow("2027-01")
+
+      expect(countClosedMonths(ventana, new Date(2028, 5, 1))).toBe(12)
+    })
+  })
+
+  describe("annualizeWindowTotal", () => {
+    it("extrapolates a partial window to 12 months", () => {
+      expect(annualizeWindowTotal(14_000_000, 7)).toBe(24_000_000)
+    })
+
+    it("returns null when there are no closed months to extrapolate from", () => {
+      expect(annualizeWindowTotal(0, 0)).toBeNull()
+    })
+
+    it("returns the total unchanged for a complete window", () => {
+      expect(annualizeWindowTotal(14_000_000, 12)).toBe(14_000_000)
+    })
+
+    it("does not inflate when closedMonths exceeds the window length", () => {
+      expect(annualizeWindowTotal(14_000_000, 13)).toBe(14_000_000)
     })
   })
 

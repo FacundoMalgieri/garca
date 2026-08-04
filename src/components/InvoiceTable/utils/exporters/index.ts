@@ -1,6 +1,10 @@
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import type { CompanyInfo } from "@/hooks/useInvoices";
-import { computeMonotributoPdfSums, formatRecategorizacionLine } from "@/lib/monotributo-pdf-sums";
+import {
+  computeMonotributoPdfSums,
+  formatRecategorizacionLine,
+  formatVentanaVigenteLine,
+} from "@/lib/monotributo-pdf-sums";
 import { applyBrandedFooter } from "@/lib/pdf-branding";
 import { type PdfSaveResult, savePdf } from "@/lib/pdf-save";
 import type { AFIPInvoice, MonotributoAFIPInfo } from "@/types/afip-scraper";
@@ -351,27 +355,37 @@ export async function exportToPDF(
   if (hasYearData && totalPeriodoConsultado > 0 && monotributoData.categorias.length > 0) {
     const categorias = [...monotributoData.categorias].sort((a, b) => a.ingresosBrutos - b.ingresosBrutos);
 
-    // Categoría / % / margen: ingresos de la ventana de 12 meses (igual que el panel)
-    const categoriaCalculada =
-      categorias.find((cat) => ingresosVentana <= cat.ingresosBrutos) ?? categorias[categorias.length - 1];
-    const porcentajeUsado =
-      categoriaCalculada.ingresosBrutos > 0
-        ? Math.min((ingresosVentana / categoriaCalculada.ingresosBrutos) * 100, 100)
-        : 0;
-    const margenDisponible = categoriaCalculada.ingresosBrutos - ingresosVentana;
-    
-    // Get payment for calculated category
-    const pagoMensualCalculado = tipoActividad === "servicios" 
-      ? categoriaCalculada.total.servicios 
-      : categoriaCalculada.total.venta;
-
-    // Find current category from ARCA (if available)
-    const categoriaActualARCA = monotributoInfo 
+    // Categoría vigente: ARCA si está, si no la ventana YA CERRADA. Nunca la
+    // ventana en curso: su acumulado es parcial y subestima la categoría
+    // (igual que el panel de Monotributo).
+    const categoriaActualARCA = monotributoInfo
       ? categorias.find((cat) => cat.categoria === monotributoInfo.categoria)
       : null;
-    const pagoMensualActual = categoriaActualARCA 
-      ? (tipoActividad === "servicios" ? categoriaActualARCA.total.servicios : categoriaActualARCA.total.venta)
+    const categoriaVentanaCerrada = mtSums.hasFacturasEnVentanaCerrada
+      ? categorias.find((cat) => mtSums.totalVentanaCerrada <= cat.ingresosBrutos) ??
+        categorias[categorias.length - 1]
       : null;
+    const categoriaVigente = categoriaActualARCA ?? categoriaVentanaCerrada;
+
+    // Categoría estimada al cierre de la ventana en curso: con la ventana
+    // abierta se proyecta a 12 meses, no se lee el parcial como total.
+    const baseEstimacion = mtSums.ventanaCompleta
+      ? ingresosVentana
+      : mtSums.totalVentanaAnualizado ?? ingresosVentana;
+    const categoriaEstimada =
+      mtSums.mesesCerrados > 0
+        ? categorias.find((cat) => baseEstimacion <= cat.ingresosBrutos) ?? categorias[categorias.length - 1]
+        : null;
+
+    // % y margen se miden contra el tope de la categoría vigente
+    const topeVigente = categoriaVigente?.ingresosBrutos ?? 0;
+    const porcentajeUsado = topeVigente > 0 ? Math.min((ingresosVentana / topeVigente) * 100, 100) : 0;
+    const margenDisponible = topeVigente - ingresosVentana;
+
+    const pagoMensualDe = (cat: { total: { servicios: number; venta: number } }) =>
+      tipoActividad === "servicios" ? cat.total.servicios : cat.total.venta;
+    const pagoMensualEstimado = categoriaEstimada ? pagoMensualDe(categoriaEstimada) : null;
+    const pagoMensualActual = categoriaVigente ? pagoMensualDe(categoriaVigente) : null;
 
     // Section header + sublinea (misma lógica que el panel: período consultado vs ventana)
     doc.setFontSize(14);
@@ -381,6 +395,9 @@ export async function exportToPDF(
     doc.setTextColor(100, 100, 100);
     // Evitar doc.splitTextToSize / jsPDF.splitTextToSize: en tests el mock de jsPDF no lo expone
     const recatLines = [formatRecategorizacionLine(mtSums)];
+    if (!categoriaActualARCA && categoriaVentanaCerrada) {
+      recatLines.push(formatVentanaVigenteLine(mtSums));
+    }
     let yAfterHeader = 45;
     doc.text(recatLines, 14, yAfterHeader);
     yAfterHeader += recatLines.length * 4.5 + 3;
@@ -404,77 +421,70 @@ export async function exportToPDF(
         ? "Venta de Bienes" 
         : monotributoInfo?.actividadDescripcion || (tipoActividad === "servicios" ? "Servicios" : "Venta de Bienes");
 
-    // Tabla: discrimina monto del período consultado vs monto (ventana 12 meses) y deriva
-    // categoría / límite / pago estimado a partir de la ventana, igual que el panel.
-    const monotributoStats: string[][] = [];
+    // Tabla: separa el período consultado, la ventana en curso (posiblemente
+    // parcial) y la categoría vigente, igual que el panel de Monotributo.
+    const money = (n: number) => `$${n.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
+    const ventanaLabel = mtSums.ventanaCompleta
+      ? "Ingresos (ventana recat., 12 meses):"
+      : `Ingresos (ventana recat., ${mtSums.mesesCerrados}/${mtSums.totalMeses} meses):`;
 
-    if (monotributoInfo && pagoMensualActual !== null) {
-      monotributoStats.push(
+    const pares: [string, string][] = [
+      ["Total (período consultado):", money(totalPeriodoConsultado)],
+      [ventanaLabel, money(ingresosVentana)],
+      ["Tu actividad:", actividadText],
+    ];
+
+    if (!mtSums.ventanaCompleta && mtSums.totalVentanaAnualizado !== null) {
+      pares.push(["Proyectado a 12 meses:", money(mtSums.totalVentanaAnualizado)]);
+    }
+
+    if (categoriaVigente) {
+      pares.push(
         [
-          "Total (período consultado):",
-          `$${totalPeriodoConsultado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-          "Ingresos (12 meses, ventana recat.):",
-          `$${ingresosVentana.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
+          categoriaActualARCA ? "Categoría actual (ARCA):" : "Categoría vigente (ventana cerrada):",
+          categoriaVigente.categoria,
         ],
+        ["Límite categoría vigente:", money(categoriaVigente.ingresosBrutos)],
+        [`Uso de límite (${categoriaVigente.categoria}):`, `${porcentajeUsado.toFixed(1)}%`],
         [
-          "Tu actividad:",
-          actividadText,
-          "Uso de límite (ingresos ventana):",
-          `${porcentajeUsado.toFixed(1)}%`,
-        ],
-        [
-          "Categoría (según ingresos ventana):",
-          categoriaCalculada.categoria,
-          "Categoría actual (ARCA):",
-          monotributoInfo.categoria,
-        ],
-        [
-          "Próxima recategorización:",
-          monotributoInfo.proximaRecategorizacion || "-",
-          "Límite (cat. por ingresos ventana):",
-          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-        ],
-        [
-          "Margen a tope (ventana):",
-          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-          `Pago mens. actual (ARCA ${monotributoInfo.categoria}):`,
-          `$${pagoMensualActual.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-        ],
-        [
-          "Pago estimado (cat. por ingresos ventana):",
-          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-          "",
-          "",
+          margenDisponible > 0 ? `Margen a tope (${categoriaVigente.categoria}):` : "Excedente sobre el tope:",
+          money(Math.abs(margenDisponible)),
         ],
       );
-    } else {
-      // Sin datos de ARCA (scraping)
-      monotributoStats.push(
-        [
-          "Total (período consultado):",
-          `$${totalPeriodoConsultado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-          "Ingresos (12 meses, ventana recat.):",
-          `$${ingresosVentana.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-        ],
-        [
-          "Tu actividad:",
-          actividadText,
-          "Uso de límite (ingresos ventana):",
-          `${porcentajeUsado.toFixed(1)}%`,
-        ],
-        [
-          "Categoría (según ingresos ventana):",
-          categoriaCalculada.categoria,
-          "Límite (categoría por ingresos):",
-          `$${categoriaCalculada.ingresosBrutos.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-        ],
-        [
-          "Margen a tope (ventana):",
-          `$${margenDisponible.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-          "Pago mensual (cat. por ingresos):",
-          `$${pagoMensualCalculado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`,
-        ],
-      );
+    }
+
+    if (pagoMensualActual !== null && categoriaVigente) {
+      pares.push([
+        categoriaActualARCA
+          ? `Pago mens. actual (ARCA ${categoriaVigente.categoria}):`
+          : `Pago mensual (${categoriaVigente.categoria}):`,
+        money(pagoMensualActual),
+      ]);
+    }
+
+    if (categoriaEstimada) {
+      pares.push([
+        `Categoría estimada (${mtSums.recategorizacionLabel}):`,
+        categoriaEstimada.categoria,
+      ]);
+      if (pagoMensualEstimado !== null && categoriaEstimada.categoria !== categoriaVigente?.categoria) {
+        pares.push([
+          `Pago estimado (${categoriaEstimada.categoria}):`,
+          money(pagoMensualEstimado),
+        ]);
+      }
+    }
+
+    if (monotributoInfo?.proximaRecategorizacion) {
+      pares.push(["Próxima recategorización:", monotributoInfo.proximaRecategorizacion]);
+    }
+
+    // Dos pares por fila (4 columnas), como el resto de las tablas del PDF
+    const monotributoStats: string[][] = [];
+    for (let i = 0; i < pares.length; i += 2) {
+      const [labelA, valueA] = pares[i];
+      const [labelB, valueB] = pares[i + 1] ?? ["", ""];
+      monotributoStats.push([labelA, valueA, labelB, valueB]);
     }
 
     autoTable(doc, {

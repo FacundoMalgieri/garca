@@ -16,13 +16,14 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { computeAnnualIncome } from "@/lib/facturador/annual-income";
 import { buildClientIndex } from "@/lib/facturador/client-index";
 import { type ClientMemory, loadClientMemory } from "@/lib/facturador/client-memory";
-import { getNextRecategorizacionDates } from "@/lib/projection";
+import { buildVentanaRecategorizacion, resolveCategoriaVigente } from "@/lib/monotributo/ventana";
+import { getLastRecategorizacionDate, getNextRecategorizacionDates } from "@/lib/projection";
 import { cn } from "@/lib/utils";
 import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
 export default function FacturarPage() {
   const router = useRouter();
-  const { state, manualExchangeRates } = useInvoiceContext();
+  const { state, manualExchangeRates, monotributoInfo } = useInvoiceContext();
   const { templates, save, remove } = useTemplates();
 
   const [tab, setTab] = useState<"emitir" | "emitidas" | "anular">("emitir");
@@ -33,13 +34,37 @@ export default function FacturarPage() {
   const [invoiceToVoid, setInvoiceToVoid] = useState<StoredInvoice | null>(null);
   const [ncOpen, setNcOpen] = useState(false);
 
-  const ventana = useMemo(() => getNextRecategorizacionDates()[0].ventana, []);
-  const { ingresosAnuales, hasCurrentYearData, droppedForeignCount } = useMemo(
-    () => computeAnnualIncome(state.invoices, manualExchangeRates, ventana),
-    [state.invoices, manualExchangeRates, ventana]
+  const recategInfo = useMemo(
+    () => ({ vigente: getLastRecategorizacionDate(), proxima: getNextRecategorizacionDates()[0] }),
+    []
   );
-  const { status } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
-  const margenDisponible = status?.margenDisponible ?? null;
+  const { ingresosAnuales, hasCurrentYearData, droppedForeignCount } = useMemo(
+    () => computeAnnualIncome(state.invoices, manualExchangeRates, recategInfo.proxima.ventana),
+    [state.invoices, manualExchangeRates, recategInfo.proxima.ventana]
+  );
+  const { data: monotributoData } = useMonotributo(hasCurrentYearData ? ingresosAnuales : 0);
+
+  // El margen hasta el tope se mide contra la categoría VIGENTE (ARCA o última
+  // ventana cerrada), no contra la que sugiere el acumulado parcial de la
+  // ventana en curso: esa subestima la categoría y dispara alertas falsas.
+  const margenDisponible = useMemo(() => {
+    const ventanaCerrada = buildVentanaRecategorizacion(recategInfo.vigente, state.invoices, manualExchangeRates);
+    const categoriaVigente = resolveCategoriaVigente({
+      categoriaARCA: monotributoInfo?.categoria,
+      ventanaCerrada: ventanaCerrada.tieneDatos ? ventanaCerrada : null,
+      categorias: monotributoData.categorias,
+    });
+    if (!categoriaVigente || !hasCurrentYearData) return null;
+    return categoriaVigente.ingresosBrutos - ingresosAnuales;
+  }, [
+    recategInfo.vigente,
+    state.invoices,
+    manualExchangeRates,
+    monotributoInfo?.categoria,
+    monotributoData.categorias,
+    hasCurrentYearData,
+    ingresosAnuales,
+  ]);
 
   const [clientMemory, setClientMemory] = useState<ClientMemory>({});
   useEffect(() => { setClientMemory(loadClientMemory()); }, [state.invoices]);
