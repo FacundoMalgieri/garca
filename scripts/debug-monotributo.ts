@@ -126,6 +126,59 @@ async function navigateAndDump(page: Page, context: import("playwright").Browser
 }
 
 /**
+ * Cronometra cada etapa de la navegación a Monotributo para ver dónde se van los
+ * segundos (el step tarda ~36s en headless). Mide por separado domcontentloaded,
+ * networkidle y la aparición del dato que realmente se extrae.
+ */
+async function timedNavigation(page: Page, context: import("playwright").BrowserContext) {
+  const marks: Record<string, number> = {};
+  const t0 = Date.now();
+  const mark = (name: string) => {
+    marks[name] = Date.now() - t0;
+    log(`⏱ ${name}: ${marks[name]}ms`);
+  };
+
+  const searchInput = page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).first();
+  await searchInput.waitFor({ state: "visible", timeout: 15_000 });
+  await searchInput.click();
+  await searchInput.fill("monotributo");
+  mark("buscador-lleno");
+
+  await page.waitForTimeout(1500); // TIMING.AFTER_CLICK_WAIT
+  const result = page.locator('li[role="option"]:has-text("Monotributo")').first();
+  await result.waitFor({ state: "visible", timeout: 15_000 });
+  mark("resultado-visible");
+
+  const newPagePromise = context.waitForEvent("page", { timeout: 60_000 }).catch(() => null);
+  await result.click();
+  const newPage = await newPagePromise;
+  const target = newPage ?? page;
+  mark("pestaña-abierta");
+
+  await target.waitForLoadState("domcontentloaded").catch(() => mark("domcontentloaded-TIMEOUT"));
+  mark("domcontentloaded");
+
+  // El dato que el step realmente necesita, ¿está antes de networkidle?
+  await target
+    .waitForSelector(".jumbotron_body h2.h3", { timeout: 60_000 })
+    .catch(() => mark("jumbotron-TIMEOUT"));
+  mark("jumbotron-listo");
+
+  const categoria = await target
+    .locator(".jumbotron_body p.lead")
+    .allTextContents()
+    .catch(() => [] as string[]);
+  mark("categoria-legible");
+  log("Textos p.lead en ese momento:", JSON.stringify(categoria));
+
+  await target.waitForLoadState("networkidle").catch(() => mark("networkidle-TIMEOUT"));
+  mark("networkidle");
+
+  writeFileSync(join(OUT_DIR, "6-timings.json"), JSON.stringify(marks, null, 2));
+  return marks;
+}
+
+/**
  * Reproduce el modo de producción (headless, contexto limpio) reusando la sesión
  * ya abierta via storageState, así el login manual se hace una sola vez.
  * Responde si el step falla sistemáticamente en headless aunque ande headed.
@@ -170,6 +223,34 @@ async function safeDump(page: Page, tag: string) {
 const main = async () => {
   mkdirSync(OUT_DIR, { recursive: true });
 
+  // MODE=timing SESSION=1: reusa el storageState de la última corrida (la cookie
+  // de ARCA es de sesión y NO sobrevive al cierre del browser, así que el perfil
+  // persistente no sirve para volver a entrar; el snapshot sí).
+  // MODE=step SESSION=1: corre el step real reusando el storageState guardado.
+  if (process.env.MODE === "step" && process.env.SESSION === "1") {
+    await runHeadlessPass(join(OUT_DIR, "session.json"));
+    return;
+  }
+
+  if (process.env.MODE === "timing" && process.env.SESSION === "1") {
+    const statePath = join(OUT_DIR, "session.json");
+    const browser = await chromium.launch({ headless: process.env.HEADLESS === "1" });
+    try {
+      const ctx = await browser.newContext({ userAgent: USER_AGENT, storageState: statePath });
+      const p = await ctx.newPage();
+      await p.goto("https://portalcf.cloud.afip.gob.ar/portal/app/", { waitUntil: "domcontentloaded" });
+      if (p.url().includes("auth.afip.gob.ar")) {
+        log("❌ El storageState guardado ya no tiene sesión válida.");
+        return;
+      }
+      await timedNavigation(p, ctx);
+      log(`Listo (timing con sesión guardada). Archivos en ${OUT_DIR}.`);
+    } finally {
+      await browser.close().catch(() => {});
+    }
+    return;
+  }
+
   // Perfil persistente: la sesión de ARCA sobrevive entre corridas, así no hay
   // que volver a tipear la clave fiscal en cada iteración del debug.
   const context = await chromium.launchPersistentContext(PROFILE_DIR, {
@@ -190,6 +271,8 @@ const main = async () => {
     // perfil expiró, cortar en el acto en vez de esperar un login imposible.
     if (enLogin && process.env.HEADLESS === "1") {
       log("❌ Sesión del perfil expirada y estamos en headless: no hay forma de loguearse. Abortando.");
+      // Salir ya: quedarse en el HOLD acá sólo deja el proceso colgado.
+      await context.close().catch(() => {});
       return;
     }
 
@@ -201,6 +284,7 @@ const main = async () => {
 
     if (!(await waitForManualLogin(page))) {
       log("❌ No detecté login a tiempo.");
+      await context.close().catch(() => {});
       return;
     }
 
@@ -217,6 +301,14 @@ const main = async () => {
     log("Buscador del portal encontrado:", searchCount, `(selector: ${SELECTORS.NAVIGATION.SEARCH_INPUT})`);
     await safeDump(page, "1-portal");
 
+    // MODE=timing: medir cada etapa de la navegación, sin correr el step
+    if (process.env.MODE === "timing") {
+      await timedNavigation(page, context);
+      log(`Listo (modo timing). Archivos en ${OUT_DIR}.`);
+      await context.close().catch(() => {});
+      return;
+    }
+
     // MODE=dump: solo navegar y volcar el DOM de Monotributo, sin correr el step
     if (process.env.MODE === "dump") {
       await navigateAndDump(page, context);
@@ -227,9 +319,10 @@ const main = async () => {
     }
 
     // Código real del scraper
-    log("── Corriendo scrapeMonotributoInfo() real ──");
+    log("── Corriendo scrapeMonotributoInfo() real (headed) ──");
+    const tHeaded = Date.now();
     const result = await scrapeMonotributoInfo(page, context);
-    log("Resultado:", JSON.stringify(result, null, 2));
+    log(`Resultado headed (${Date.now() - tHeaded}ms):`, JSON.stringify(result, null, 2));
     writeFileSync(join(OUT_DIR, "3-resultado.json"), JSON.stringify(result, null, 2));
 
     // Si quedó abierta una pestaña de Monotributo, volcarla
