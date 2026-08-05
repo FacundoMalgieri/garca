@@ -12,6 +12,7 @@ import { encryptCredentials } from "@/lib/crypto";
 import { loadClientMemory } from "@/lib/facturador/client-memory";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { formatDMY } from "@/lib/facturador/dates";
+import { findPreviewBlockers } from "@/lib/facturador/preview-guard";
 import { computeTopeAlert } from "@/lib/facturador/tope";
 import type { Plantilla, StoredInvoice } from "@/types/facturador";
 
@@ -118,7 +119,12 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
   const handleRetryConfirm = () => confirm(buildTarget(), buildCreds(turnstileToken));
 
   const tope = !esNC && preview ? computeTopeAlert(margenDisponible !== null ? { margenDisponible } : null, preview.importeTotal) : null;
-  const canConfirm = agree && typed.trim().toUpperCase() === "EMITIR" && !!turnstileToken;
+  // Un preview con campos que RCEL no registró (ej. condición de venta en el
+  // literal "null") emitiría un comprobante fiscal incompleto, que después hay
+  // que anular con otra NC. Se bloquea la confirmación, no solo se muestra.
+  const previewBlockers = preview ? findPreviewBlockers(preview) : [];
+  const canConfirm =
+    agree && typed.trim().toUpperCase() === "EMITIR" && !!turnstileToken && previewBlockers.length === 0;
 
   // [Contrato B] Emisión confirmada legalmente pero sin CAE resuelto vía
   // Consultas. NO es error: la factura YA se emitió.
@@ -222,6 +228,24 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
                 {tope.level === "exceeds"
                   ? `⚠️ Esta factura supera tu tope de categoría por $${formatCurrency(Math.abs(tope.margenRestante))}.`
                   : `Después de esta factura te quedan $${formatCurrency(tope.margenRestante)} de margen en tu categoría.`}
+              </div>
+            )}
+
+            {previewBlockers.length > 0 && (
+              <div
+                data-testid="preview-blockers"
+                role="alert"
+                className="rounded-lg border-2 border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                <p className="font-semibold mb-1">RCEL devolvió un Resumen incompleto. No se puede emitir así:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {previewBlockers.map((b) => (
+                    <li key={b.campo}>
+                      <b>{b.campo}:</b> {b.detalle}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs">Cancelá y volvé a preparar el comprobante.</p>
               </div>
             )}
 

@@ -16,18 +16,74 @@ import { ELEMENT_TIMEOUT, TIMING } from "../../constants";
 // ---------------------------------------------------------------------------
 
 /**
+ * Vuelve a aplicar una acción si el DOM no quedó en el estado esperado.
+ *
+ * En una corrida de smoke (05/08/2026) el Resumen de RCEL salió con la condición
+ * de venta en el literal "null" (JSP imprimiendo un null de sesión), o sea que el
+ * checkbox `#formadepago*` no quedó marcado. No se repitió en la corrida
+ * siguiente: es intermitente. El sospechoso es el AJAX del padrón, que dispara
+ * antes en el plan y puede seguir tocando la sección del receptor después de que
+ * `lookup` deja de esperar (solo espera a que aparezca la razón social).
+ *
+ * En vez de adivinar el tiempo justo, se verifica el estado y se reintenta: acá
+ * un campo que se pierde en silencio termina en un comprobante fiscal REAL mal
+ * emitido, así que si después del reintento sigue mal, hay que fallar fuerte.
+ */
+async function setAndVerify(
+  page: Page,
+  selector: string,
+  apply: () => Promise<void>,
+  read: () => Promise<boolean>,
+  descripcion: string,
+): Promise<void> {
+  await apply();
+  if (await read()) return;
+
+  console.warn(`[AFIP Facturador] ⚠️  ${descripcion} no quedó aplicado en ${selector}, reintentando...`);
+  await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
+  await apply();
+
+  if (!(await read())) {
+    throw new Error(
+      `No se pudo dejar ${descripcion} en ${selector}: RCEL lo descartó dos veces. ` +
+        `Emitir así generaría un comprobante incompleto.`,
+    );
+  }
+}
+
+/**
  * Applies one FillAction to the page.
  *
  * action types:
- *   select  → page.selectOption
+ *   select  → page.selectOption (verificado)
  *   fill    → page.fill
- *   check   → page.check
+ *   check   → page.check (verificado)
  *   lookup  → page.fill + Enter + wait for #razonsocialreceptor to be non-empty
  */
 export async function applyAction(page: Page, a: FillAction): Promise<void> {
   switch (a.action) {
     case "select":
-      await page.selectOption(a.selector, a.value);
+      await setAndVerify(
+        page,
+        a.selector,
+        () => page.selectOption(a.selector, a.value).then(() => undefined),
+        // `selectOption` matchea por value O por label, así que la verificación
+        // acepta las dos: comparar solo contra el value daría un falso negativo
+        // en las opciones elegidas por texto y bloquearía una emisión válida.
+        async () => {
+          const seleccionado = await page.locator(a.selector).evaluate((el) => {
+            const select = el as HTMLSelectElement;
+            const opt = select.selectedOptions[0];
+            return { value: select.value, label: opt?.label ?? "", text: opt?.textContent?.trim() ?? "" };
+          });
+          return (
+            seleccionado.value === a.value ||
+            seleccionado.label === a.value ||
+            seleccionado.text === a.value
+          );
+        },
+        `la opción "${a.value}"`,
+      );
       break;
 
     case "fill":
@@ -35,7 +91,13 @@ export async function applyAction(page: Page, a: FillAction): Promise<void> {
       break;
 
     case "check":
-      await page.check(a.selector);
+      await setAndVerify(
+        page,
+        a.selector,
+        () => page.check(a.selector),
+        () => page.locator(a.selector).isChecked(),
+        "el check",
+      );
       break;
 
     case "lookup":

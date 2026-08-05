@@ -107,6 +107,41 @@ describe("EmissionModal", () => {
       expect.objectContaining({ turnstileToken: "TS-TOKEN", companyIndex: 2 }),
     );
   });
+  it("[preview-guard] condición de venta en \"null\": bloquea la emisión y explica por qué", () => {
+    // Caso real (05/08/2026): RCEL devolvió el literal "null" porque el checkbox
+    // no quedó marcado. Antes el modal solo lo mostraba y se podía confirmar.
+    mockState = {
+      phase: "preview",
+      preview: { ...PREVIEW, receptor: { ...PREVIEW.receptor, condicionVenta: "null" } },
+      result: null,
+      error: null,
+    };
+    render(<EmissionModal {...baseProps} />);
+
+    expect(screen.getByTestId("preview-blockers")).toHaveTextContent(/Condición de venta/);
+
+    fireEvent.click(screen.getByTestId("ts-solve"));
+    fireEvent.click(screen.getByTestId("confirm-check"));
+    fireEvent.change(screen.getByTestId("confirm-typed"), { target: { value: "EMITIR" } });
+
+    expect(screen.getByRole("button", { name: /emitir factura/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /emitir factura/i }));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("[preview-guard] preview sano: no muestra el aviso y deja emitir", () => {
+    mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
+    render(<EmissionModal {...baseProps} />);
+
+    expect(screen.queryByTestId("preview-blockers")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("ts-solve"));
+    fireEvent.click(screen.getByTestId("confirm-check"));
+    fireEvent.change(screen.getByTestId("confirm-typed"), { target: { value: "EMITIR" } });
+
+    expect(screen.getByRole("button", { name: /emitir factura/i })).not.toBeDisabled();
+  });
+
   it("fase done: muestra número y CAE", () => {
     mockState = { phase: "done", preview: PREVIEW, result: RESULT, error: null };
     render(<EmissionModal {...baseProps} />);

@@ -1,0 +1,56 @@
+# Updates de rutina agrupados.
+#
+# Sin este archivo Dependabot solo abre PRs por alertas de seguridad, y el
+# lockfile se queda atrás: en agosto 2026 se acumularon 16 alertas (8 de Next)
+# mientras el único PR abierto subía postcss a una versión que igual seguía
+# afectada. El deploy usa `npm ci`, así que nada avanza hasta que alguien mueve
+# el lockfile a mano.
+#
+# Los majors quedan fuera de los grupos a propósito: llegan como PR individual
+# para revisarlos de a uno (un minor de Next ya nos costó un rato).
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Argentina/Buenos_Aires"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      prod-minor-patch:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      dev-minor-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      # Las alertas de seguridad van todas juntas: se mergean sin pensar mucho.
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Imagen base del Dockerfile (node:22-slim): los CVEs de la base no aparecen
+  # en npm audit, así que sin esto no los ve nadie.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # Actions del pipeline de deploy.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]
