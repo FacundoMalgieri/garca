@@ -10,7 +10,7 @@ import type { Page } from "playwright";
 import { parseResumen } from "@/lib/facturador/resumen-parser";
 import type { EmissionPreview } from "@/types/facturador";
 
-import { ELEMENT_TIMEOUT } from "../../constants";
+import { ELEMENT_TIMEOUT, READ_TIMEOUT } from "../../constants";
 
 /**
  * Waits for the Resumen screen, grabs the raw HTML, and returns a parsed EmissionPreview.
@@ -34,7 +34,14 @@ export async function capturePreview(
   const html = await page.content();
 
   // Check for the observations div — it may signal warnings but is not a blocker at preview
-  const observaciones = await page.locator("#observaciones").textContent().catch(() => "");
+  // Medido contra RCEL el 05/08/2026: el nodo #observaciones EXISTE en el Resumen
+  // (vacío cuando no hay observaciones), así que esta lectura resuelve al instante
+  // — capturePreview completo tarda ~19ms. El timeout es defensivo: si RCEL deja
+  // de renderizarlo, la lectura corta en 2s en vez de esperar los 30s del default.
+  const observaciones = await page
+    .locator("#observaciones")
+    .textContent({ timeout: READ_TIMEOUT })
+    .catch(() => "");
   if (observaciones && observaciones.trim().length > 0) {
     console.warn("[AFIP Facturador] ⚠️  Observaciones en Resumen:", observaciones.trim());
   }
