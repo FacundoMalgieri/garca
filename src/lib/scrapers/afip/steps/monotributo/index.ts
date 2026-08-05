@@ -8,6 +8,7 @@ import type { BrowserContext, Page } from "playwright";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../constants";
+import { pickProximaRecategorizacion } from "./parse";
 
 /**
  * Result of Monotributo scraping.
@@ -140,6 +141,10 @@ async function navigateToMonotributo(
  * <p class="lead m-b-0"><strong>CUIT</strong> 20-30123456-3</p>
  * <p class="lead"><strong>Categoría H LOCACIONES DE SERVICIOS</strong></p>
  * <div id="divProxRecategorizacion">Próximo período de recategorización: <strong>Enero 2026</strong></div>
+ *
+ * Verificado contra monotributo.afip.gob.ar/app/Inicio.aspx el 05/08/2026: los
+ * selectores del nombre, CUIT y categoría siguen vigentes. El de la próxima
+ * recategorización cambia de forma según el momento (ver pickProximaRecategorizacion).
  */
 async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo | null> {
   console.log("[AFIP Monotributo] Extracting info from page...");
@@ -202,9 +207,14 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
       return null;
     }
 
-    // Extract próxima recategorización
-    const recategElement = page.locator("#divProxRecategorizacion strong").first();
-    const proximaRecategorizacion = await recategElement.textContent().catch(() => null) || "";
+    // Extract próxima recategorización.
+    // El <strong> sólo existe fuera de la ventana de recategorización; con la
+    // ventana abierta ARCA pone texto plano ("Podés recategorizarte hasta el
+    // 05/08/2026."), así que se leen los dos y decide el parser.
+    const recategDiv = page.locator("#divProxRecategorizacion").first();
+    const strongText = await recategDiv.locator("strong").first().textContent().catch(() => null);
+    const divText = await recategDiv.textContent().catch(() => null);
+    const proximaRecategorizacion = pickProximaRecategorizacion(strongText, divText);
 
     return {
       categoria,
