@@ -7,28 +7,23 @@
  * contra el DOM real.
  *
  * Uso (credenciales por env, NO se guardan):
- *   AFIP_CUIT=20xxxxxxxx9 AFIP_PASS='tu-clave' npx tsx scripts/smoke-emit-preview.ts
+ *   npx tsx scripts/smoke-emit-preview.ts
  *
  * Opcional: HEADLESS=1 para correr sin ventana.
  */
 import { chromium } from "playwright";
 
-import { DEFAULT_TIMEOUT, USER_AGENT } from "../src/lib/scrapers/afip/constants";
 import { TIPO_OFICIAL } from "../src/lib/facturador/codes";
 import { buildFillPlan } from "../src/lib/facturador/fill-plan";
-import { login } from "../src/lib/scrapers/afip/steps/login";
-import { navigateToEmission } from "../src/lib/scrapers/afip/steps/emission/navigate";
+import { DEFAULT_TIMEOUT, USER_AGENT } from "../src/lib/scrapers/afip/constants";
 import { fillComprobante } from "../src/lib/scrapers/afip/steps/emission/fill";
+import { navigateToEmission } from "../src/lib/scrapers/afip/steps/emission/navigate";
 import { capturePreview } from "../src/lib/scrapers/afip/steps/emission/preview";
+import { login } from "../src/lib/scrapers/afip/steps/login";
 import type { Plantilla } from "../src/types/facturador";
+import { requireCredentials } from "./lib/smoke-env";
 
-const cuit = process.env.AFIP_CUIT;
-const password = process.env.AFIP_PASS;
-
-if (!cuit || !password) {
-  console.error("Faltan credenciales. Usá: AFIP_CUIT=.. AFIP_PASS=.. npx tsx scripts/smoke-emit-preview.ts");
-  process.exit(1);
-}
+const { cuit, password } = requireCredentials("scripts/smoke-emit-preview.ts");
 
 // Plantilla de prueba (monto chico; NUNCA se confirma).
 const plantilla: Plantilla = {
@@ -55,7 +50,7 @@ async function main() {
     page.setDefaultTimeout(DEFAULT_TIMEOUT);
 
     console.log("→ login...");
-    const res = await login(page, { cuit: cuit!, password: password! }, DEFAULT_TIMEOUT);
+    const res = await login(page, { cuit, password }, DEFAULT_TIMEOUT);
     if (!res.success) {
       console.error("login falló:", res);
       return;

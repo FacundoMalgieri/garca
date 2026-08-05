@@ -11,21 +11,16 @@
  * Imprime numeroCompleto + CAE (leídos de Consultas) + tamaño del PDF (base64).
  *
  * IRREVERSIBLE. Requiere env explícito para correr:
- *   AFIP_CUIT=20xxxxxxxx9 AFIP_PASS='clave' EMIT_REAL=1 npx tsx scripts/smoke-emit-confirm.ts
+ *   EMIT_REAL=1 npx tsx scripts/smoke-emit-confirm.ts
  */
 import { buildCreditNote } from "../src/lib/facturador/credit-note";
 import { formatDMY } from "../src/lib/facturador/dates";
 import { createIdempotencyStore } from "../src/lib/facturador/idempotency";
 import { confirmEmissionFlow } from "../src/lib/scrapers/afip/emit";
 import type { EmissionResult, Plantilla, StoredInvoice } from "../src/types/facturador";
+import { requireCredentials } from "./lib/smoke-env";
 
-const cuit = process.env.AFIP_CUIT;
-const password = process.env.AFIP_PASS;
-
-if (!cuit || !password) {
-  console.error("Faltan credenciales. Usá: AFIP_CUIT=.. AFIP_PASS=.. EMIT_REAL=1 npx tsx scripts/smoke-emit-confirm.ts");
-  process.exit(1);
-}
+const { cuit, password } = requireCredentials("scripts/smoke-emit-confirm.ts");
 if (process.env.EMIT_REAL !== "1") {
   console.error("⚠️  Este script EMITE comprobantes fiscales reales. Reintentá con EMIT_REAL=1 para confirmar.");
   process.exit(1);
@@ -46,7 +41,7 @@ const facturaPlantilla: Plantilla = {
   lineas: [{ descripcion: "Prueba GARCA confirm - anular", cantidad: 1, unidad: "7", precioUnitario: 1 }],
 };
 
-const creds = { cuit: cuit!, password: password! };
+const creds = { cuit, password };
 
 /**
  * Corre `confirmEmissionFlow` bajo el store con una key, luego re-corre con la
@@ -101,7 +96,7 @@ async function main() {
     puntoVenta: Number(pvStr),
     numero: Number(nroStr),
     numeroCompleto: fact.numeroCompleto,
-    cuitEmisor: cuit!,
+    cuitEmisor: cuit,
     razonSocialEmisor: "",
     cuitReceptor: fact.receptor.cuit || "",
     razonSocialReceptor: fact.receptor.razonSocial || "",
