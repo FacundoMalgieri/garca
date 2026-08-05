@@ -16,89 +16,34 @@ import { ELEMENT_TIMEOUT, TIMING } from "../../constants";
 // ---------------------------------------------------------------------------
 
 /**
- * Vuelve a aplicar una acción si el DOM no quedó en el estado esperado.
- *
- * En una corrida de smoke (05/08/2026) el Resumen de RCEL salió con la condición
- * de venta en el literal "null" (JSP imprimiendo un null de sesión), o sea que el
- * checkbox `#formadepago*` no quedó marcado. No se repitió en la corrida
- * siguiente: es intermitente. El sospechoso es el AJAX del padrón, que dispara
- * antes en el plan y puede seguir tocando la sección del receptor después de que
- * `lookup` deja de esperar (solo espera a que aparezca la razón social).
- *
- * En vez de adivinar el tiempo justo, se verifica el estado y se reintenta: acá
- * un campo que se pierde en silencio termina en un comprobante fiscal REAL mal
- * emitido, así que si después del reintento sigue mal, hay que fallar fuerte.
+ * Aplica una acción sin verificar nada.
  */
-async function setAndVerify(
-  page: Page,
-  selector: string,
-  apply: () => Promise<void>,
-  read: () => Promise<boolean>,
-  descripcion: string,
-): Promise<void> {
-  await apply();
-  if (await read()) return;
-
-  console.warn(`[AFIP Facturador] ⚠️  ${descripcion} no quedó aplicado en ${selector}, reintentando...`);
-  await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
-  await apply();
-
-  if (!(await read())) {
-    throw new Error(
-      `No se pudo dejar ${descripcion} en ${selector}: RCEL lo descartó dos veces. ` +
-        `Emitir así generaría un comprobante incompleto.`,
-    );
-  }
-}
-
-/**
- * Applies one FillAction to the page.
- *
- * action types:
- *   select  → page.selectOption (verificado)
- *   fill    → page.fill
- *   check   → page.check (verificado)
- *   lookup  → page.fill + Enter + wait for #razonsocialreceptor to be non-empty
- */
-export async function applyAction(page: Page, a: FillAction): Promise<void> {
+async function rawApply(page: Page, a: FillAction): Promise<void> {
   switch (a.action) {
     case "select":
-      await setAndVerify(
-        page,
-        a.selector,
-        () => page.selectOption(a.selector, a.value).then(() => undefined),
-        // `selectOption` matchea por value O por label, así que la verificación
-        // acepta las dos: comparar solo contra el value daría un falso negativo
-        // en las opciones elegidas por texto y bloquearía una emisión válida.
-        async () => {
-          const seleccionado = await page.locator(a.selector).evaluate((el) => {
-            const select = el as HTMLSelectElement;
-            const opt = select.selectedOptions[0];
-            return { value: select.value, label: opt?.label ?? "", text: opt?.textContent?.trim() ?? "" };
-          });
-          return (
-            seleccionado.value === a.value ||
-            seleccionado.label === a.value ||
-            seleccionado.text === a.value
-          );
-        },
-        `la opción "${a.value}"`,
-      );
+      await page.selectOption(a.selector, a.value);
       break;
 
     case "fill":
       await page.fill(a.selector, a.value);
       break;
 
-    case "check":
-      await setAndVerify(
-        page,
-        a.selector,
-        () => page.check(a.selector),
-        () => page.locator(a.selector).isChecked(),
-        "el check",
-      );
+    case "check": {
+      const el = page.locator(a.selector);
+      // RCEL registra la forma de pago desde el handler del click, no desde el
+      // estado del DOM. `page.check()` no hace NADA si la casilla ya está
+      // marcada (no dispara click), así que cuando RCEL la renderiza pre-marcada
+      // —recordando la emisión anterior de la sesión— el handler nunca corre y
+      // el servidor recibe null: el Resumen sale con la condición de venta en
+      // "null" aunque el DOM se vea correcto. Medido: fallaba 3 de 5 corridas.
+      // Desmarcar y volver a marcar garantiza el evento con el estado final ok.
+      if (await el.isChecked()) {
+        await el.uncheck();
+        await page.waitForTimeout(TIMING.ROW_SCROLL_WAIT);
+      }
+      await el.check();
       break;
+    }
 
     case "lookup":
       await page.fill(a.selector, a.value);
@@ -120,11 +65,89 @@ export async function applyAction(page: Page, a: FillAction): Promise<void> {
   }
 }
 
+/**
+ * ¿El DOM refleja la acción? `null` = no verificable (fill/lookup: RCEL reformatea
+ * y normaliza lo tipeado, así que comparar texto daría falsos negativos).
+ */
+async function matchesDom(page: Page, a: FillAction): Promise<boolean | null> {
+  if (a.action === "check") {
+    return page.locator(a.selector).isChecked();
+  }
+
+  if (a.action === "select") {
+    // `selectOption` matchea por value O por label, así que se aceptan las dos:
+    // comparar solo contra el value daría un falso negativo en las opciones
+    // elegidas por texto y bloquearía una emisión válida.
+    const sel = await page.locator(a.selector).evaluate((el) => {
+      const select = el as HTMLSelectElement;
+      const opt = select.selectedOptions[0];
+      return { value: select.value, label: opt?.label ?? "", text: opt?.textContent?.trim() ?? "" };
+    });
+    return sel.value === a.value || sel.label === a.value || sel.text === a.value;
+  }
+
+  return null;
+}
+
+/**
+ * Reaplica lo que se perdió entre que se seteó y ahora.
+ *
+ * Medido contra RCEL (05/08/2026): 3 de 5 corridas llegaban al Resumen con la
+ * condición de venta en el literal "null" — un null de sesión impreso por el JSP,
+ * o sea que el checkbox `#formadepago*` no llegó al servidor. El checkbox SÍ
+ * quedaba marcado al aplicarlo (verificar en ese momento no detectaba nada): lo
+ * borra algo posterior de la misma pantalla, el candidato más fuerte es el
+ * `onchange` de `#domicilioreceptorcombo`, que re-renderiza la sección del
+ * receptor después.
+ *
+ * Por eso la verificación va acá, inmediatamente antes de Continuar: es el único
+ * momento en que el DOM ya no va a cambiar más y todavía se puede corregir.
+ */
+async function reapplyDrifted(page: Page, actions: FillAction[]): Promise<void> {
+  for (const a of actions) {
+    const ok = await matchesDom(page, a).catch(() => null);
+    if (ok !== false) continue;
+
+    console.warn(
+      `[AFIP Facturador] ⚠️  ${a.selector} se perdió después de aplicarlo (RCEL lo reseteó), reaplicando...`,
+    );
+    await rawApply(page, a);
+    await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
+
+    if ((await matchesDom(page, a).catch(() => null)) === false) {
+      throw new Error(
+        `No se pudo dejar ${a.selector} en "${a.value}": RCEL lo descartó dos veces. ` +
+          `Emitir así generaría un comprobante incompleto.`,
+      );
+    }
+  }
+}
+
+/**
+ * Applies one FillAction to the page, verificando select/check en el momento.
+ *
+ * La verificación fuerte está en reapplyDrifted(), justo antes de Continuar: acá
+ * solo se detecta el caso en que la acción no prende de entrada.
+ */
+export async function applyAction(page: Page, a: FillAction): Promise<void> {
+  await rawApply(page, a);
+
+  if ((await matchesDom(page, a).catch(() => null)) === false) {
+    console.warn(`[AFIP Facturador] ⚠️  ${a.selector} no quedó aplicado, reintentando...`);
+    await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
+    await rawApply(page, a);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Continuar button
 // ---------------------------------------------------------------------------
 
-async function clickContinuar(page: Page): Promise<void> {
+async function clickContinuar(page: Page, verificar: FillAction[] = []): Promise<void> {
+  // Último momento para corregir lo que RCEL reseteó: después de esto el estado
+  // del formulario ya viaja al servidor.
+  await reapplyDrifted(page, verificar);
+
   const btn = page.locator('input[type="button"][value="Continuar >"]');
   await btn.waitFor({ state: "visible", timeout: ELEMENT_TIMEOUT });
   await btn.click();
@@ -241,7 +264,7 @@ export async function fillComprobante(
 ): Promise<void> {
   // ---- Screen 0 ----
   await fillPantalla0(page, plan.pantalla0);
-  await clickContinuar(page);
+  await clickContinuar(page, plan.pantalla0);
 
   // ---- Screen 1 ----
   console.log("[AFIP Facturador] Screen 1 – datos del emisor");
@@ -252,7 +275,7 @@ export async function fillComprobante(
       await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
     }
   }
-  await clickContinuar(page);
+  await clickContinuar(page, plan.pantalla1);
 
   // ---- Screen 2 ----
   console.log("[AFIP Facturador] Screen 2 – datos del receptor");
@@ -285,11 +308,11 @@ export async function fillComprobante(
     }
   }
 
-  await clickContinuar(page);
+  await clickContinuar(page, plan.pantalla2);
 
   // ---- Screen 3 ----
   await fillPantalla3(page, plan.pantalla3);
-  await clickContinuar(page);
+  await clickContinuar(page, plan.pantalla3);
 
   // Now on Screen 4 (Resumen de Datos) — caller handles from here
   console.log("[AFIP Facturador] ✅ On Screen 4 (Resumen de Datos)");
