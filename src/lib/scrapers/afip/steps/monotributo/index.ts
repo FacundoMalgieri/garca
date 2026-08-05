@@ -11,6 +11,18 @@ import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../const
 import { pickProximaRecategorizacion } from "./parse";
 
 /**
+ * Timeout para LEER texto de un nodo que puede no existir.
+ *
+ * `locator.textContent()` sin timeout usa el default de Playwright (30s): si el
+ * nodo falta, la lectura se queda esperando esos 30s antes de fallar. Medido el
+ * 05/08/2026: llegar al dato tarda ~5s, pero el step tardaba ~35s porque
+ * `#divProxRecategorizacion strong` ya no existe y esa lectura sola se comía 30s.
+ * Estos nodos ya están en el HTML server-rendered cuando se los busca, así que
+ * si no aparecen en 2s es porque no están.
+ */
+const READ_TIMEOUT = 2000;
+
+/**
  * Result of Monotributo scraping.
  */
 export interface MonotributoScrapingResult {
@@ -69,6 +81,23 @@ export async function scrapeMonotributoInfo(
 }
 
 /**
+ * Espera a que la página de Monotributo tenga el dato que se va a extraer.
+ *
+ * Antes se esperaba "networkidle". Medido el 05/08/2026 contra el DOM real, esa
+ * espera no era el problema (cerraba a 5,6s vs 4,9s del nodo), pero es una señal
+ * frágil acá: Inicio.aspx hace polling AJAX cada 2s (`CalcularFacturacion` del
+ * facturómetro) mientras la ventana de recategorización está abierta. Los datos
+ * que necesitamos vienen server-rendered, así que se espera el nodo concreto.
+ */
+async function waitForMonotributoReady(target: Page): Promise<void> {
+  await target.waitForLoadState("domcontentloaded").catch(() => {});
+  await target.waitForSelector(".jumbotron_body h2.h3", { timeout: ELEMENT_TIMEOUT }).catch(() => {
+    console.log("[AFIP Monotributo] jumbotron no visible dentro del timeout, sigo igual");
+  });
+  await target.waitForTimeout(TIMING.AFTER_CLICK_WAIT);
+}
+
+/**
  * Navigates to Monotributo portal using search box.
  */
 async function navigateToMonotributo(
@@ -110,14 +139,12 @@ async function navigateToMonotributo(
     
     if (newPage) {
       console.log("[AFIP Monotributo] ✅ New tab opened!");
-      await newPage.waitForLoadState("networkidle");
-      await newPage.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
+      await waitForMonotributoReady(newPage);
       return newPage;
     } else {
       // No new tab, check if we navigated in the same page
       console.log("[AFIP Monotributo] No new tab, checking current page...");
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(TIMING.AFTER_NAVIGATION_WAIT);
+      await waitForMonotributoReady(page);
 
       // Check if we're on a Monotributo page
       const url = page.url();
@@ -157,7 +184,7 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
 
     // Extract name
     const nombreElement = page.locator(".jumbotron_body h2.h3").first();
-    const nombreCompleto = await nombreElement.textContent().catch(() => null);
+    const nombreCompleto = await nombreElement.textContent({ timeout: READ_TIMEOUT }).catch(() => null);
 
     if (!nombreCompleto) {
       console.log("[AFIP Monotributo] Could not find name element");
@@ -166,7 +193,7 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
 
     // Extract CUIT
     const cuitElement = page.locator(".jumbotron_body p.lead").first();
-    const cuitText = await cuitElement.textContent().catch(() => null);
+    const cuitText = await cuitElement.textContent({ timeout: READ_TIMEOUT }).catch(() => null);
 
     // Parse CUIT (format: "CUIT 20-30123456-3")
     const cuitMatch = cuitText?.match(/CUIT\s*([\d-]+)/i);
@@ -182,7 +209,7 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     let tipoActividad: "servicios" | "venta" | null = null;
 
     for (let i = 0; i < categoriaCount; i++) {
-      const text = await categoriaElements.nth(i).textContent();
+      const text = await categoriaElements.nth(i).textContent({ timeout: READ_TIMEOUT }).catch(() => null);
 
       if (text && text.includes("Categoría")) {
         // Parse: "Categoría H LOCACIONES DE SERVICIOS"
@@ -212,8 +239,12 @@ async function extractMonotributoInfo(page: Page): Promise<MonotributoAFIPInfo |
     // ventana abierta ARCA pone texto plano ("Podés recategorizarte hasta el
     // 05/08/2026."), así que se leen los dos y decide el parser.
     const recategDiv = page.locator("#divProxRecategorizacion").first();
-    const strongText = await recategDiv.locator("strong").first().textContent().catch(() => null);
-    const divText = await recategDiv.textContent().catch(() => null);
+    const strongText = await recategDiv
+      .locator("strong")
+      .first()
+      .textContent({ timeout: READ_TIMEOUT })
+      .catch(() => null);
+    const divText = await recategDiv.textContent({ timeout: READ_TIMEOUT }).catch(() => null);
     const proximaRecategorizacion = pickProximaRecategorizacion(strongText, divText);
 
     return {

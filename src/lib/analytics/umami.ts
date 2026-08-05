@@ -43,7 +43,12 @@ export function trackUmamiEvent(
 }
 
 export const UMAMI_EVENTS = {
-  /** ARCA: empresas obtenidas (paso 1 del flujo de ingreso). */
+  /**
+   * ARCA: empresas obtenidas (paso 1 del flujo de ingreso).
+   * `data: { count, mono }`. `mono` dice si el scrape de Monotributo trajo
+   * categoría ('ok') o no ('none'): es el único dato que permite ver desde
+   * afuera si ese step falla en producción (no manda la categoría).
+   */
   ArcCompaniesOk: "funnel_arc_companies_ok",
   /** ARCA: comprobantes obtenidos (paso 2, éxito). */
   ArcInvoicesOk: "funnel_arc_invoices_ok",

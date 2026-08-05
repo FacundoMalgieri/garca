@@ -474,7 +474,10 @@ export function useInvoices(): UseInvoicesReturn {
           });
 
           const companyCount = (finalResult.companies || []).length;
-          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, { count: companyCount });
+          trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, {
+            count: companyCount,
+            mono: monotributo ? "ok" : "none",
+          });
           return true;
         } else {
           throw new Error("No se recibió resultado del servidor");
@@ -511,7 +514,10 @@ export function useInvoices(): UseInvoicesReturn {
         });
 
         const companyCountJson = (data.companies || []).length;
-        trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, { count: companyCountJson });
+        trackUmamiEvent(UMAMI_EVENTS.ArcCompaniesOk, {
+          count: companyCountJson,
+          mono: monotributo ? "ok" : "none",
+        });
         return true;
       }
     } catch (error) {
