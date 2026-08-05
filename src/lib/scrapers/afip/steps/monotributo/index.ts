@@ -7,20 +7,8 @@ import type { BrowserContext, Page } from "playwright";
 
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
-import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, READ_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 import { pickProximaRecategorizacion } from "./parse";
-
-/**
- * Timeout para LEER texto de un nodo que puede no existir.
- *
- * `locator.textContent()` sin timeout usa el default de Playwright (30s): si el
- * nodo falta, la lectura se queda esperando esos 30s antes de fallar. Medido el
- * 05/08/2026: llegar al dato tarda ~5s, pero el step tardaba ~35s porque
- * `#divProxRecategorizacion strong` ya no existe y esa lectura sola se comía 30s.
- * Estos nodos ya están en el HTML server-rendered cuando se los busca, así que
- * si no aparecen en 2s es porque no están.
- */
-const READ_TIMEOUT = 2000;
 
 /**
  * Result of Monotributo scraping.

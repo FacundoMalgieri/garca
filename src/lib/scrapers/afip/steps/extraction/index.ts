@@ -6,7 +6,7 @@ import type { Page } from "playwright";
 
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
-import { SELECTORS, TIMING } from "../../constants";
+import { ROW_READ_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 import { parseCurrencyInfo, parseImporte, parseNumeroComprobante, parseTipoComprobante } from "../../utils";
 
 /**
@@ -83,16 +83,20 @@ async function extractInvoiceFromRow(
     return null;
   }
 
-  // Extract raw data from cells
-  const fecha = (await cells.nth(0).textContent()) || "";
-  const tipo = (await cells.nth(1).textContent()) || "";
-  const numeroCompleto = (await cells.nth(2).textContent()) || "";
-  const tipoDocReceptor = (await cells.nth(3).textContent()) || "";
-  const cuitReceptor = (await cells.nth(4).textContent()) || "";
-  const cae = (await cells.nth(5).textContent()) || "";
+  // Extract raw data from cells.
+  // ROW_READ_TIMEOUT acota cada lectura: las celdas ya existen (cellCount >= 8),
+  // pero si la tabla se re-renderiza en el medio, sin timeout cada lectura
+  // esperaria 30s. El margen es amplio a proposito: si esto tira, el caller
+  // saltea la fila y la factura no aparece en los totales.
+  const fecha = (await cells.nth(0).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
+  const tipo = (await cells.nth(1).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
+  const numeroCompleto = (await cells.nth(2).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
+  const tipoDocReceptor = (await cells.nth(3).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
+  const cuitReceptor = (await cells.nth(4).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
+  const cae = (await cells.nth(5).textContent({ timeout: ROW_READ_TIMEOUT })) || "";
   const importeCell = cells.nth(6);
-  const importeText = (await importeCell.textContent()) || "0";
-  const importeTitle = (await importeCell.getAttribute("title")) || "";
+  const importeText = (await importeCell.textContent({ timeout: ROW_READ_TIMEOUT })) || "0";
+  const importeTitle = (await importeCell.getAttribute("title", { timeout: ROW_READ_TIMEOUT })) || "";
 
 
   // Parse data

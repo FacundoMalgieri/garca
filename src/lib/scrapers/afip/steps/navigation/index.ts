@@ -6,7 +6,7 @@ import type { BrowserContext, Page } from "playwright";
 
 import type { AFIPCompany } from "@/types/afip-scraper";
 
-import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, NEW_TAB_TIMEOUT, READ_TIMEOUT, SELECTORS, TIMING } from "../../constants";
 
 /**
  * Navigation result with company information.
@@ -240,7 +240,8 @@ async function extractUserInfoFromHeader(page: Page): Promise<{ cuit: string; no
     const userTableCount = await userTable.count();
 
     if (userTableCount > 0) {
-      const userText = await userTable.first().textContent();
+      // Sin timeout, si el nodo desaparece la lectura cuelga 30s (ver READ_TIMEOUT)
+      const userText = await userTable.first().textContent({ timeout: READ_TIMEOUT });
 
       if (userText) {
         // Format: "20301234563 - PEREZ JUAN CARLOS"

@@ -10,6 +10,27 @@
 export const DEFAULT_TIMEOUT = 120000; // 2 minutes - overall navigation timeout
 export const ELEMENT_TIMEOUT = 60000; // 1 minute - timeout for waiting for individual elements
 export const NEW_TAB_TIMEOUT = 60000; // 1 minute - timeout for waiting for new tabs to open
+/**
+ * Timeout para LEER texto/atributos de un nodo que ya deberia estar en el DOM.
+ *
+ * `locator.textContent()` / `getAttribute()` sin `timeout` usan el default de
+ * Playwright (30s): si el nodo falta, la lectura espera esos 30s antes de fallar.
+ * Medido contra ARCA el 05/08/2026, eso hacia que el step de Monotributo tardara
+ * 35s en vez de 6,6s (una sola lectura de un nodo que ARCA elimino). Estas
+ * lecturas se hacen despues de esperar el contenedor, asi que si el nodo no
+ * aparece en 2s es porque no esta.
+ */
+export const READ_TIMEOUT = 2000;
+/**
+ * Igual que READ_TIMEOUT pero para las celdas de la tabla de comprobantes.
+ *
+ * Ahi la asimetria es distinta: si una lectura tira, el caller saltea la fila y
+ * la factura desaparece del total con solo un console.warn. Un limite corto
+ * cambiaria un cuelgue hipotetico por perdida de datos silenciosa, asi que se
+ * usa un margen amplio: sigue acotado (3x mas rapido que el default de 30s) pero
+ * lejos de cualquier lectura lenta que igual habria funcionado.
+ */
+export const ROW_READ_TIMEOUT = 10000;
 // Headless por defecto. Poné AFIP_HEADLESS=false en el entorno (dev) para
 // ver la ventana de Chromium y observar el scraping/emisión en vivo.
 export const DEFAULT_HEADLESS = process.env.AFIP_HEADLESS !== "false";
