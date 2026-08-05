@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Dependencies + Playwright
 # ============================================
-FROM node:22-slim AS deps
+FROM node:25-slim AS deps
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN npx playwright install --with-deps chromium
 # ============================================
 # Stage 2: Builder
 # ============================================
-FROM node:22-slim AS builder
+FROM node:25-slim AS builder
 
 WORKDIR /app
 
