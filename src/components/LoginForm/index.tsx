@@ -6,6 +6,7 @@ import { CompanySelector } from "@/components/CompanySelector";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { LoadingSpinner } from "@/components/ui/icons";
+import { ARCA_DEPENDENCY_NOTICE } from "@/lib/errors/user-message";
 import type { AFIPCompany } from "@/types/afip-scraper";
 
 import { CuitInput } from "./components/CuitInput";
@@ -242,6 +243,7 @@ export function LoginForm({
           Ingresá tus credenciales de ARCA para consultar tus comprobantes. Tus datos se procesan de forma segura y no
           se almacenan.
         </CardDescription>
+        <p className="text-xs text-muted-foreground mt-2">{ARCA_DEPENDENCY_NOTICE}</p>
       </CardHeader>
 
       <CardContent>

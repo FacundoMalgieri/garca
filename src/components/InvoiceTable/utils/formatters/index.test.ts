@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { getUserFacingError } from "@/lib/errors/user-message";
+
 import { calculateTotalPesos, formatCurrency, formatInvoiceType, getErrorMessage, isFacturaE,isForeignCurrency } from "./index";
 
 describe("formatters", () => {
@@ -43,12 +45,21 @@ describe("formatters", () => {
       expect(getErrorMessage("ACCOUNT_BLOCKED", null)).toContain("bloqueada");
     });
 
+    // SERVICE_UNAVAILABLE y TIMEOUT delegan en el mapper compartido
+    // (@/lib/errors/user-message): son códigos con consejo operativo, y antes
+    // decían cosas distintas en /panel y en /ingresar para el mismo problema.
     it("should return correct message for SERVICE_UNAVAILABLE", () => {
-      expect(getErrorMessage("SERVICE_UNAVAILABLE", null)).toContain("no está disponible");
+      expect(getErrorMessage("SERVICE_UNAVAILABLE", null)).toContain("ARCA no está respondiendo");
     });
 
     it("should return correct message for TIMEOUT", () => {
-      expect(getErrorMessage("TIMEOUT", null)).toContain("tardó demasiado");
+      expect(getErrorMessage("TIMEOUT", null)).toContain("ARCA no está respondiendo");
+    });
+
+    it("da el mismo consejo que /ingresar para un mismo código", () => {
+      for (const code of ["TIMEOUT", "SERVICE_UNAVAILABLE", "NAVIGATION_ERROR"]) {
+        expect(getErrorMessage(code, "x")).toBe(getUserFacingError("x", code));
+      }
     });
 
     it("should return correct message for NO_DATA", () => {

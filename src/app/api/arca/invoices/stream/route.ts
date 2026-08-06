@@ -11,6 +11,7 @@ import { decryptCredentials } from "@/lib/crypto";
 import { scrapeAFIPInvoicesWithEvents } from "@/lib/scrapers/afip";
 import { SCRAPER_EVENTS,type ScraperEvent } from "@/lib/scrapers/afip/events";
 import { performSecurityChecks } from "@/lib/security";
+import { startSseHeartbeat } from "@/lib/sse/heartbeat";
 import type { AFIPCredentials, AFIPInvoiceFilters } from "@/types/afip-scraper";
 
 export const dynamic = "force-dynamic";
@@ -104,26 +105,37 @@ export async function POST(request: NextRequest) {
     
     // Use request.signal to detect client disconnection
     const abortSignal = request.signal;
-    
+
+    // Hoisted para que cancel() (desconexión del cliente) también corte el
+    // heartbeat, sin esperar al finally de start().
+    let stopHeartbeat: () => void = () => {};
+
     const stream = new ReadableStream({
       async start(controller) {
-        const sendEvent = (
-          event: ScraperEvent | { type: "result"; message: string; data: unknown }
-        ) => {
+        const sendRaw = (chunk: string) => {
           // Skip if controller is already closed (user cancelled)
           if (isControllerClosed || abortSignal.aborted) return;
-          
+
           try {
-            const data = `data: ${JSON.stringify(event)}\n\n`;
-            controller.enqueue(encoder.encode(data));
+            controller.enqueue(encoder.encode(chunk));
           } catch {
             // Controller was closed (user disconnected/cancelled)
             isControllerClosed = true;
           }
         };
-        
+
+        const sendEvent = (
+          event: ScraperEvent | { type: "result"; message: string; data: unknown }
+        ) => {
+          sendRaw(`data: ${JSON.stringify(event)}\n\n`);
+        };
+
         // Check cancellation function for scraper
         const isCancelled = () => isControllerClosed || abortSignal.aborted;
+
+        // Cloudflare corta la conexión tras ~100s sin bytes. La descarga de
+        // XMLs y la extracción pueden pasar ese umbral entre eventos.
+        stopHeartbeat = startSseHeartbeat(sendRaw);
 
         try {
           // Check queue status
@@ -170,6 +182,7 @@ export async function POST(request: NextRequest) {
           };
           sendEvent(errorResult);
         } finally {
+          stopHeartbeat();
           if (!isControllerClosed) {
             isControllerClosed = true;
             controller.close();
@@ -179,6 +192,7 @@ export async function POST(request: NextRequest) {
       cancel() {
         // Called when client disconnects
         isControllerClosed = true;
+        stopHeartbeat();
         console.log("[AFIP Invoices Stream] Client disconnected, cancelling...");
       },
     });

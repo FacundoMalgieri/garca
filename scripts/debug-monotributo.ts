@@ -220,6 +220,81 @@ async function safeDump(page: Page, tag: string) {
   }
 }
 
+/**
+ * Verifica contra ARCA real las suposiciones del fix del 05/08/2026, que se
+ * infirieron de un volcado del portal y no de una sesión viva:
+ *
+ * 1. ¿Existe la tarjeta de Monotributo en "Servicios | Más utilizados"?
+ * 2. ¿Qué devuelve el buscador al tipear "monotributo"? (si hay varias opciones,
+ *    el `.first()` del step puede estar clickeando cualquier cosa)
+ * 3. ¿Se puede ir directo a monotributo.afip.gob.ar sin pasar por el click, o
+ *    ARCA rebota a login por falta del handshake de SSO?
+ *
+ * Todo es de sólo lectura: no emite ni modifica nada.
+ */
+async function probeNavigationAssumptions(
+  page: Page,
+  context: import("playwright").BrowserContext
+) {
+  const out: Record<string, unknown> = {};
+
+  // 1. Tarjeta de "Más utilizados"
+  const cardCount = await page.locator(SELECTORS.NAVIGATION.MONOTRIBUTO_CARD).count();
+  out.tarjetaMasUtilizados = { selector: SELECTORS.NAVIGATION.MONOTRIBUTO_CARD, count: cardCount };
+  log(`1) Tarjeta en "Más utilizados": ${cardCount} match(es)`);
+
+  // 2. Lista real del typeahead
+  try {
+    const searchInput = page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).first();
+    await searchInput.waitFor({ state: "visible", timeout: 15_000 });
+    await searchInput.click();
+    await searchInput.fill("monotributo");
+    await page.waitForTimeout(2500);
+
+    const opciones = await page.locator('li[role="option"]').allTextContents();
+    out.opcionesBuscador = opciones;
+    log(`2) Opciones del buscador (${opciones.length}):`, JSON.stringify(opciones, null, 2));
+
+    const listboxHtml = await page
+      .locator('[role="listbox"]')
+      .first()
+      .evaluate((el) => el.outerHTML)
+      .catch(() => null);
+    if (listboxHtml) writeFileSync(join(OUT_DIR, "7-listbox.html"), listboxHtml);
+
+    await page.keyboard.press("Escape").catch(() => {});
+  } catch (e) {
+    out.opcionesBuscador = { error: e instanceof Error ? e.message : String(e) };
+    log("2) ⚠️ No pude leer las opciones del buscador:", e instanceof Error ? e.message : e);
+  }
+
+  // 3. ¿Sirve el goto directo? En pestaña aparte para no romper el portal.
+  const probe = await context.newPage();
+  try {
+    await probe.goto("https://monotributo.afip.gob.ar/app/Inicio.aspx", {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+    await probe.waitForTimeout(3000);
+    const url = probe.url();
+    const jumbotron = await probe.locator(".jumbotron_body h2.h3").count();
+    out.gotoDirecto = {
+      url,
+      jumbotron,
+      funciona: !url.includes("auth.afip.gob.ar") && jumbotron > 0,
+    };
+    log("3) goto directo →", JSON.stringify(out.gotoDirecto));
+  } catch (e) {
+    out.gotoDirecto = { error: e instanceof Error ? e.message : String(e) };
+    log("3) goto directo falló:", e instanceof Error ? e.message : e);
+  } finally {
+    await probe.close().catch(() => {});
+  }
+
+  writeFileSync(join(OUT_DIR, "7-probe.json"), JSON.stringify(out, null, 2));
+  return out;
+}
+
 const main = async () => {
   mkdirSync(OUT_DIR, { recursive: true });
 
@@ -300,6 +375,28 @@ const main = async () => {
     const searchCount = await page.locator(SELECTORS.NAVIGATION.SEARCH_INPUT).count();
     log("Buscador del portal encontrado:", searchCount, `(selector: ${SELECTORS.NAVIGATION.SEARCH_INPUT})`);
     await safeDump(page, "1-portal");
+
+    // MODE=probe: verificar las suposiciones del fix y después correr el step real
+    if (process.env.MODE === "probe") {
+      await probeNavigationAssumptions(page, context);
+
+      // El probe dejó el buscador tipeado: volver a una base limpia.
+      await page.goto(URLS.PORTAL, { waitUntil: "domcontentloaded" }).catch(() => {});
+      await page.waitForTimeout(2000);
+
+      log("── Corriendo el step real (con reintentos) ──");
+      const t0 = Date.now();
+      const resultado = await scrapeMonotributoInfo(page, context);
+      log(`4) Step real (${Date.now() - t0}ms):`, JSON.stringify(resultado, null, 2));
+      writeFileSync(
+        join(OUT_DIR, "8-resultado-probe.json"),
+        JSON.stringify({ ms: Date.now() - t0, resultado }, null, 2)
+      );
+
+      log(`Listo (modo probe). Archivos en ${OUT_DIR}.`);
+      await context.close().catch(() => {});
+      return;
+    }
 
     // MODE=timing: medir cada etapa de la navegación, sin correr el step
     if (process.env.MODE === "timing") {

@@ -1,3 +1,5 @@
+import { getUserFacingError } from "@/lib/errors/user-message";
+
 /**
  * Formats invoice type for display.
  * Converts "Factura de Exportación E" to "Factura E".
@@ -17,6 +19,8 @@ export function isFacturaE(tipo: string): boolean {
  * Returns a user-friendly error message based on error code.
  */
 export function getErrorMessage(errorCode: string | null, error: string | null): string {
+  // Códigos donde este mensaje es mejor que el string crudo del scraper: son
+  // situaciones del usuario o de su cuenta, sin consejo operativo que unificar.
   switch (errorCode) {
     case "INVALID_CREDENTIALS":
       return "❌ Credenciales inválidas. Verifique su CUIT/CUIL y contraseña.";
@@ -24,15 +28,14 @@ export function getErrorMessage(errorCode: string | null, error: string | null):
       return "🤖 ARCA requiere CAPTCHA. Por favor intente más tarde.";
     case "ACCOUNT_BLOCKED":
       return "🔒 Su cuenta está bloqueada. Contacte a ARCA.";
-    case "SERVICE_UNAVAILABLE":
-      return "⚠️ El servicio de ARCA no está disponible. Intente más tarde.";
-    case "TIMEOUT":
-      return "⏱️ La consulta tardó demasiado. Intente nuevamente.";
     case "NO_DATA":
       return "📋 No se encontraron comprobantes para los filtros especificados.";
-    default:
-      return error || "Error desconocido";
   }
+
+  // El resto delega en el mapper compartido. Acá SÍ importa unificar: un mismo
+  // código tiene que dar el mismo consejo en /panel y en /ingresar (antes
+  // TIMEOUT decía "intente nuevamente" en uno y "esperá a ARCA" en el otro).
+  return getUserFacingError(error, errorCode) || "Error desconocido";
 }
 
 /**
