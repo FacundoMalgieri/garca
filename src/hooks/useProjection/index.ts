@@ -11,6 +11,7 @@ import {
   getNextRecategorizacionDates,
   getRecategorizacionWindow,
 } from "@/lib/projection"
+import { sanitizeProjectionData } from "@/lib/storage/sanitize"
 import type { AFIPInvoice } from "@/types/afip-scraper"
 import type { TipoActividad } from "@/types/monotributo"
 import type { MonthKey, MonthlyTotal, ProjectionData, ProjectionResult, RecategorizacionInfo } from "@/types/projection"
@@ -83,7 +84,9 @@ function loadProjectionData(): ProjectionData | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return null
-    return JSON.parse(stored) as ProjectionData
+    // Se sanea en vez de castear: lo guardado tiene la forma de la versión que
+    // lo escribió. null → la UI vuelve a sus defaults. Ver @/lib/storage/sanitize.
+    return sanitizeProjectionData(JSON.parse(stored))
   } catch {
     return null
   }
