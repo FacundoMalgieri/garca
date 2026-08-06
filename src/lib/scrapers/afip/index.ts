@@ -16,7 +16,7 @@ import type {
   MonotributoAFIPInfo,
 } from "@/types/afip-scraper";
 
-import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, USER_AGENT } from "./constants";
+import { DEFAULT_HEADLESS, DEFAULT_TIMEOUT, MONOTRIBUTO_TIMEOUTS, USER_AGENT } from "./constants";
 import { type EventEmitter, noopEmitter, SCRAPER_EVENTS } from "./events";
 import { scrapePuntosDeVentaBestEffort } from "./steps/emission/puntos-venta";
 import { extractInvoices } from "./steps/extraction";
@@ -25,7 +25,7 @@ import { login } from "./steps/login";
 import { scrapeMonotributoInfo } from "./steps/monotributo";
 import { navigateToCompanySelection, navigateToInvoices } from "./steps/navigation";
 import { downloadXMLs } from "./steps/xml-download";
-import { handleError } from "./utils";
+import { handleError, withTimeout } from "./utils";
 
 /**
  * Extended options for streaming scraper.
@@ -124,25 +124,41 @@ export async function getAFIPCompaniesWithEvents(
       // Store current URL to navigate back if needed
       const portalUrl = page.url();
       
-      const monotributoResult = await scrapeMonotributoInfo(page, context);
+      // El dato de Monotributo es opcional, así que el step corre con un
+      // presupuesto de tiempo: pase lo que pase adentro, el flujo de empresas
+      // sigue y el stream SSE vuelve a tener eventos.
+      const monotributoResult = await withTimeout(
+        scrapeMonotributoInfo(page, context),
+        MONOTRIBUTO_TIMEOUTS.STEP_BUDGET,
+        { success: false as const, info: null, error: "Presupuesto de tiempo agotado" }
+      );
       if (monotributoResult.success && monotributoResult.info) {
         monotributoInfo = monotributoResult.info;
         emit(SCRAPER_EVENTS.monotributoFound(monotributoInfo.categoria));
       } else {
+        if (monotributoResult.error) {
+          console.warn("[AFIP Companies] Monotributo sin datos:", monotributoResult.error);
+        }
         emit(SCRAPER_EVENTS.monotributoNotFound());
       }
-      
-      // Navigate back to portal home to search for Comprobantes
-      // We need to go back because Monotributo may have navigated away
+
+      // Navigate back to portal home to search for Comprobantes.
+      // We need to go back because Monotributo may have navigated away.
+      // "networkidle" no sirve acá: el portal hace polling AJAX y la espera se
+      // estira hasta DEFAULT_TIMEOUT (2 min) sin emitir nada.
       console.log("[AFIP Companies] Navigating back to portal for companies...");
-      await page.goto(portalUrl || "https://portalcf.cloud.afip.gob.ar/portal/app/", { waitUntil: "networkidle" });
+      await page.goto(portalUrl || "https://portalcf.cloud.afip.gob.ar/portal/app/", {
+        waitUntil: "domcontentloaded",
+      });
     } catch (monotributoError) {
       console.warn("[AFIP Companies] Monotributo fetch failed (non-critical):", monotributoError);
       emit(SCRAPER_EVENTS.monotributoNotFound());
-      
+
       // Try to navigate back to portal even on error
       try {
-        await page.goto("https://portalcf.cloud.afip.gob.ar/portal/app/", { waitUntil: "networkidle" });
+        await page.goto("https://portalcf.cloud.afip.gob.ar/portal/app/", {
+          waitUntil: "domcontentloaded",
+        });
       } catch {
         console.warn("[AFIP Companies] Could not navigate back to portal");
       }

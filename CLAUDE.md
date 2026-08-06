@@ -97,3 +97,13 @@ Tailwind CSS v4 with `clsx` + `tailwind-merge` for conditional classes. Dark mod
 3. **Índice `/guias`** — `src/app/guias/guides-data.ts` (`GUIDES`) y el `ItemList` dentro de `guiasCollectionPageSchema` (misma lista de URLs).
 4. **Sitemap** — `src/app/sitemap.ts` si la URL es estática (las rutas dinámicas `categoria/[letra]` ya salen de datos).
 5. **OG** — `public/og/<slug>.png` (1200×630) alineado al slug usado en `buildArticleImage`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -14,6 +14,7 @@ import {
   parseImporte,
   parseNumeroComprobante,
   parseTipoComprobante,
+  withTimeout,
 } from "./index";
 
 describe("AFIP Scraper Utils", () => {
@@ -244,3 +245,36 @@ describe("AFIP Scraper Utils", () => {
   });
 });
 
+
+describe("withTimeout", () => {
+  it("devuelve el resultado real cuando la operación entra en presupuesto", async () => {
+    const result = await withTimeout(Promise.resolve("ok"), 1000, "fallback");
+    expect(result).toBe("ok");
+  });
+
+  it("devuelve el fallback cuando la operación se pasa del presupuesto", async () => {
+    const nunca = new Promise<string>(() => {});
+    const result = await withTimeout(nunca, 10, "fallback");
+    expect(result).toBe("fallback");
+  });
+
+  it("propaga el rechazo de la operación si ocurre dentro del presupuesto", async () => {
+    // Anotado: Promise.reject infiere Promise<never> y con NoInfer el fallback
+    // ya no puede ensanchar T para tapar eso.
+    await expect(
+      withTimeout(Promise.reject<string>(new Error("boom")), 1000, "fallback")
+    ).rejects.toThrow("boom");
+  });
+
+  it("no deja rechazos sin manejar cuando la operación falla tarde", async () => {
+    const tardio = new Promise<string>((_, reject) => {
+      setTimeout(() => reject(new Error("tarde")), 30);
+    });
+
+    const result = await withTimeout(tardio, 10, "fallback");
+    expect(result).toBe("fallback");
+
+    // Si el rechazo tardío quedara sin handler, Node lo reportaría acá.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+});

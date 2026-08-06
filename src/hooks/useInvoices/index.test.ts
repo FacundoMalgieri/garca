@@ -70,6 +70,7 @@ describe("useInvoices", () => {
         companies: [],
         isLoading: false,
         error: null,
+        errorCode: null,
         progress: null,
         monotributoInfo: null,
       });
@@ -935,7 +936,10 @@ describe("useInvoices", () => {
       expect(result.current.state.company).toMatchObject({ index: 3 });
     });
 
-    it("should set UNKNOWN error code on unexpected failure", async () => {
+    it("should set the computed client error code on unexpected failure", async () => {
+      // Antes se guardaba "UNKNOWN" descartando el código ya calculado para
+      // analytics. /ingresar lo usa para decidir qué aconsejar, así que un
+      // corte de red tiene que llegar como tal.
       mockFetch.mockRejectedValueOnce(new Error("Unexpected failure"));
 
       const { result } = renderHook(() => useInvoices());
@@ -948,7 +952,8 @@ describe("useInvoices", () => {
       });
 
       expect(result.current.state.error).toBe("Unexpected failure");
-      expect(result.current.state.errorCode).toBe("UNKNOWN");
+      // Error genérico (no TypeError de fetch) → CLIENT, no NETWORK.
+      expect(result.current.state.errorCode).toBe("CLIENT");
       expect(result.current.state.invoices).toEqual([]);
     });
   });

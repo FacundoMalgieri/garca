@@ -8,6 +8,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useNavigationGuard } from "@/hooks/useNavigationGuard";
+import { getUserFacingError } from "@/lib/errors/user-message";
 
 export default function IngresoPage() {
   const router = useRouter();
@@ -94,8 +95,11 @@ export default function IngresoPage() {
   // Use progress from whichever is loading
   const currentProgress = companiesState.isLoading ? companiesState.progress : state.progress;
 
-  // Combine errors from both states
-  const error = state.error || companiesState.error;
+  // Combine errors from both states. El código viaja junto al mensaje para que
+  // el formulario pueda aconsejar según la causa (recargar vs esperar a ARCA).
+  const error = state.error
+    ? getUserFacingError(state.error, state.errorCode)
+    : getUserFacingError(companiesState.error, companiesState.errorCode);
 
   return (
     <>

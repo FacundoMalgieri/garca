@@ -234,3 +234,40 @@ export function isBlockedAccountError(errorText: string): boolean {
   return lower.includes("bloquead") || lower.includes("blocked") || lower.includes("inhabilitad");
 }
 
+
+// ============================================================================
+// TIMEOUTS
+// ============================================================================
+
+/**
+ * Acota una operación a un presupuesto de tiempo, devolviendo un fallback si
+ * se pasa.
+ *
+ * Red de seguridad para pasos opcionales del scraper: aunque cada espera tenga
+ * su timeout, siempre queda alguna operación de Playwright sin uno explícito
+ * que cae en el default de la página (2 minutos). Eso deja el stream SSE mudo
+ * más allá del corte de ~100s de Cloudflare y el usuario ve un error de red.
+ *
+ * La operación original sigue corriendo; se descarta su resultado. Como
+ * `Promise.race` ya le enganchó handlers, un rechazo tardío no queda sin
+ * manejar.
+ */
+export async function withTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  // NoInfer: el fallback no debe ensanchar T. Sin esto, pasar `null` haría que
+  // T infiera `X | null` en vez de fallar la compilación.
+  fallback: NoInfer<T>
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const budget = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([operation, budget]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}

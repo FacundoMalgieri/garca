@@ -68,6 +68,8 @@ export interface CompaniesState {
   companies: AFIPCompany[];
   isLoading: boolean;
   error: string | null;
+  /** Código del error, para elegir qué aconsejarle al usuario. */
+  errorCode: string | null;
   progress: ScraperProgress | null;
   monotributoInfo: MonotributoAFIPInfo | null;
 }
@@ -135,6 +137,7 @@ export function useInvoices(): UseInvoicesReturn {
     companies: [],
     isLoading: false,
     error: null,
+    errorCode: null,
     progress: null,
     monotributoInfo: null,
   });
@@ -356,6 +359,7 @@ export function useInvoices(): UseInvoicesReturn {
       companies: [],
       isLoading: true,
       error: null,
+      errorCode: null,
       progress: { message: "Iniciando...", progress: 0, type: "start" },
       monotributoInfo: null,
     });
@@ -452,6 +456,7 @@ export function useInvoices(): UseInvoicesReturn {
               companies: [],
               isLoading: false,
               error: finalResult.error || "Error al obtener empresas",
+              errorCode: failCode ?? null,
               progress: null,
               monotributoInfo: null,
             });
@@ -469,6 +474,7 @@ export function useInvoices(): UseInvoicesReturn {
             companies: finalResult.companies || [],
             isLoading: false,
             error: null,
+            errorCode: null,
             progress: null,
             monotributoInfo: monotributo,
           });
@@ -492,6 +498,7 @@ export function useInvoices(): UseInvoicesReturn {
             companies: [],
             isLoading: false,
             error: data.error || "Error al obtener empresas",
+            errorCode: data.errorCode || null,
             progress: null,
             monotributoInfo: null,
           });
@@ -509,6 +516,7 @@ export function useInvoices(): UseInvoicesReturn {
           companies: data.companies || [],
           isLoading: false,
           error: null,
+          errorCode: null,
           progress: null,
           monotributoInfo: monotributo,
         });
@@ -536,6 +544,7 @@ export function useInvoices(): UseInvoicesReturn {
         companies: [],
         isLoading: false,
         error: errorMessage,
+        errorCode: clientCode,
         progress: null,
         monotributoInfo: null,
       });
@@ -803,7 +812,9 @@ export function useInvoices(): UseInvoicesReturn {
         invoices: [],
         isLoading: false,
         error: errorMessage,
-        errorCode: "UNKNOWN",
+        // El código calculado arriba, no "UNKNOWN": /ingresar lo usa para
+        // elegir qué aconsejar.
+        errorCode: clientCode,
         company: null,
         puntosDeVenta: null,
         progress: null,
@@ -928,6 +939,7 @@ export function useInvoices(): UseInvoicesReturn {
       companies: [],
       isLoading: false,
       error: null,
+      errorCode: null,
       progress: null,
       monotributoInfo: null,
     });

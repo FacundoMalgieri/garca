@@ -31,6 +31,40 @@ export const READ_TIMEOUT = 2000;
  * lejos de cualquier lectura lenta que igual habria funcionado.
  */
 export const ROW_READ_TIMEOUT = 10000;
+
+/**
+ * Timeouts del step de Monotributo.
+ *
+ * El dato de Monotributo es opcional: si no sale, el flujo de empresas sigue
+ * igual. Por eso este step no puede usar los timeouts generales de 60s.
+ *
+ * El 05/08/2026, con la navegacion a Monotributo fallando, el step estuvo 120s
+ * sin emitir un solo evento (60s de NEW_TAB_TIMEOUT esperando una pestana que
+ * nunca se abrio + 60s de ELEMENT_TIMEOUT esperando el jumbotron en una pagina
+ * que no era la de Monotributo). Cloudflare corta una conexion proxeada tras
+ * ~100s sin bytes, asi que el stream SSE murio y el usuario vio un error de
+ * red. El camino feliz completo tarda ~6,6s (ver commit 0d37b5d), asi que estos
+ * margenes siguen siendo holgados.
+ */
+export const MONOTRIBUTO_TIMEOUTS = {
+  /** Tarjeta de "Servicios | Mas utilizados": ya esta en el DOM del portal. */
+  CARD: 5000,
+  /** Buscador del portal y su resultado: ya estan en pantalla post-login. */
+  SEARCH: 8000,
+  /** Sonda "se abrio pestana nueva?". El caso feliz resuelve en ~1-2s. */
+  NEW_TAB: 6000,
+  /** Navegacion en la misma pestana hacia el portal de Monotributo. */
+  SAME_TAB_NAV: 6000,
+  /** Contenido renderizado (jumbotron) una vez que ya estamos en la pagina. */
+  READY: 12000,
+  /**
+   * Presupuesto total del step, como red de seguridad sobre los anteriores:
+   * cubre cualquier operacion de Playwright sin timeout explicito, que caeria
+   * en el default de la pagina (DEFAULT_TIMEOUT, 120s) y volveria a pasarse
+   * del corte de Cloudflare.
+   */
+  STEP_BUDGET: 45000,
+} as const;
 // Headless por defecto. Poné AFIP_HEADLESS=false en el entorno (dev) para
 // ver la ventana de Chromium y observar el scraping/emisión en vivo.
 export const DEFAULT_HEADLESS = process.env.AFIP_HEADLESS !== "false";
@@ -42,6 +76,7 @@ export const MAX_RETRIES = 2;
 
 export const URLS = {
   LOGIN: "https://auth.afip.gob.ar/contribuyente_/login.xhtml",
+  PORTAL: "https://portalcf.cloud.afip.gob.ar/portal/app/",
   RCEL: "https://fe.arca.gob.ar/rcel/jsp/index_bis.jsp",
 } as const;
 
@@ -68,6 +103,15 @@ export const SELECTORS = {
     // Multiple selectors for company button - ARCA uses different variants
     COMPANY_BUTTON: 'input[type="button"].btn_empresa, input[type="submit"].btn_empresa, input.btn_empresa, button.btn_empresa, input[onclick*="seleccionaEmpresaForm"], input[onclick*="empresa"], input[value][class*="btn"]',
     CONSULTAS_BUTTON: 'a#btn_consultas, a:has-text("Consultas"), a[href*="filtrarComprobantesGenerados"]',
+    /**
+     * Tarjeta de Monotributo en "Servicios | Mas utilizados" del portal.
+     *
+     * Ojo: es un `<a>` SIN href (la navegacion la hace un onClick de React),
+     * igual que los resultados del buscador. Por eso hay que verificar que la
+     * navegacion ocurrio en vez de asumirlo. La seccion es personalizada, asi
+     * que la tarjeta puede no estar: el caller cae al buscador.
+     */
+    MONOTRIBUTO_CARD: '#serviciosMasUtilizados a:has-text("Monotributo")',
   },
 
   // Filters
