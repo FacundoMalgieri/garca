@@ -6,6 +6,12 @@ import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytic
 import { encryptCredentials } from "@/lib/crypto";
 import { dedupeInvoices, mergeFetchedInvoices } from "@/lib/facturador/dedupe";
 import { sanitizePuntosDeVenta } from "@/lib/facturador/puntos-venta";
+import {
+  sanitizeCompanyInfo,
+  sanitizeInvoices,
+  sanitizeManualFxRates,
+  sanitizeMonotributoInfo,
+} from "@/lib/storage/sanitize";
 import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
@@ -151,7 +157,9 @@ export function useInvoices(): UseInvoicesReturn {
     if (typeof window === "undefined") return {};
     try {
       const stored = localStorage.getItem(MANUAL_FX_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : {};
+      // Las cotizaciones se usan para convertir a pesos: una basura o un 0 acá
+      // ensucia todos los totales del panel.
+      return stored ? sanitizeManualFxRates(JSON.parse(stored)) : {};
     } catch {
       return {};
     }
@@ -268,11 +276,19 @@ export function useInvoices(): UseInvoicesReturn {
         // when it returned zero invoices. Parsing "[]" yields an empty array
         // but still marks the session as queried so /panel renders the empty
         // state instead of bouncing back to /ingresar.
-        const invoices = JSON.parse(storedInvoices);
-        const parsedCompany = storedCompany ? JSON.parse(storedCompany) : null;
-        const company: CompanyInfo | null = parsedCompany
-          ? { ...parsedCompany, index: parsedCompany.index ?? 0 }
-          : extractCompanyInfo(invoices);
+        // Se sanea la forma, no sólo el JSON: lo guardado tiene la forma de la
+        // versión que lo escribió. Ver @/lib/storage/sanitize.
+        const invoices = sanitizeInvoices(JSON.parse(storedInvoices));
+        if (invoices === null) {
+          // Lo guardado no es una lista: inservible. Mejor tratarlo como "no hay
+          // sesión" (y mandar a /ingresar) que mostrar un panel vacío, que se
+          // leería como "no facturaste nada".
+          setState((prev) => ({ ...prev, isHydrated: true }));
+          return;
+        }
+        const company: CompanyInfo | null =
+          sanitizeCompanyInfo(storedCompany ? JSON.parse(storedCompany) : null) ??
+          extractCompanyInfo(invoices);
         // PDV va en su propio try/catch: si el JSON está corrupto no debe tirar
         // toda la hidratación (que dejaría al usuario deslogueado). Default null.
         // Además se sanea la forma: JSON válido no implica forma válida, y una
@@ -290,8 +306,9 @@ export function useInvoices(): UseInvoicesReturn {
       }
 
       if (storedMonotributo) {
-        const monotributo = JSON.parse(storedMonotributo);
-        setMonotributoInfo(monotributo);
+        // null (sin categoría) deja el panel de Monotributo oculto en vez de
+        // renderizarlo a medias.
+        setMonotributoInfo(sanitizeMonotributoInfo(JSON.parse(storedMonotributo)));
       }
     } catch {
       // Silently fail - localStorage might not be available

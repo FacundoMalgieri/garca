@@ -5,6 +5,8 @@
  * Solo client-side. Fuente de condición IVA para autocompletar y para el default de la NC.
  */
 
+import { asStringArray, isRecord } from "@/lib/storage/sanitize";
+
 export interface ClientHint {
   razonSocial?: string;
   condicionIVA?: string;
@@ -16,13 +18,39 @@ export type ClientMemory = Record<string, ClientHint>;
 
 export const CLIENTES_STORAGE_KEY = "garca_clientes";
 
+/**
+ * Sanea la memoria de clientes guardada.
+ *
+ * Los campos son todos opcionales, así que se conservan sólo los que tienen el
+ * tipo correcto en vez de descartar el hint entero: un `condicionIVA` roto no
+ * tiene por qué hacerte perder la razón social.
+ */
+export function sanitizeClientMemory(raw: unknown): ClientMemory {
+  if (!isRecord(raw)) return {};
+
+  const memory: ClientMemory = {};
+  for (const [doc, value] of Object.entries(raw)) {
+    if (!isRecord(value)) continue;
+    const hint: ClientHint = {};
+    if (typeof value.razonSocial === "string") hint.razonSocial = value.razonSocial;
+    if (typeof value.condicionIVA === "string") hint.condicionIVA = value.condicionIVA;
+    if (Array.isArray(value.condicionVenta)) {
+      const condicionVenta = asStringArray(value.condicionVenta);
+      if (condicionVenta.length > 0) hint.condicionVenta = condicionVenta;
+    }
+    if (Object.keys(hint).length > 0) memory[doc] = hint;
+  }
+  return memory;
+}
+
 export function loadClientMemory(): ClientMemory {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(CLIENTES_STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as ClientMemory) : {};
+    // Se sanea cada hint: `condicionVenta` se escribe derecho en el form y de ahí
+    // sale al plan de llenado de RCEL, donde tiene que ser un array de strings.
+    return sanitizeClientMemory(JSON.parse(raw));
   } catch {
     return {};
   }
