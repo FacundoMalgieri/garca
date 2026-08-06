@@ -56,9 +56,6 @@ export function buildFillPlan(p: Plantilla, opts: FillPlanOptions = {}): FillPla
   } else {
     pantalla2.push({ selector: "#nrodocreceptor", action: "fill", value: p.cliente.nroDoc });
   }
-  for (const fp of p.cliente.condicionVenta) {
-    pantalla2.push({ selector: `#formadepago${fp}`, action: "check", value: "true" });
-  }
   if (opts.asociado) {
     pantalla2.push({ selector: "#cmp_asoc_tipo", action: "select", value: opts.asociado.tipo });
     pantalla2.push({ selector: '[name="cmpAsociadoPtoVta"]', action: "fill", value: opts.asociado.puntoVenta });
@@ -66,6 +63,20 @@ export function buildFillPlan(p: Plantilla, opts: FillPlanOptions = {}): FillPla
     if (opts.asociado.fecha) {
       pantalla2.push({ selector: '[name="cmpAsociadoFechaEmision"]', action: "fill", value: opts.asociado.fecha });
     }
+  }
+  // La forma de pago va ÚLTIMA, después del comprobante asociado.
+  //
+  // El 06/08/2026 una NC llegó dos veces al Resumen con la condición de venta en
+  // "null", mientras la factura del mismo día (mismo usuario, misma sesión) salía
+  // bien. La única diferencia estructural del plan es este bloque de asociado, que
+  // antes iba después del checkbox: sus campos tienen validación nativa de RCEL
+  // (alert on blur) y re-renderizan la sección, y algo ahí se lleva puesto el
+  // valor que el servidor ya había registrado. Emitida a mano, tildando la forma
+  // de pago al final y sin tocar nada más, salió bien.
+  //
+  // Dejarla al final la pone después de todo lo que puede pisarla.
+  for (const fp of p.cliente.condicionVenta) {
+    pantalla2.push({ selector: `#formadepago${fp}`, action: "check", value: "true" });
   }
 
   const pantalla3: FillAction[] = [];

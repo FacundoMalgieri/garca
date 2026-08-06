@@ -103,14 +103,37 @@ async function matchesDom(page: Page, a: FillAction): Promise<boolean | null> {
  * Por eso la verificación va acá, inmediatamente antes de Continuar: es el único
  * momento en que el DOM ya no va a cambiar más y todavía se puede corregir.
  */
+/**
+ * ¿Hay que volver a aplicar esta acción justo antes de Continuar?
+ *
+ * Para `check` la respuesta es SIEMPRE, y esa es la parte contraintuitiva: el
+ * DOM no es evidencia del estado del servidor. RCEL guarda la forma de pago
+ * desde el handler del click, así que un checkbox tildado puede convivir con un
+ * `null` del lado del servidor — es exactamente lo que pasó con la NC del
+ * 06/08/2026, que llegó dos veces al Resumen con la condición de venta en
+ * "null" mientras el tilde se veía puesto. Comparar contra el DOM no podía
+ * detectarlo.
+ *
+ * Para el resto de las acciones el DOM sí alcanza: un select o un input que
+ * conserva su valor es prueba suficiente de que RCEL no lo reseteó.
+ *
+ * @param domMatches - Resultado de comparar contra el DOM; null si no se pudo leer.
+ */
+export function needsReapply(a: FillAction, domMatches: boolean | null): boolean {
+  if (a.action === "check") return true;
+  return domMatches === false;
+}
+
 async function reapplyDrifted(page: Page, actions: FillAction[]): Promise<void> {
   for (const a of actions) {
     const ok = await matchesDom(page, a).catch(() => null);
-    if (ok !== false) continue;
+    if (!needsReapply(a, ok)) continue;
 
-    console.warn(
-      `[AFIP Facturador] ⚠️  ${a.selector} se perdió después de aplicarlo (RCEL lo reseteó), reaplicando...`,
-    );
+    if (ok === false) {
+      console.warn(
+        `[AFIP Facturador] ⚠️  ${a.selector} se perdió después de aplicarlo (RCEL lo reseteó), reaplicando...`,
+      );
+    }
     await rawApply(page, a);
     await page.waitForTimeout(TIMING.JS_PROCESS_WAIT);
 

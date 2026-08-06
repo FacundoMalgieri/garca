@@ -133,3 +133,49 @@ describe("buildFillPlan", () => {
     expect(nroAction?.action).toBe("fill");
   });
 });
+
+describe("orden de la forma de pago en pantalla 2", () => {
+  const base = {
+    id: "x", nombre: "x", puntoDeVenta: "3", concepto: "productos" as const,
+    cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "30707915281", condicionVenta: ["1"] },
+    lineas: [{ descripcion: "x", cantidad: 1, unidad: "7", precioUnitario: 100 }],
+  };
+
+  // El 06/08/2026 una NC llegó dos veces al Resumen con la condición de venta en
+  // "null" mientras la factura del mismo día salía bien. La única diferencia
+  // estructural del plan es el bloque de comprobante asociado, que iba DESPUÉS
+  // del checkbox: sus campos tienen validación nativa de RCEL y se llevaban
+  // puestro el valor que el servidor ya había registrado.
+  it("las formas de pago van después del comprobante asociado", () => {
+    const plan = buildFillPlan(base, {
+      universo: "4",
+      asociado: { tipo: "11", puntoVenta: "00003", numero: "00000093", fecha: "06/08/2026" },
+    });
+
+    const idxPago = plan.pantalla2.findIndex((a) => a.selector.startsWith("#formadepago"));
+    const idxAsocUltimo = plan.pantalla2.reduce(
+      (last, a, i) => (a.selector.includes("cmpAsociado") || a.selector === "#cmp_asoc_tipo" ? i : last),
+      -1,
+    );
+
+    expect(idxPago).toBeGreaterThan(-1);
+    expect(idxAsocUltimo).toBeGreaterThan(-1);
+    expect(idxPago).toBeGreaterThan(idxAsocUltimo);
+  });
+
+  it("sin asociado, la forma de pago sigue yendo después del receptor", () => {
+    const plan = buildFillPlan(base, {});
+    const idxPago = plan.pantalla2.findIndex((a) => a.selector.startsWith("#formadepago"));
+    const idxDoc = plan.pantalla2.findIndex((a) => a.selector === "#nrodocreceptor");
+    expect(idxPago).toBeGreaterThan(idxDoc);
+  });
+
+  it("conserva todas las formas de pago pedidas, en orden", () => {
+    const plan = buildFillPlan(
+      { ...base, cliente: { ...base.cliente, condicionVenta: ["1", "6"] } },
+      { universo: "4", asociado: { tipo: "11", puntoVenta: "00003", numero: "00000093" } },
+    );
+    const pagos = plan.pantalla2.filter((a) => a.selector.startsWith("#formadepago"));
+    expect(pagos.map((a) => a.selector)).toEqual(["#formadepago1", "#formadepago6"]);
+  });
+});
