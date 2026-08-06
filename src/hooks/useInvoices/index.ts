@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sanitizeErrorCode, trackUmamiEvent, UMAMI_EVENTS } from "@/lib/analytics/umami";
 import { encryptCredentials } from "@/lib/crypto";
 import { dedupeInvoices, mergeFetchedInvoices } from "@/lib/facturador/dedupe";
+import { sanitizePuntosDeVenta } from "@/lib/facturador/puntos-venta";
 import type { AFIPCompany, AFIPInvoice, MonotributoAFIPInfo, PuntoDeVenta } from "@/types/afip-scraper";
 
 const STORAGE_KEY = "garca_invoices";
@@ -274,9 +275,12 @@ export function useInvoices(): UseInvoicesReturn {
           : extractCompanyInfo(invoices);
         // PDV va en su propio try/catch: si el JSON está corrupto no debe tirar
         // toda la hidratación (que dejaría al usuario deslogueado). Default null.
+        // Además se sanea la forma: JSON válido no implica forma válida, y una
+        // sesión guardada por una versión anterior a `tipos` rompía /facturar
+        // entero al usarse. Ver sanitizePuntosDeVenta.
         let puntosDeVenta: PuntoDeVenta[] | null = null;
         try {
-          puntosDeVenta = storedPdv ? JSON.parse(storedPdv) : null;
+          puntosDeVenta = storedPdv ? sanitizePuntosDeVenta(JSON.parse(storedPdv)) : null;
         } catch {
           puntosDeVenta = null;
         }

@@ -24,3 +24,28 @@ export function previousMonthPeriod(today: Date): { desde: string; hasta: string
 export function defaultVtoPago(today: Date): string {
   return formatDMY(addDays(today, 10));
 }
+
+/**
+ * DD/MM/YYYY -> YYYY-MM-DD, el formato que habla `<input type="date">`.
+ *
+ * La Plantilla guarda DD/MM/YYYY porque es lo que espera RCEL, así que la
+ * conversión vive sólo en el borde de la UI.
+ *
+ * @returns "" si no parsea (el input nativo lo interpreta como vacío).
+ */
+export function dmyToISO(dmy: string): string {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dmy.trim());
+  if (!m) return "";
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+/**
+ * YYYY-MM-DD -> DD/MM/YYYY, de vuelta al formato de RCEL.
+ *
+ * @returns "" si no parsea (pasa cuando el usuario limpia el input).
+ */
+export function isoToDMY(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
