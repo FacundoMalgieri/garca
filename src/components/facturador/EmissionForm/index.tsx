@@ -6,7 +6,8 @@ import { formatCurrency } from "@/components/InvoiceTable/utils/formatters";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { type ClientIndex,resolveClient } from "@/lib/facturador/client-index";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
-import { defaultVtoPago,previousMonthPeriod } from "@/lib/facturador/dates";
+import { normalizeDocNumber } from "@/lib/facturador/cuit";
+import { defaultVtoPago,dmyToISO, isoToDMY,previousMonthPeriod } from "@/lib/facturador/dates";
 import {
   CONCEPTO_OPTIONS, COND_IVA_OPTIONS, FORMA_PAGO_OPTIONS, TIPO_DOC_OPTIONS,
 UNIDAD_OPTIONS, } from "@/lib/facturador/select-options";
@@ -24,9 +25,16 @@ const TIPO_DOC_DNI = "96";
 // Universo (tipo de comprobante) de Factura C en RCEL. La tab "Emitir" siempre emite Factura C.
 const UNIVERSO_FACTURA_C = "2";
 
-/** ¿Este punto de venta puede emitir Factura C? */
+/**
+ * ¿Este punto de venta puede emitir Factura C?
+ *
+ * `tipos` se defiende aunque el tipo lo declare requerido: los PV pueden venir
+ * de una sesión vieja en localStorage. La hidratación ya los sanea
+ * (sanitizePuntosDeVenta), pero acá una lectura de más no cuesta nada y el modo
+ * de falla que evita es /facturar entero en pantalla de error.
+ */
 function pvSupportsFacturaC(p: PuntoDeVenta): boolean {
-  return p.tipos.some((t) => t.value === UNIVERSO_FACTURA_C);
+  return (p.tipos ?? []).some((t) => t.value === UNIVERSO_FACTURA_C);
 }
 
 /**
@@ -42,12 +50,13 @@ function parseNumericInput(raw: string): number | null {
 
 /** Etiqueta corta que le dice al usuario qué emite el PV (C vs E). */
 function pvSummary(p: PuntoDeVenta): string {
-  const numero = /(\d{4,5})/.exec(p.label)?.[1] ?? p.value;
+  const numero = /(\d{4,5})/.exec(p.label ?? "")?.[1] ?? p.value;
+  const tipos = p.tipos ?? [];
   const kind = pvSupportsFacturaC(p)
     ? "Factura C"
-    : p.tipos.some((t) => /exportaci[oó]n/i.test(t.label))
+    : tipos.some((t) => /exportaci[oó]n/i.test(t.label))
       ? "Factura E (exportación)"
-      : (p.tipos[0]?.label ?? "sin comprobantes");
+      : (tipos[0]?.label ?? "sin comprobantes");
   return `${numero} · ${kind}`;
 }
 
@@ -131,8 +140,13 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
       }
       return { ...f, cliente };
     });
-  const setNroDoc = (nroDoc: string) =>
+  // Se normaliza al entrar, no al validar: si el CUIT viene pegado con puntos o
+  // con un carácter invisible, el campo muestra el número limpio. Antes se veía
+  // un CUIT correcto y el form decía "CUIT inválido" sin nada visible que lo
+  // explicara. Los tres tipos de doc (CUIT/CUIL/DNI) son numéricos.
+  const setNroDoc = (raw: string) =>
     setForm((f) => {
+      const nroDoc = normalizeDocNumber(raw);
       const h = clientHints ? resolveClient(clientHints, nroDoc) : null;
       const cliente = { ...f.cliente, nroDoc };
       // Solo prefillear cuando el doc recién resuelve a un hint que no aplicamos
@@ -263,17 +277,23 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
             <button type="button" onClick={applyMesAnterior} className="text-xs text-primary dark:text-primary-foreground hover:underline cursor-pointer">mes anterior</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Inputs nativos: el calendario del navegador evita tipear DD/MM/AAAA
+                a mano y de paso hace imposible una fecha mal formada. La Plantilla
+                sigue guardando DD/MM/YYYY (lo que espera RCEL), así que se
+                convierte sólo acá, en el borde. */}
             <div>
               <label className={labelCls}>Desde</label>
-              <input data-testid="periodo-desde" className={inputCls} value={form.periodo?.desde ?? ""} onChange={(e) => setPeriodo({ desde: e.target.value })} placeholder="DD/MM/AAAA" />
+              <input type="date" data-testid="periodo-desde" className={inputCls} value={dmyToISO(form.periodo?.desde ?? "")} onChange={(e) => setPeriodo({ desde: isoToDMY(e.target.value) })} />
             </div>
             <div>
               <label className={labelCls}>Hasta</label>
-              <input data-testid="periodo-hasta" className={inputCls} value={form.periodo?.hasta ?? ""} onChange={(e) => setPeriodo({ hasta: e.target.value })} placeholder="DD/MM/AAAA" />
+              <input type="date" data-testid="periodo-hasta" className={inputCls} value={dmyToISO(form.periodo?.hasta ?? "")} onChange={(e) => setPeriodo({ hasta: isoToDMY(e.target.value) })} />
             </div>
             <div>
               <label className={labelCls}>Vto. pago</label>
-              <input data-testid="periodo-vto" className={inputCls} value={form.periodo?.vtoPago ?? ""} onChange={(e) => setPeriodo({ vtoPago: e.target.value })} placeholder="DD/MM/AAAA" />
+              {/* max: AFIP no acepta un vencimiento a más de 10 días (lo valida
+                  validateEmissionInput). El input nativo ya no deja elegirlo. */}
+              <input type="date" data-testid="periodo-vto" className={inputCls} value={dmyToISO(form.periodo?.vtoPago ?? "")} max={dmyToISO(defaultVtoPago(new Date()))} onChange={(e) => setPeriodo({ vtoPago: isoToDMY(e.target.value) })} />
             </div>
           </div>
         </div>

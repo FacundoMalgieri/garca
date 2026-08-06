@@ -65,7 +65,45 @@ describe("EmissionForm", () => {
   it("atajo 'mes anterior' completa el período", () => {
     render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
     fireEvent.click(screen.getByText(/mes anterior/i));
-    expect((screen.getByTestId("periodo-desde") as HTMLInputElement).value).toMatch(/^01\//);
+    // Los inputs de fecha son nativos: hablan ISO (YYYY-MM-DD), día 01.
+    expect((screen.getByTestId("periodo-desde") as HTMLInputElement).value).toMatch(/^\d{4}-\d{2}-01$/);
+  });
+
+  it("los campos de fecha son inputs nativos de tipo date", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    for (const id of ["periodo-desde", "periodo-hasta", "periodo-vto"]) {
+      expect((screen.getByTestId(id) as HTMLInputElement).type).toBe("date");
+    }
+  });
+
+  it("el vencimiento no deja elegir más allá del tope de AFIP", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    const vto = screen.getByTestId("periodo-vto") as HTMLInputElement;
+    expect(vto.max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  // El caso real reportado el 06/08/2026: un CUIT válido pegado desde otra app
+  // mostraba "CUIT del receptor inválido" con el número viéndose perfecto.
+  it("acepta un CUIT válido pegado con caracteres invisibles", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    fireEvent.change(screen.getByTestId("linea-desc-0"), { target: { value: "Servicios" } });
+    fireEvent.change(screen.getByTestId("linea-precio-0"), { target: { value: "50000" } });
+    // zero-width space al final, invisible en pantalla.
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30707915281​" } });
+
+    // El campo muestra el número limpio, sin el invisible.
+    expect((screen.getByTestId("nro-doc") as HTMLInputElement).value).toBe("30707915281");
+    expect(screen.queryByText(/CUIT del receptor inválido/i)).not.toBeInTheDocument();
+  });
+
+  it("acepta un CUIT válido pegado con puntos", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    fireEvent.change(screen.getByTestId("linea-desc-0"), { target: { value: "Servicios" } });
+    fireEvent.change(screen.getByTestId("linea-precio-0"), { target: { value: "50000" } });
+    fireEvent.change(screen.getByTestId("nro-doc"), { target: { value: "30.707.915.281" } });
+
+    expect((screen.getByTestId("nro-doc") as HTMLInputElement).value).toBe("30707915281");
+    expect(screen.queryByText(/CUIT del receptor inválido/i)).not.toBeInTheDocument();
   });
 
   it("en blanco (initial null) muestra 'Guardar como plantilla' cuando hay datos válidos", () => {
@@ -141,6 +179,26 @@ describe("EmissionForm", () => {
     // El PV inicial ("3") no está en la lista → elige el primero capaz = 00002.
     expect(screen.getByText("00002 · Factura C")).toBeInTheDocument();
     expect(screen.queryByText(/exportaci/i)).not.toBeInTheDocument();
+  });
+
+  // Un PV persistido por una versión anterior a `tipos` no debe romper la
+  // pantalla: antes tiraba "Cannot read properties of undefined (reading 'some')"
+  // y /facturar quedaba en error. La hidratación ya los sanea, pero el
+  // componente se defiende igual.
+  it("no explota con un PV sin tipos (sesión vieja en localStorage)", () => {
+    const puntosDeVenta = [{ value: "3", label: " 00003-Sin universo" }] as never;
+    expect(() =>
+      render(
+        <EmissionForm
+          initial={BASE}
+          onPreview={vi.fn()}
+          onUpdateTemplate={vi.fn()}
+          onSaveAsNew={vi.fn()}
+          puntosDeVenta={puntosDeVenta}
+        />,
+      ),
+    ).not.toThrow();
+    expect(screen.getByTestId("nro-doc")).toBeInTheDocument();
   });
 
   // [L5-UI] Guard: elegir manualmente un PV que no soporta Factura C bloquea la emisión.
