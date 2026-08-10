@@ -1461,4 +1461,81 @@ describe("useInvoices", () => {
     });
   });
 
+  describe("replaceLocal", () => {
+    const emitida = {
+      fecha: "10/08/2026",
+      tipo: "FACTURA C",
+      tipoComprobante: 11,
+      puntoVenta: 3,
+      numero: 91,
+      numeroCompleto: "0003-00000091",
+      cuitEmisor: "",
+      razonSocialEmisor: "Mi Empresa SA",
+      cuitReceptor: "30709876543",
+      razonSocialReceptor: "Cliente SA",
+      importeNeto: 50000,
+      importeIVA: 0,
+      importeTotal: 50000,
+      moneda: "ARS",
+      cae: "77777777777777",
+      emittedByGarca: true,
+    } as AFIPInvoice;
+    const scrapeada = {
+      fecha: "05/08/2026",
+      tipo: "Factura C",
+      tipoComprobante: 11,
+      puntoVenta: 2,
+      numero: 200,
+      numeroCompleto: "0002-00000200",
+      cuitEmisor: "20345678901",
+      razonSocialEmisor: "Mi Empresa SA",
+      cuitReceptor: "30709876543",
+      razonSocialReceptor: "Cliente SA",
+      importeNeto: 80000,
+      importeIVA: 20000,
+      importeTotal: 100000,
+      moneda: "ARS",
+      cae: "88888888888888",
+    } as AFIPInvoice;
+
+    it("con replaceLocal descarta las emitidas por GARCA que ARCA no devuelve", async () => {
+      const { result } = renderHook(() => useInvoices());
+      act(() => { result.current.addEmittedInvoice(emitida); });
+      expect(result.current.state.invoices).toHaveLength(1);
+
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({
+          success: true,
+          invoices: [scrapeada],
+          company: { cuit: "20345678901", razonSocial: "Mi Empresa SA" },
+        })
+      );
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "pw", 0, undefined, "EMISOR", "tok", true);
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.invoices[0].numero).toBe(200);
+    });
+
+    it("sin el flag conserva las emitidas que ARCA no devuelve", async () => {
+      const { result } = renderHook(() => useInvoices());
+      act(() => { result.current.addEmittedInvoice(emitida); });
+
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({
+          success: true,
+          invoices: [scrapeada],
+          company: { cuit: "20345678901", razonSocial: "Mi Empresa SA" },
+        })
+      );
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "pw", 0, undefined, "EMISOR", "tok");
+      });
+
+      expect(result.current.state.invoices).toHaveLength(2);
+      expect(result.current.state.invoices.some((i) => i.numero === 91)).toBe(true);
+    });
+  });
+
 });

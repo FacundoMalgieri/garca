@@ -38,7 +38,8 @@ interface InvoiceContextType {
     companyIndex: number,
     dateRange?: DateRange,
     rol?: "EMISOR" | "RECEPTOR",
-    turnstileToken?: string
+    turnstileToken?: string,
+    replaceLocal?: boolean
   ) => Promise<boolean>;
   clearInvoices: () => void;
   clearCompanies: () => void;
