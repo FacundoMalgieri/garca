@@ -1359,6 +1359,88 @@ describe("useInvoices", () => {
     });
   });
 
+  describe("fallos no destructivos", () => {
+    // Fixture local: la de "persistencia sin expiración" está scopeada a ese
+    // describe y no es alcanzable desde acá.
+    const storedInvoice = {
+      fecha: "15/11/2025",
+      tipo: "Factura C",
+      tipoComprobante: 11,
+      puntoVenta: 2,
+      numero: 150,
+      numeroCompleto: "0002-00000150",
+      cuitEmisor: "20345678901",
+      razonSocialEmisor: "Mi Empresa SA",
+      cuitReceptor: "30709876543",
+      razonSocialReceptor: "Cliente SA",
+      importeNeto: 80000,
+      importeIVA: 20000,
+      importeTotal: 100000,
+      moneda: "ARS",
+      cae: "12345678901234",
+    };
+
+    it("un fetch fallido conserva la sesión previa", async () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 }));
+      const { result } = renderHook(() => useInvoices());
+      expect(result.current.state.hasQueried).toBe(true);
+
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({ success: false, error: "Clave incorrecta", errorCode: "AUTH_FAILED" })
+      );
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "mal", 0, undefined, "EMISOR", "tok", true);
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.company).not.toBeNull();
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(result.current.state.error).toBe("Clave incorrecta");
+    });
+
+    it("un fetch que tira excepción conserva la sesión previa", async () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      const { result } = renderHook(() => useInvoices());
+
+      mockFetch.mockRejectedValueOnce(new Error("network down"));
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "pw", 0, undefined, "EMISOR", "tok", true);
+      });
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(result.current.state.isHydrated).toBe(true);
+    });
+
+    it("un fallo no persiste una lista vacía", async () => {
+      vi.useFakeTimers();
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      const { result } = renderHook(() => useInvoices());
+
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({ success: false, error: "Clave incorrecta", errorCode: "AUTH_FAILED" })
+      );
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "mal", 0, undefined, "EMISOR", "tok", true);
+      });
+      await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+
+      expect(JSON.parse(localStorage.getItem("garca_invoices") ?? "[]")).toHaveLength(1);
+      vi.useRealTimers();
+    });
+
+    it("cancelar un refresh conserva hasQueried", async () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      const { result } = renderHook(() => useInvoices());
+
+      act(() => { result.current.cancelOperation(); });
+
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(result.current.state.isLoading).toBe(false);
+    });
+  });
+
   describe("merge de emitidas en re-fetch", () => {
     const createMockSSEResponse = (events: Array<{ type: string; message: string; data?: unknown }>) => {
       const encoder = new TextEncoder();

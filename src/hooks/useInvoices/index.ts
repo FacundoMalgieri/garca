@@ -639,7 +639,9 @@ export function useInvoices(): UseInvoicesReturn {
       isLoading: true,
       error: null,
       errorCode: null,
-      hasQueried: false,
+      // hasQueried viene de prev: false en /ingresar (sesión limpia) y true
+      // durante un refresh desde /panel. Resetearlo acá vaciaba la sesión
+      // previa si el fetch fallaba (ver paths de fallo más abajo).
       progress: { message: "Iniciando...", progress: 0, type: "start" },
     }));
 
@@ -745,13 +747,13 @@ export function useInvoices(): UseInvoicesReturn {
               code: sanitizeErrorCode(finalResult.errorCode),
               reused: tokenReused,
             });
+            // No se tocan invoices/company/hasQueried: un fetch fallido no debe
+            // destruir la sesión previa (ver comentario al inicio del try).
             setState((prev) => ({
               ...prev,
-              invoices: [],
               isLoading: false,
               error: finalResult?.error || "Error al consultar facturas",
               errorCode: finalResult?.errorCode || null,
-              company: null,
               progress: null,
             }));
             return false;
@@ -812,13 +814,12 @@ export function useInvoices(): UseInvoicesReturn {
 
         if (!data.success) {
           trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: sanitizeErrorCode(data.errorCode), reused: tokenReused });
+          // Ver comentario en el path de fallo del SSE: no se toca la sesión previa.
           setState((prev) => ({
             ...prev,
-            invoices: [],
             isLoading: false,
             error: data.error || "Error al consultar facturas",
             errorCode: data.errorCode || null,
-            company: null,
             progress: null,
           }));
           return false;
@@ -879,20 +880,18 @@ export function useInvoices(): UseInvoicesReturn {
           : "CLIENT";
       trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: clientCode, reused: tokenReused });
 
-      setState({
-        invoices: [],
+      // Updater en vez de objeto completo: una excepción (red caída, etc.) no
+      // debe destruir la sesión previa. Ver comentario al inicio del try.
+      setState((prev) => ({
+        ...prev,
         isLoading: false,
         error: errorMessage,
         // El código calculado arriba, no "UNKNOWN": /ingresar lo usa para
         // elegir qué aconsejar.
         errorCode: clientCode,
-        company: null,
-        puntosDeVenta: null,
         progress: null,
         isHydrated: true,
-        hasQueried: false,
-        lastSyncedAt: null,
-      });
+      }));
     }
     return false;
     // clearCompanies is a stable useCallback([]) declared below; referenced at
