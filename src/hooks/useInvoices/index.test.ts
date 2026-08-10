@@ -60,6 +60,7 @@ describe("useInvoices", () => {
         progress: null,
         isHydrated: true,
         hasQueried: false,
+        lastSyncedAt: null,
       });
     });
 
@@ -1157,6 +1158,70 @@ describe("useInvoices", () => {
       const { result } = renderHook(() => useInvoices());
 
       expect(result.current.state.company?.razonSocial).toBe("Recovered From Second");
+    });
+  });
+
+  describe("persistencia sin expiración", () => {
+    const storedInvoice = {
+      fecha: "15/11/2025",
+      tipo: "Factura C",
+      tipoComprobante: 11,
+      puntoVenta: 2,
+      numero: 150,
+      numeroCompleto: "0002-00000150",
+      cuitEmisor: "20345678901",
+      razonSocialEmisor: "Mi Empresa SA",
+      cuitReceptor: "30709876543",
+      razonSocialReceptor: "Cliente SA",
+      importeNeto: 80000,
+      importeIVA: 20000,
+      importeTotal: 100000,
+      moneda: "ARS",
+      cae: "12345678901234",
+    };
+
+    it("hidrata una sesión guardada hace 40 días en vez de borrarla", () => {
+      const fortyDaysAgo = Date.now() - 40 * 24 * 60 * 60 * 1000;
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_company", JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 }));
+      localStorage.setItem("garca_invoices_ts", String(fortyDaysAgo));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.hasQueried).toBe(true);
+      expect(localStorage.getItem("garca_invoices")).not.toBeNull();
+    });
+
+    it("expone lastSyncedAt desde garca_invoices_ts", () => {
+      const ts = 1_760_000_000_000;
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_invoices_ts", String(ts));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.lastSyncedAt).toBe(ts);
+    });
+
+    it("trata un timestamp no numérico como ausente", () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_invoices_ts", "no-es-un-numero");
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.lastSyncedAt).toBeNull();
+      expect(result.current.state.invoices).toHaveLength(1);
+    });
+
+    it("clearInvoices deja lastSyncedAt en null", () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_invoices_ts", String(Date.now()));
+
+      const { result } = renderHook(() => useInvoices());
+      act(() => { result.current.clearInvoices(); });
+
+      expect(result.current.state.lastSyncedAt).toBeNull();
+      expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
     });
   });
 
