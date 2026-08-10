@@ -1430,6 +1430,29 @@ describe("useInvoices", () => {
       vi.useRealTimers();
     });
 
+    it("borra el timestamp si el guardado de comprobantes falla por cuota", async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useInvoices());
+
+      mockFetch.mockResolvedValueOnce(mockSseFetch({ success: true, invoices: [storedInvoice] }));
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "pw", 0, undefined, "EMISOR", "tok", true);
+      });
+      expect(localStorage.getItem("garca_invoices_ts")).not.toBeNull();
+
+      // Sólo la key grande (garca_invoices) falla por cuota; el timestamp ya
+      // está escrito de antes y debe caer con ella cuando el flush corre.
+      const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation((key: string) => {
+        if (key === "garca_invoices") throw new DOMException("quota", "QuotaExceededError");
+      });
+      await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+      setItem.mockRestore();
+
+      expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
+      expect(result.current.state.lastSyncedAt).toBeNull();
+      vi.useRealTimers();
+    });
+
     it("cancelar un refresh conserva hasQueried", async () => {
       localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
       const { result } = renderHook(() => useInvoices());
