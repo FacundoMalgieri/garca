@@ -1339,6 +1339,24 @@ describe("useInvoices", () => {
 
       vi.useRealTimers();
     });
+
+    it("descarta una sesión demo persistida", () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem(
+        "garca_company",
+        JSON.stringify({ cuit: "20345678901", razonSocial: "Tecnología Innovadora SRL (Demo)", index: 0 }),
+      );
+      localStorage.setItem("garca_invoices_ts", String(Date.now()));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.invoices).toHaveLength(0);
+      expect(result.current.state.hasQueried).toBe(false);
+      expect(result.current.state.company).toBeNull();
+      expect(result.current.state.isHydrated).toBe(true);
+      expect(localStorage.getItem("garca_invoices")).toBeNull();
+      expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
+    });
   });
 
   describe("merge de emitidas en re-fetch", () => {
