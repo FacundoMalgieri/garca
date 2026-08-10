@@ -22,6 +22,7 @@ interface InvoiceState {
   progress: ScraperProgress | null;
   isHydrated: boolean;
   hasQueried: boolean;
+  lastSyncedAt: number | null;
 }
 
 interface InvoiceContextType {

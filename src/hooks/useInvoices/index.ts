@@ -18,9 +18,12 @@ const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
 const PDV_STORAGE_KEY = "garca_pdv";
 const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
-const STORAGE_TTL_KEY = "garca_invoices_ts";
+// Timestamp del último scrape exitoso. Antes era un reloj de expiración (TTL de
+// 24 h): la sesión ahora persiste indefinidamente y este valor sólo alimenta el
+// aviso de "última actualización". Se escribe únicamente al terminar bien un
+// fetch, no en cada guardado, para que emitir una factura no lo mueva.
+const LAST_SYNC_STORAGE_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
-const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Company information extracted from invoices.
@@ -66,6 +69,9 @@ export interface InvoiceState {
   // /panel and survive a refresh, so navigation guards key on this flag rather
   // than the invoice count to avoid the silent bounce back to /ingresar.
   hasQueried: boolean;
+  // Epoch ms del último scrape exitoso, o null si nunca hubo uno (sesión previa
+  // a este campo, demo, o fetch que nunca corrió). Alimenta LastSyncNotice.
+  lastSyncedAt: number | null;
 }
 
 /**
@@ -138,6 +144,7 @@ export function useInvoices(): UseInvoicesReturn {
     progress: null,
     isHydrated: false,
     hasQueried: false,
+    lastSyncedAt: null,
   });
 
   const [companiesState, setCompaniesState] = useState<CompaniesState>({
@@ -253,18 +260,9 @@ export function useInvoices(): UseInvoicesReturn {
    */
   const loadFromStorage = useCallback(() => {
     try {
-      const storedTs = localStorage.getItem(STORAGE_TTL_KEY);
-      if (storedTs && Date.now() - Number.parseInt(storedTs, 10) > TTL_MS) {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(COMPANY_STORAGE_KEY);
-        localStorage.removeItem(PDV_STORAGE_KEY);
-        localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
-        localStorage.removeItem(STORAGE_TTL_KEY);
-        localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
-        setManualExchangeRates({});
-        setState((prev) => ({ ...prev, isHydrated: true }));
-        return;
-      }
+      const storedTs = localStorage.getItem(LAST_SYNC_STORAGE_KEY);
+      const parsedTs = storedTs === null ? Number.NaN : Number.parseInt(storedTs, 10);
+      const lastSyncedAt = Number.isFinite(parsedTs) ? parsedTs : null;
 
       const storedInvoices = localStorage.getItem(STORAGE_KEY);
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
@@ -283,7 +281,7 @@ export function useInvoices(): UseInvoicesReturn {
           // Lo guardado no es una lista: inservible. Mejor tratarlo como "no hay
           // sesión" (y mandar a /ingresar) que mostrar un panel vacío, que se
           // leería como "no facturaste nada".
-          setState((prev) => ({ ...prev, isHydrated: true }));
+          setState((prev) => ({ ...prev, isHydrated: true, lastSyncedAt }));
           return;
         }
         const company: CompanyInfo | null =
@@ -300,9 +298,9 @@ export function useInvoices(): UseInvoicesReturn {
         } catch {
           puntosDeVenta = null;
         }
-        setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true }));
+        setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true, lastSyncedAt }));
       } else {
-        setState((prev) => ({ ...prev, isHydrated: true }));
+        setState((prev) => ({ ...prev, isHydrated: true, lastSyncedAt }));
       }
 
       if (storedMonotributo) {
@@ -322,7 +320,6 @@ export function useInvoices(): UseInvoicesReturn {
   const saveToStorage = (invoices: AFIPInvoice[], company: CompanyInfo | null) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
-      localStorage.setItem(STORAGE_TTL_KEY, String(Date.now()));
       if (company) {
         localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(company));
       }
@@ -342,6 +339,19 @@ export function useInvoices(): UseInvoicesReturn {
       } else {
         localStorage.removeItem(PDV_STORAGE_KEY);
       }
+    } catch {
+      // Silently fail - localStorage might be full or unavailable
+    }
+  };
+
+  /**
+   * Sella el momento del último scrape exitoso. Se llama FUERA del updater de
+   * setState (al lado de persistPuntosDeVenta): un efecto adentro del updater se
+   * invoca dos veces bajo StrictMode en dev y corre en renders descartados.
+   */
+  const persistLastSync = (ts: number) => {
+    try {
+      localStorage.setItem(LAST_SYNC_STORAGE_KEY, String(ts));
     } catch {
       // Silently fail - localStorage might be full or unavailable
     }
@@ -731,6 +741,8 @@ export function useInvoices(): UseInvoicesReturn {
 
           const puntosDeVenta = finalResult.puntosDeVenta ?? null;
           persistPuntosDeVenta(puntosDeVenta);
+          const syncedAt = Date.now();
+          persistLastSync(syncedAt);
 
           setState((prev) => {
             // Conservar las emitidas por GARCA a través del re-fetch: el row
@@ -750,6 +762,7 @@ export function useInvoices(): UseInvoicesReturn {
               progress: null,
               isHydrated: true,
               hasQueried: true,
+              lastSyncedAt: syncedAt,
             };
           });
 
@@ -792,6 +805,8 @@ export function useInvoices(): UseInvoicesReturn {
 
         const puntosDeVenta = (data.puntosDeVenta as PuntoDeVenta[] | undefined) ?? null;
         persistPuntosDeVenta(puntosDeVenta);
+        const syncedAt = Date.now();
+        persistLastSync(syncedAt);
 
         setState((prev) => {
           // Ver comentario en el success path del SSE (mergeFetchedInvoices).
@@ -809,6 +824,7 @@ export function useInvoices(): UseInvoicesReturn {
             progress: null,
             isHydrated: true,
             hasQueried: true,
+            lastSyncedAt: syncedAt,
           };
         });
 
@@ -841,6 +857,7 @@ export function useInvoices(): UseInvoicesReturn {
         progress: null,
         isHydrated: true,
         hasQueried: false,
+        lastSyncedAt: null,
       });
     }
     return false;
@@ -892,7 +909,7 @@ export function useInvoices(): UseInvoicesReturn {
       localStorage.removeItem(COMPANY_STORAGE_KEY);
       localStorage.removeItem(PDV_STORAGE_KEY);
       localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
-      localStorage.removeItem(STORAGE_TTL_KEY);
+      localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
       localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
     } catch {
       // Silently fail
@@ -910,6 +927,7 @@ export function useInvoices(): UseInvoicesReturn {
       progress: null,
       isHydrated: true,
       hasQueried: false,
+      lastSyncedAt: null,
     });
   }, []);
 
@@ -933,6 +951,7 @@ export function useInvoices(): UseInvoicesReturn {
       progress: null,
       isHydrated: true,
       hasQueried: true,
+      lastSyncedAt: null,
     });
     setMonotributoInfo(info);
     saveMonotributoToStorage(info);
