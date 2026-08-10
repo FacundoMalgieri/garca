@@ -92,7 +92,7 @@ export default function PanelPage() {
     }
   }, [state.isHydrated, state.isLoading, state.hasQueried, router]);
 
-  if (!state.isHydrated || state.isLoading) {
+  if (!state.isHydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
