@@ -5,15 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ClearDataModal } from "@/components/ClearDataModal";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useTourContext } from "@/contexts/TourContext";
 import { useTheme } from "@/hooks/useTheme";
+import { hasAnyStoredData, type StorageGroupId } from "@/lib/storage/groups";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const { state, clearInvoices } = useInvoiceContext();
+  const { state } = useInvoiceContext();
   // Treat pre-hydration as "unknown" so we don't flash either CTA. Once
   // loadFromStorage has run (state.isHydrated === true) we trust
   // state.invoices.length as the source of truth.
@@ -26,6 +27,16 @@ export function Navbar() {
 
   const isOnPanel = pathname === "/panel";
   const hasTour = isOnPanel || pathname === "/calculadora-monotributo";
+
+  // El botón vive en las rutas de la app, no en las de marketing, y aparece si
+  // queda CUALQUIER cosa guardada: con el gate viejo (invoices.length > 0),
+  // borrar los comprobantes escondía el botón y dejaba las plantillas y los
+  // clientes sin forma de borrarse.
+  const isAppRoute = pathname === "/panel" || pathname === "/facturar";
+  const [puedeLimpiar, setPuedeLimpiar] = useState(false);
+  useEffect(() => {
+    setPuedeLimpiar(hasAnyStoredData());
+  }, [state.isHydrated, state.invoices.length]);
 
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -42,10 +53,16 @@ export function Navbar() {
     };
   }, []);
 
-  const handleClearData = () => {
-    clearInvoices();
-    setIsOpen(false);
+  const handleCleared = (ids: StorageGroupId[]) => {
     setShowClearConfirm(false);
+    setIsOpen(false);
+    if (ids.some((id) => id !== "comprobantes")) {
+      // Las preferencias son estado React que sobrevive al borrado de la key y
+      // se re-persiste al primer cambio. Recargar re-inicializa todos los hooks
+      // desde storage vacío.
+      window.location.reload();
+      return;
+    }
     router.push("/");
   };
 
@@ -189,7 +206,7 @@ export function Navbar() {
               </Link>
             )}
 
-            {isOnPanel && hasInvoices && (
+            {isAppRoute && puedeLimpiar && (
               <button
                 onClick={() => setShowClearConfirm(true)}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-destructive border border-destructive transition-colors hover:bg-destructive/10 inline-flex items-center gap-2 cursor-pointer"
@@ -293,7 +310,7 @@ export function Navbar() {
               )}
 
               {/* Destructive actions */}
-              {isOnPanel && hasInvoices && (
+              {isAppRoute && puedeLimpiar && (
                 <>
                   <div className="my-2 mx-4 border-t border-border" />
                   <button
@@ -311,16 +328,11 @@ export function Navbar() {
         )}
       </div>
 
-      {/* Clear Data Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Modal de borrado selectivo */}
+      <ClearDataModal
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={handleClearData}
-        title="¿Limpiar todos los datos?"
-        description="Esta acción eliminará todas las facturas y datos almacenados en tu navegador. No se puede deshacer."
-        confirmText="Sí, limpiar"
-        cancelText="Cancelar"
-        variant="destructive"
+        onCleared={handleCleared}
       />
     </nav>
   );

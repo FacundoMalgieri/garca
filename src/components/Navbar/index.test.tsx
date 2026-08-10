@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach,describe, expect, it, vi } from "vitest";
 
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
@@ -64,11 +64,34 @@ vi.mock("@/contexts/TourContext", () => ({
 }));
 
 describe("Navbar", () => {
+  // jsdom no implementa window.location.reload (loguea "Not implemented:
+  // navigation" y no hace nada), y no se puede espiar la property real
+  // (`vi.spyOn(window.location, "reload")` tira "Cannot redefine property").
+  // Se reemplaza el objeto `location` entero por uno con un reload espiable,
+  // y se restaura el original en cada afterEach para que no se filtre entre tests.
+  const originalLocation = window.location;
+  let mockReload: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     mockInvoices = [];
     mockTheme = "light";
     mockPathname = "/panel";
+    mockReload = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: { ...originalLocation, reload: mockReload },
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    });
   });
 
   it("should be defined", () => {
@@ -144,65 +167,77 @@ describe("Navbar", () => {
     expect(screen.getByText("Facturas")).toBeInTheDocument();
   });
 
-  it("shows clear data button when invoices exist", () => {
-    mockInvoices = [
-      {
-        fecha: "15/11/2025",
-        tipo: "Factura C",
-        tipoComprobante: 11,
-        puntoVenta: 2,
-        numero: 150,
-        numeroCompleto: "0002-00000150",
-        cuitEmisor: "20345678901",
-        razonSocialEmisor: "Test Company",
-        cuitReceptor: "30712345678",
-        razonSocialReceptor: "Client Company",
-        importeNeto: 1000000,
-        importeIVA: 210000,
-        importeTotal: 1210000,
-        moneda: "ARS",
-        cae: "75000000000000",
-      },
-    ];
+  it("shows clear data button when there is stored data", () => {
+    // El gate ya no mira las invoices en memoria sino si queda algo en
+    // localStorage — así el botón sigue disponible después de borrar
+    // comprobantes, con las plantillas del facturador todavía guardadas.
+    localStorage.setItem("garca_invoices", "[]");
 
     render(<Navbar />);
     expect(screen.getByText("Limpiar Datos")).toBeInTheDocument();
   });
 
-  it("does not show clear data button when no invoices", () => {
+  it("does not show clear data button when nothing is stored", () => {
     render(<Navbar />);
     expect(screen.queryByText("Limpiar Datos")).not.toBeInTheDocument();
   });
 
+  it("ofrece Limpiar Datos en /panel aunque no haya comprobantes", () => {
+    localStorage.setItem("garca_facturador_templates", "[]");
+    mockPathname = "/panel";
+    mockInvoices = [];
+
+    render(<Navbar />);
+
+    expect(screen.getAllByRole("button", { name: /Limpiar Datos/ }).length).toBeGreaterThan(0);
+  });
+
+  it("no ofrece Limpiar Datos si no hay nada guardado", () => {
+    mockPathname = "/panel";
+    mockInvoices = [];
+
+    render(<Navbar />);
+
+    expect(screen.queryByRole("button", { name: /Limpiar Datos/ })).not.toBeInTheDocument();
+  });
+
+  it("no ofrece Limpiar Datos en la landing", () => {
+    localStorage.setItem("garca_facturador_templates", "[]");
+    mockPathname = "/";
+    mockInvoices = [];
+
+    render(<Navbar />);
+
+    expect(screen.queryByRole("button", { name: /Limpiar Datos/ })).not.toBeInTheDocument();
+  });
+
   it("clears invoice data via context and redirects home when clear button is confirmed", () => {
-    mockInvoices = [
-      {
-        fecha: "15/11/2025",
-        tipo: "Factura C",
-        tipoComprobante: 11,
-        puntoVenta: 2,
-        numero: 150,
-        numeroCompleto: "0002-00000150",
-        cuitEmisor: "20345678901",
-        razonSocialEmisor: "Test Company",
-        cuitReceptor: "30712345678",
-        razonSocialReceptor: "Client Company",
-        importeNeto: 1000000,
-        importeIVA: 210000,
-        importeTotal: 1210000,
-        moneda: "ARS",
-        cae: "75000000000000",
-      },
-    ];
+    localStorage.setItem("garca_invoices", "[]");
 
     render(<Navbar />);
 
     fireEvent.click(screen.getByText("Limpiar Datos"));
-    expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Sí, limpiar"));
+    expect(screen.getByText("¿Qué querés borrar?")).toBeInTheDocument();
+    // Selección default: sólo Comprobantes.
+    fireEvent.click(screen.getByRole("button", { name: /Borrar lo seleccionado/ }));
 
     expect(mockClearInvoices).toHaveBeenCalledTimes(1);
     expect(mockRouterPush).toHaveBeenCalledWith("/");
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+
+  it("recarga la página en vez de redirigir cuando se borra algo además de Comprobantes", () => {
+    localStorage.setItem("garca_invoices", "[]");
+    localStorage.setItem("garca_facturador_templates", "[]");
+
+    render(<Navbar />);
+
+    fireEvent.click(screen.getByText("Limpiar Datos"));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Facturador/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Borrar lo seleccionado/ }));
+
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(mockRouterPush).not.toHaveBeenCalledWith("/");
   });
 
   it("opens mobile menu when hamburger is clicked", () => {
@@ -282,39 +317,21 @@ describe("Navbar", () => {
   });
 
   it("closes confirmation dialog when cancel is clicked", () => {
-    mockInvoices = [
-      {
-        fecha: "15/11/2025",
-        tipo: "Factura C",
-        tipoComprobante: 11,
-        puntoVenta: 2,
-        numero: 150,
-        numeroCompleto: "0002-00000150",
-        cuitEmisor: "20345678901",
-        razonSocialEmisor: "Test Company",
-        cuitReceptor: "30712345678",
-        razonSocialReceptor: "Client Company",
-        importeNeto: 1000000,
-        importeIVA: 210000,
-        importeTotal: 1210000,
-        moneda: "ARS",
-        cae: "75000000000000",
-      },
-    ];
+    localStorage.setItem("garca_invoices", "[]");
 
     render(<Navbar />);
 
-    // Click "Limpiar Datos" opens confirmation dialog
+    // Click "Limpiar Datos" abre el modal de borrado selectivo
     fireEvent.click(screen.getByText("Limpiar Datos"));
 
     // Verify dialog is shown
-    expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
+    expect(screen.getByText("¿Qué querés borrar?")).toBeInTheDocument();
 
     // Click cancel button
     fireEvent.click(screen.getByText("Cancelar"));
 
     // Dialog should close
-    expect(screen.queryByText("¿Limpiar todos los datos?")).not.toBeInTheDocument();
+    expect(screen.queryByText("¿Qué querés borrar?")).not.toBeInTheDocument();
 
     // Redirect should NOT have been triggered
     expect(mockRouterPush).not.toHaveBeenCalledWith("/");
@@ -463,25 +480,7 @@ describe("Navbar", () => {
   });
 
   it("opens mobile clear data dialog from mobile menu", () => {
-    mockInvoices = [
-      {
-        fecha: "15/11/2025",
-        tipo: "Factura C",
-        tipoComprobante: 11,
-        puntoVenta: 2,
-        numero: 150,
-        numeroCompleto: "0002-00000150",
-        cuitEmisor: "20345678901",
-        razonSocialEmisor: "Test Company",
-        cuitReceptor: "30712345678",
-        razonSocialReceptor: "Client Company",
-        importeNeto: 1000000,
-        importeIVA: 210000,
-        importeTotal: 1210000,
-        moneda: "ARS",
-        cae: "75000000000000",
-      },
-    ];
+    localStorage.setItem("garca_invoices", "[]");
 
     render(<Navbar />);
 
@@ -494,7 +493,7 @@ describe("Navbar", () => {
     fireEvent.click(clearButtons[1]); // Mobile button
 
     // Dialog should open
-    expect(screen.getByText("¿Limpiar todos los datos?")).toBeInTheDocument();
+    expect(screen.getByText("¿Qué querés borrar?")).toBeInTheDocument();
   });
 
   it("invokes scrollTo for each desktop navigation target", async () => {

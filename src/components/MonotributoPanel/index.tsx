@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { ClearDataModal } from "@/components/ClearDataModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
 import type { RecategorizacionOutlook } from "@/lib/monotributo/outlook";
@@ -113,7 +113,7 @@ export function MonotributoPanel({
   isCurrentYearData = true,
 }: MonotributoPanelProps) {
   const { data, tipoActividad, updateTipoActividad } = useMonotributo(ventanaVigente.ingresos);
-  const { clearInvoices, monotributoInfo } = useInvoiceContext();
+  const { monotributoInfo } = useInvoiceContext();
 
   // Use scraped activity type if available, otherwise allow manual selection
   const hasScrapedActivity = monotributoInfo?.tipoActividad !== null && monotributoInfo?.tipoActividad !== undefined;
@@ -399,16 +399,16 @@ export function MonotributoPanel({
         )}
       </CardContent>
 
-      {/* Clear Data Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Modal de borrado selectivo. Sin router.push: si se borraron
+          Comprobantes, el efecto de /panel ya redirige a /ingresar; agregar
+          un push acá haría carrera contra él sobre el mismo cambio de estado. */}
+      <ClearDataModal
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={clearInvoices}
-        title="¿Limpiar todos los datos?"
-        description="Esta acción eliminará todas las facturas y datos almacenados en tu navegador. No se puede deshacer."
-        confirmText="Sí, limpiar"
-        cancelText="Cancelar"
-        variant="destructive"
+        onCleared={(ids) => {
+          setShowClearConfirm(false);
+          if (ids.some((id) => id !== "comprobantes")) window.location.reload();
+        }}
       />
     </Card>
   );
