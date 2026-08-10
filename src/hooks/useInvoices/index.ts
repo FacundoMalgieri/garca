@@ -25,6 +25,20 @@ const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 const LAST_SYNC_STORAGE_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
 
+/** Borra del storage todo lo que compone una sesión de comprobantes. */
+function clearStoredSession() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(COMPANY_STORAGE_KEY);
+    localStorage.removeItem(PDV_STORAGE_KEY);
+    localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
+    localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
+    localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
+  } catch {
+    // Silently fail
+  }
+}
+
 /**
  * Company information extracted from invoices.
  */
@@ -287,6 +301,18 @@ export function useInvoices(): UseInvoicesReturn {
         const company: CompanyInfo | null =
           sanitizeCompanyInfo(storedCompany ? JSON.parse(storedCompany) : null) ??
           extractCompanyInfo(invoices);
+
+        // La demo nunca fue pensada para persistir: la escribe el mismo efecto
+        // debounced que una sesión real (loadDemoData marca hasQueried), y sin
+        // TTL quedaría para siempre, mostrando facturas ficticias con fecha de
+        // actualización y ocultando el CTA "Ingresar" del Navbar. Mismo criterio
+        // de detección que /panel: la razón social lleva "(Demo)".
+        if (company?.razonSocial?.includes("(Demo)")) {
+          clearStoredSession();
+          setState((prev) => ({ ...prev, isHydrated: true }));
+          return;
+        }
+
         // PDV va en su propio try/catch: si el JSON está corrupto no debe tirar
         // toda la hidratación (que dejaría al usuario deslogueado). Default null.
         // Además se sanea la forma: JSON válido no implica forma válida, y una
@@ -904,16 +930,7 @@ export function useInvoices(): UseInvoicesReturn {
     clearTimeout(saveTimeoutRef.current);
     pendingSaveRef.current = null;
 
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(COMPANY_STORAGE_KEY);
-      localStorage.removeItem(PDV_STORAGE_KEY);
-      localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
-      localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
-      localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
-    } catch {
-      // Silently fail
-    }
+    clearStoredSession();
     setManualExchangeRates({});
     setMonotributoInfo(null);
 
