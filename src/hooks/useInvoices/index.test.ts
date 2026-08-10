@@ -35,6 +35,39 @@ vi.mock("@/lib/analytics/umami", () => ({
   },
 }));
 
+/**
+ * Builds a mock fetch Response simulating a single-event SSE stream that
+ * immediately emits one "result" event carrying `resultPayload` as its data.
+ * Reused across tests that only care about the final result and don't need
+ * to assert on intermediate progress events (those keep their own local
+ * `createMockSSEResponse` that takes a full event list).
+ */
+const mockSseFetch = (resultPayload: unknown) => {
+  const encoder = new TextEncoder();
+  const chunk = encoder.encode(
+    `data: ${JSON.stringify({ type: "result", message: "ok", data: resultPayload })}\n\n`
+  );
+  let sent = false;
+
+  return {
+    ok: true,
+    headers: {
+      get: (name: string) => (name === "content-type" ? "text/event-stream" : null),
+    },
+    body: {
+      getReader: () => ({
+        read: async () => {
+          if (!sent) {
+            sent = true;
+            return { done: false, value: chunk };
+          }
+          return { done: true, value: undefined };
+        },
+      }),
+    },
+  };
+};
+
 describe("useInvoices", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1222,6 +1255,89 @@ describe("useInvoices", () => {
 
       expect(result.current.state.lastSyncedAt).toBeNull();
       expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
+    });
+
+    it("escribe garca_invoices_ts y expone lastSyncedAt al terminar bien el fetch (SSE)", async () => {
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({ success: true, invoices: [], company: { cuit: "123", razonSocial: "Test" } })
+      );
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.lastSyncedAt).toEqual(expect.any(Number));
+      expect(localStorage.getItem("garca_invoices_ts")).toBe(String(result.current.state.lastSyncedAt));
+    });
+
+    it("escribe garca_invoices_ts y expone lastSyncedAt al terminar bien el fetch (fallback JSON)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => "application/json" },
+        json: () =>
+          Promise.resolve({ success: true, invoices: [], company: { cuit: "123", razonSocial: "Test" } }),
+      });
+
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.state.lastSyncedAt).toEqual(expect.any(Number));
+      expect(localStorage.getItem("garca_invoices_ts")).toBe(String(result.current.state.lastSyncedAt));
+    });
+
+    it("addEmittedInvoice no mueve garca_invoices_ts: emitir una factura no es sincronizar", () => {
+      vi.useFakeTimers();
+      const initialTs = 1_700_000_000_000;
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem("garca_invoices_ts", String(initialTs));
+
+      const { result } = renderHook(() => useInvoices());
+      expect(result.current.state.lastSyncedAt).toBe(initialTs);
+
+      const emittedInvoice = {
+        fecha: "01/01/2026",
+        tipo: "Factura C",
+        tipoComprobante: 11,
+        puntoVenta: 3,
+        numero: 5,
+        numeroCompleto: "0003-00000005",
+        cuitEmisor: "",
+        razonSocialEmisor: "YO",
+        cuitReceptor: "30709876543",
+        razonSocialReceptor: "Cliente SA",
+        importeNeto: 1000,
+        importeIVA: 210,
+        importeTotal: 1210,
+        moneda: "ARS",
+        cae: "999",
+        emittedByGarca: true,
+      } as AFIPInvoice;
+
+      act(() => {
+        result.current.addEmittedInvoice(emittedInvoice);
+      });
+
+      // El guardado post-emisión está debounced 300ms; sin avanzar el reloj la
+      // aserción pasaría igual sin haber ejercitado saveToStorage.
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(localStorage.getItem("garca_invoices_ts")).toBe(String(initialTs));
+      expect(result.current.state.lastSyncedAt).toBe(initialTs);
+
+      vi.useRealTimers();
     });
   });
 
