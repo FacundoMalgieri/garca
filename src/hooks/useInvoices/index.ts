@@ -1118,7 +1118,7 @@ function extractCompanyInfo(invoices: AFIPInvoice[], loginCuit?: string, index =
 /**
  * Gets the default date range (last 12 months from today).
  */
-function getDefaultDateRange(): DateRange {
+export function getDefaultDateRange(): DateRange {
   const today = new Date();
   const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
 
