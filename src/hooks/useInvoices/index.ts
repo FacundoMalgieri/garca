@@ -251,7 +251,17 @@ export function useInvoices(): UseInvoicesReturn {
     saveTimeoutRef.current = setTimeout(() => {
       const pending = pendingSaveRef.current;
       if (pending) {
-        saveToStorage(pending.invoices, pending.company);
+        if (!saveToStorage(pending.invoices, pending.company)) {
+          // El write grande falló (cuota llena): el timestamp de "última
+          // actualización", escrito aparte y antes, no puede sobrevivir a un
+          // guardado que no ocurrió.
+          try {
+            localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
+          } catch {
+            // Silently fail
+          }
+          setState((prev) => ({ ...prev, lastSyncedAt: null }));
+        }
         pendingSaveRef.current = null;
       }
     }, 300);
@@ -267,7 +277,17 @@ export function useInvoices(): UseInvoicesReturn {
     return () => {
       const pending = pendingSaveRef.current;
       if (pending) {
-        saveToStorage(pending.invoices, pending.company);
+        // Mismo criterio que el flush debounced (ver arriba), pero sin
+        // setState: el componente ya se está desmontando, así que actualizar
+        // estado acá sería un no-op en el mejor caso y un warning de React
+        // en el peor.
+        if (!saveToStorage(pending.invoices, pending.company)) {
+          try {
+            localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
+          } catch {
+            // Silently fail
+          }
+        }
         pendingSaveRef.current = null;
       }
     };
@@ -345,16 +365,21 @@ export function useInvoices(): UseInvoicesReturn {
   }, []);
 
   /**
-   * Saves invoices and company info to localStorage.
+   * Persiste comprobantes y empresa. Devuelve si el write funcionó: el caller
+   * necesita saberlo porque el timestamp de última actualización se escribe
+   * aparte (y antes), y no puede quedar afirmando frescura que el storage no
+   * tiene si acá salta QuotaExceededError.
    */
-  const saveToStorage = (invoices: AFIPInvoice[], company: CompanyInfo | null) => {
+  const saveToStorage = (invoices: AFIPInvoice[], company: CompanyInfo | null): boolean => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
       if (company) {
         localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(company));
       }
+      return true;
     } catch {
-      // Silently fail - localStorage might be full or unavailable
+      // localStorage lleno o no disponible.
+      return false;
     }
   };
 
