@@ -125,7 +125,11 @@ export interface UseInvoicesReturn {
     companyIndex: number,
     dateRange?: DateRange,
     rol?: "EMISOR" | "RECEPTOR",
-    turnstileToken?: string
+    turnstileToken?: string,
+    // true en el refresh manual desde /panel: descarta todo lo local (scrapeado
+    // y emitido por GARCA) y se queda sólo con lo que devuelve ARCA. Default
+    // false conserva el comportamiento de /ingresar.
+    replaceLocal?: boolean
   ) => Promise<boolean>;
   clearInvoices: () => void;
   clearCompanies: () => void;
@@ -619,7 +623,8 @@ export function useInvoices(): UseInvoicesReturn {
     companyIndex: number,
     dateRange?: DateRange,
     rol: "EMISOR" | "RECEPTOR" = "EMISOR",
-    turnstileToken?: string
+    turnstileToken?: string,
+    replaceLocal = false
   ): Promise<boolean> => {
     const tokenReused = markTokenReuse(turnstileToken);
     // Abort any existing request
@@ -774,9 +779,12 @@ export function useInvoices(): UseInvoicesReturn {
             // Conservar las emitidas por GARCA a través del re-fetch: el row
             // autoritativo de AFIP reemplaza al placeholder (sin duplicar) y las
             // emitidas que AFIP todavía no indexó se mantienen. Ver mergeFetchedInvoices.
-            const emittedByGarca = prev.invoices.filter(
-              (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
-            );
+            // replaceLocal (refresh manual desde /panel): se descarta todo lo
+            // local, incluidas las emitidas por GARCA, y queda sólo lo que trae
+            // ARCA. mergeFetchedInvoices([], fetched) devuelve fetched tal cual.
+            const emittedByGarca = replaceLocal
+              ? []
+              : prev.invoices.filter((i) => (i as { emittedByGarca?: boolean }).emittedByGarca);
             return {
               ...prev,
               invoices: mergeFetchedInvoices(emittedByGarca, invoices),
@@ -835,10 +843,10 @@ export function useInvoices(): UseInvoicesReturn {
         persistLastSync(syncedAt);
 
         setState((prev) => {
-          // Ver comentario en el success path del SSE (mergeFetchedInvoices).
-          const emittedByGarca = prev.invoices.filter(
-            (i) => (i as { emittedByGarca?: boolean }).emittedByGarca
-          );
+          // Ver comentario en el success path del SSE (mergeFetchedInvoices y replaceLocal).
+          const emittedByGarca = replaceLocal
+            ? []
+            : prev.invoices.filter((i) => (i as { emittedByGarca?: boolean }).emittedByGarca);
           return {
             ...prev,
             invoices: mergeFetchedInvoices(emittedByGarca, invoices),
