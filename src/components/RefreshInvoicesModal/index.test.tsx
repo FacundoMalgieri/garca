@@ -125,6 +125,22 @@ describe("RefreshInvoicesModal", () => {
     expect(screen.queryByText(/Clave incorrecta/)).not.toBeInTheDocument();
   });
 
+  it("muestra solo el splash mientras isLoading, sin backdrop ni tarjeta", () => {
+    mockState.isLoading = true;
+    render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
+    expect(screen.getByText(/Actualizando comprobantes/)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Cancelar/ })).not.toBeInTheDocument();
+  });
+
+  it("con isLoading en true, Escape no cierra el modal", () => {
+    mockState.isLoading = true;
+    const onClose = vi.fn();
+    render(<RefreshInvoicesModal isOpen onClose={onClose} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("no renderiza nada cerrado", () => {
     render(<RefreshInvoicesModal isOpen={false} onClose={vi.fn()} />);
     expect(screen.queryByRole("button", { name: /Traer comprobantes/ })).not.toBeInTheDocument();

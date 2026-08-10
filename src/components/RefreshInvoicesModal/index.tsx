@@ -64,6 +64,18 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
   const puedeEnviar = password.length > 0 && turnstileToken !== null && !state.isLoading;
 
   const handleClose = () => {
+    // Mientras el fetch está en curso no hay Cancelar ni backdrop en pantalla
+    // (ver el branch de `state.isLoading` más abajo), pero el listener de
+    // Escape del hook de a11y sigue atado a `document` sin importar qué se
+    // esté renderizando. Sin esta guarda, Escape cerraría el modal a mitad de
+    // una carga no abortable y el resultado llegaría al contexto con el modal
+    // ya desmontado — el mismo agujero que ocultar la tarjeta buscaba cerrar.
+    // Se gatea acá adentro (no en el `isOpen` que recibe useModalA11y) porque
+    // alternar ese argumento dispara el cleanup de foco-restore del hook en
+    // cada transición true→false→true, lo que saca el foco al fondo de la
+    // página durante la carga; no vale la pena por un cierre que de por sí no
+    // debe ocurrir.
+    if (state.isLoading) return;
     setPassword("");
     rearmTurnstile();
     onClose();
