@@ -6,8 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChartsPanel } from "@/components/ChartsPanel";
 import { CompanyHeader } from "@/components/CompanyHeader";
 import { InvoiceTable } from "@/components/InvoiceTable";
+import { LastSyncNotice } from "@/components/LastSyncNotice";
 import { MonotributoPanel } from "@/components/MonotributoPanel";
 import { ProjectionPanel } from "@/components/ProjectionPanel";
+import { RefreshInvoicesModal } from "@/components/RefreshInvoicesModal";
 import { SummaryPanel } from "@/components/SummaryPanel";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
@@ -29,6 +31,7 @@ export default function PanelPage() {
   const { registerTour } = useTourContext();
   const getSteps = useCallback(() => getPanelTourSteps(), []);
   const { startTour } = useTour({ tourKey: PANEL_TOUR_KEY, steps: getSteps });
+  const [showRefresh, setShowRefresh] = useState(false);
 
   useEffect(() => {
     registerTour(startTour);
@@ -170,6 +173,13 @@ export default function PanelPage() {
         <CompanyHeader />
       </section>
 
+      {/* Última sincronización + botón para reemplazarla (no aplica a la demo) */}
+      {!isDemo && (
+        <div className="mx-4 md:mx-0">
+          <LastSyncNotice onRefresh={() => setShowRefresh(true)} />
+        </div>
+      )}
+
       {/* FX manual exchange rate banner */}
       {Object.keys(fxCurrenciesNeedingRate).length > 0 && (
         <FxRateBanner
@@ -216,6 +226,8 @@ export default function PanelPage() {
       <section id="facturas">
         <InvoiceTable />
       </section>
+
+      <RefreshInvoicesModal isOpen={showRefresh} onClose={() => setShowRefresh(false)} />
     </div>
   );
 }
