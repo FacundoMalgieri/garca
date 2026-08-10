@@ -3,7 +3,12 @@
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 
 interface LastSyncNoticeProps {
-  onRefresh: () => void;
+  /**
+   * Ausente cuando no hay de dónde re-consultar (sin empresa guardada): en ese
+   * caso no se ofrece Actualizar, porque el modal no tendría CUIT ni índice de
+   * empresa y el submit sería un no-op silencioso.
+   */
+  onRefresh?: () => void;
 }
 
 /**
@@ -31,15 +36,19 @@ export function LastSyncNotice({ onRefresh }: LastSyncNoticeProps) {
         ) : (
           <>Comprobantes actualizados el {fecha}.</>
         )}{" "}
-        Si emitís desde ARCA, actualizá para verlos acá.
+        {onRefresh
+          ? "Si emitís desde ARCA, actualizá para verlos acá."
+          : "No tenemos guardada la empresa de la sesión, así que para actualizarlos vas a tener que ingresar de nuevo con tu clave fiscal."}
       </p>
-      <button
-        type="button"
-        onClick={onRefresh}
-        className="shrink-0 rounded-lg border border-primary px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 cursor-pointer"
-      >
-        Actualizar
-      </button>
+      {onRefresh && (
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="shrink-0 rounded-lg border border-primary px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 cursor-pointer"
+        >
+          Actualizar
+        </button>
+      )}
     </div>
   );
 }

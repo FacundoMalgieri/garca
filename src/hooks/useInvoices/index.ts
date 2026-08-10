@@ -132,6 +132,7 @@ export interface UseInvoicesReturn {
     replaceLocal?: boolean
   ) => Promise<boolean>;
   clearInvoices: () => void;
+  clearError: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
   loadDemoData: (
@@ -955,6 +956,20 @@ export function useInvoices(): UseInvoicesReturn {
   const isOperationInProgress = state.isLoading || companiesState.isLoading;
 
   /**
+   * Descarta el error del último fetch sin tocar el resto de la sesión.
+   *
+   * Antes el error sólo se limpiaba al arrancar un fetch nuevo o con
+   * `clearInvoices`. Como un fallo ya no destruye la sesión, quedaba un estado
+   * nuevo (`hasQueried: true` + `error != null`) que sobrevivía para siempre:
+   * `InvoiceTable` mostraba el cartel rojo encima de la lista vieja y
+   * `/ingresar` dejaba de redirigir al panel porque su guarda mira `!error`.
+   * Quien cierra el modal de actualizar llama a esto para cerrar el fallo.
+   */
+  const clearError = useCallback(() => {
+    setState((prev) => ({ ...prev, error: null, errorCode: null }));
+  }, []);
+
+  /**
    * Clears invoice data from state and localStorage.
    */
   const clearInvoices = useCallback(() => {
@@ -1049,6 +1064,7 @@ export function useInvoices(): UseInvoicesReturn {
       fetchCompanies,
       fetchInvoicesWithCompany,
       clearInvoices,
+      clearError,
       clearCompanies,
       loadFromStorage,
       loadDemoData,
@@ -1065,6 +1081,7 @@ export function useInvoices(): UseInvoicesReturn {
       fetchCompanies,
       fetchInvoicesWithCompany,
       clearInvoices,
+      clearError,
       clearCompanies,
       loadFromStorage,
       loadDemoData,

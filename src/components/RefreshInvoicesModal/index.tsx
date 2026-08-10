@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { LoadingSplash } from "@/components/LoadingSplash";
 import { DateRangePicker } from "@/components/LoginForm/components/DateRangePicker";
 import { PasswordInput } from "@/components/LoginForm/components/PasswordInput";
+import { validateDateRange } from "@/components/LoginForm/utils/validation";
 import { TurnstileWidget, type TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { getDefaultDateRange } from "@/hooks/useInvoices";
@@ -27,19 +28,18 @@ interface RefreshInvoicesModalProps {
  * reaparece en el refresh siguiente.
  */
 export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalProps) {
-  const { state, fetchInvoicesWithCompany } = useInvoiceContext();
+  const { state, fetchInvoicesWithCompany, cancelOperation, clearError } = useInvoiceContext();
   const [mounted, setMounted] = useState(false);
   const [password, setPassword] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const defaultRange = getDefaultDateRange();
   const [fechaDesde, setFechaDesde] = useState(defaultRange.from);
   const [fechaHasta, setFechaHasta] = useState(defaultRange.to);
-  // El error del contexto solo se limpia cuando arranca un fetch nuevo, no
-  // cuando el modal se cierra. Sin esta bandera local, cerrar el modal tras un
-  // submit fallido y reabrirlo más tarde (sin volver a enviar) mostraría de
-  // nuevo el error viejo. Se gatea la sección de error con esto en vez de
-  // tocarle los semánticos de error al hook/contexto para el resto de
-  // consumidores.
+  // La sección de error se muestra sólo después de un intento propio. El
+  // cierre por `handleClose` ya llama a `clearError()`, pero el contexto puede
+  // traer un error de otro origen (un fetch fallido de /ingresar, o un cierre
+  // que no pasó por handleClose): esta bandera evita que el modal lo adopte
+  // como si fuera el resultado de su propio submit.
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
@@ -61,23 +61,48 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
     turnstileRef.current?.reset();
   };
 
-  const puedeEnviar = password.length > 0 && turnstileToken !== null && !state.isLoading;
+  // Mismo tope que /ingresar (rango invertido y más de 366 días): el server
+  // sólo valida el formato, así que si el modal no lo chequea un rango de
+  // varios años llega derecho al scraper.
+  const dateError = validateDateRange(fechaDesde, fechaHasta);
+
+  const puedeEnviar =
+    password.length > 0 &&
+    turnstileToken !== null &&
+    !state.isLoading &&
+    dateError === null &&
+    // Sin empresa guardada no hay CUIT ni índice con qué re-consultar: el
+    // submit sería un no-op silencioso.
+    state.company !== null;
 
   const handleClose = () => {
-    // Mientras el fetch está en curso no hay Cancelar ni backdrop en pantalla
-    // (ver el branch de `state.isLoading` más abajo), pero el listener de
-    // Escape del hook de a11y sigue atado a `document` sin importar qué se
-    // esté renderizando. Sin esta guarda, Escape cerraría el modal a mitad de
-    // una carga no abortable y el resultado llegaría al contexto con el modal
-    // ya desmontado — el mismo agujero que ocultar la tarjeta buscaba cerrar.
+    // Durante la carga sólo se ve el splash con su propio Cancelar (ver el
+    // branch de `state.isLoading` más abajo), pero el listener de Escape del
+    // hook de a11y sigue atado a `document` sin importar qué se esté
+    // renderizando. Escape queda inerte a propósito: es una tecla fácil de
+    // apretar sin querer y abortar un scraping de varios minutos por accidente
+    // es peor que no hacer nada; para cortar está el botón explícito.
     // Se gatea acá adentro (no en el `isOpen` que recibe useModalA11y) porque
     // alternar ese argumento dispara el cleanup de foco-restore del hook en
     // cada transición true→false→true, lo que saca el foco al fondo de la
-    // página durante la carga; no vale la pena por un cierre que de por sí no
-    // debe ocurrir.
+    // página durante la carga.
     if (state.isLoading) return;
     setPassword("");
     rearmTurnstile();
+    // El error del contexto no se limpia solo: sin esto, un refresh fallido
+    // deja el cartel rojo en InvoiceTable y rompe el redirect de /ingresar
+    // para el resto de la sesión.
+    clearError();
+    onClose();
+  };
+
+  // Aborta el fetch en curso y vuelve al panel. `cancelOperation` conserva
+  // `hasQueried`, así que /panel no expulsa al usuario a /ingresar.
+  const handleCancelFetch = () => {
+    cancelOperation();
+    setPassword("");
+    rearmTurnstile();
+    clearError();
     onClose();
   };
 
@@ -105,16 +130,28 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
 
   if (!active) return null;
 
-  // Mientras el fetch está en curso se muestra SOLO el splash de progreso: si
-  // el backdrop/tarjeta del modal quedan montados encima (ambos son `fixed`
-  // con z-index explícito, así que compiten por la misma capa), el splash
-  // termina tapado por la tarjeta opaca y el scraping se ve "colgado" sin
-  // spinner ni progreso. Como bonus, sin la tarjeta montada no hay botón
-  // Cancelar ni backdrop para cerrar el modal a mitad del fetch (que no se
-  // aborta) y perder de vista un resultado que igual va a llegar al contexto.
+  // Mientras el fetch está en curso se esconde la tarjeta del formulario: si
+  // el backdrop/tarjeta quedan montados encima (ambos son `fixed` con z-index
+  // explícito, así que compiten por la misma capa), el splash termina tapado
+  // por la tarjeta opaca y el scraping se ve "colgado" sin spinner ni
+  // progreso. Encima del splash queda un único botón para cortar: la petición
+  // SÍ se aborta (`cancelOperation` corta `invoicesAbortRef`), así que un
+  // refresh que quedó largo no puede aterrizar más tarde y pisar lo que el
+  // usuario hizo mientras tanto (p. ej. una factura recién emitida).
   if (state.isLoading) {
     return createPortal(
-      <LoadingSplash isLoading message="Actualizando comprobantes…" progress={state.progress} />,
+      <>
+        <LoadingSplash isLoading message="Actualizando comprobantes…" progress={state.progress} />
+        <div className="fixed inset-x-0 bottom-4 z-[110] flex justify-center px-4">
+          <button
+            type="button"
+            onClick={handleCancelFetch}
+            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-lg transition-colors hover:bg-muted cursor-pointer"
+          >
+            Cancelar actualización
+          </button>
+        </div>
+      </>,
       document.body
     );
   }
@@ -157,7 +194,7 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
             fechaHasta={fechaHasta}
             onFechaDesdeChange={setFechaDesde}
             onFechaHastaChange={setFechaHasta}
-            error={null}
+            error={dateError}
             disabled={state.isLoading}
             maxDate={defaultRange.to}
           />
