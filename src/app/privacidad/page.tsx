@@ -52,7 +52,7 @@ export default function PrivacidadPage() {
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li><strong className="text-foreground">Almacenamiento:</strong> Se guardan <strong className="text-foreground">únicamente</strong> en el localStorage de tu navegador.</li>
             <li><strong className="text-foreground">Transmisión:</strong> <strong className="text-foreground">NO</strong> se envían a ningún servidor externo después de obtenidos.</li>
-            <li><strong className="text-foreground">Control:</strong> Podés eliminarlos en cualquier momento usando el botón &quot;Limpiar Datos&quot;.</li>
+            <li><strong className="text-foreground">Control:</strong> Podés eliminarlos en cualquier momento con &quot;Limpiar Datos&quot;, eligiendo qué borrar: comprobantes, plantillas y clientes del facturador, o preferencias.</li>
             <li><strong className="text-foreground">Persistencia:</strong> Permanecen en tu dispositivo hasta que los elimines o limpies los datos del navegador.</li>
             <li><strong className="text-foreground">Límite:</strong> El localStorage tiene un límite de ~5-10 MB según el navegador. Datos que excedan este límite podrían no guardarse correctamente.</li>
           </ul>
@@ -114,7 +114,7 @@ export default function PrivacidadPage() {
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li><strong className="text-foreground">Ubicación:</strong> Los datos se almacenan exclusivamente en tu dispositivo, dentro del almacenamiento del navegador.</li>
             <li><strong className="text-foreground">No se sincroniza:</strong> Los datos NO se sincronizan entre dispositivos ni navegadores.</li>
-            <li><strong className="text-foreground">Eliminación:</strong> Podés borrar todos los datos usando &quot;Limpiar Datos&quot;, limpiando los datos del sitio en tu navegador, o usando el modo incógnito.</li>
+            <li><strong className="text-foreground">Eliminación:</strong> Con &quot;Limpiar Datos&quot; elegís qué borrar por grupo. Tus plantillas de facturación y los clientes recordados persisten hasta que los tildes explícitamente, porque no están en ARCA y no se pueden recuperar. También podés limpiar los datos del sitio desde tu navegador, o usar el modo incógnito.</li>
             <li><strong className="text-foreground">Riesgo:</strong> Cualquier persona con acceso físico a tu dispositivo y navegador podría ver los datos almacenados. Usá el Servicio en dispositivos de confianza.</li>
             <li><strong className="text-foreground">Sin encriptación local:</strong> Los datos en localStorage no están encriptados. El navegador los protege con su política de mismo origen (same-origin policy).</li>
           </ul>
@@ -274,7 +274,7 @@ export default function PrivacidadPage() {
             <li><strong className="text-foreground">Eliminar</strong> tus datos — usando el botón &quot;Limpiar Datos&quot; del Servicio, limpiando el localStorage del navegador, o desinstalando la PWA si la hubieras instalado.</li>
             <li><strong className="text-foreground">Exportar</strong> tus datos — mediante las funciones de exportación a PDF, CSV y JSON.</li>
             <li><strong className="text-foreground">Rectificar</strong> tus datos — dado que los datos provienen directamente de ARCA, cualquier corrección debe realizarse en el portal de ARCA.</li>
-            <li><strong className="text-foreground">Revocar consentimiento</strong> — podés dejar de usar el Servicio en cualquier momento y eliminar todos tus datos locales.</li>
+            <li><strong className="text-foreground">Revocar consentimiento</strong> — podés dejar de usar el Servicio en cualquier momento y eliminar todos tus datos locales con &quot;Limpiar Datos&quot;, tildando los tres grupos.</li>
             <li><strong className="text-foreground">No ser objeto de decisiones automatizadas</strong> — el Servicio no toma decisiones automatizadas sobre vos. Las proyecciones y cálculos son orientativos.</li>
           </ul>
           <p className="text-muted-foreground mt-2">
