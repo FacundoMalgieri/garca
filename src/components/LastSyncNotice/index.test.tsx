@@ -42,4 +42,15 @@ describe("LastSyncNotice", () => {
     fireEvent.click(screen.getByRole("button", { name: /Actualizar/ }));
     expect(onRefresh).toHaveBeenCalledTimes(1);
   });
+
+  it("sin onRefresh no ofrece Actualizar y explica por qué", () => {
+    mockState.lastSyncedAt = new Date(2026, 7, 10).getTime();
+    render(<LastSyncNotice />);
+
+    // /panel omite onRefresh cuando no hay empresa guardada: ofrecer el botón
+    // abriría un modal con el CUIT vacío y un submit que no hace nada.
+    expect(screen.queryByRole("button", { name: /Actualizar/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/10\/08\/2026/)).toBeInTheDocument();
+    expect(screen.getByText(/ingresar de nuevo con tu clave fiscal/)).toBeInTheDocument();
+  });
 });

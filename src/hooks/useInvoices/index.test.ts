@@ -1453,6 +1453,33 @@ describe("useInvoices", () => {
       vi.useRealTimers();
     });
 
+    it("clearError apaga el error del fallo sin tocar la sesión", async () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
+      localStorage.setItem(
+        "garca_company",
+        JSON.stringify({ cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 0 })
+      );
+      const { result } = renderHook(() => useInvoices());
+
+      mockFetch.mockResolvedValueOnce(
+        mockSseFetch({ success: false, error: "Clave incorrecta", errorCode: "AUTH_FAILED" })
+      );
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "mal", 0, undefined, "EMISOR", "tok", true);
+      });
+      expect(result.current.state.error).toBe("Clave incorrecta");
+
+      act(() => { result.current.clearError(); });
+
+      // Sin esto el error vive para siempre: InvoiceTable pinta el cartel rojo
+      // encima de la lista vieja y /ingresar deja de redirigir a /panel.
+      expect(result.current.state.error).toBeNull();
+      expect(result.current.state.errorCode).toBeNull();
+      expect(result.current.state.invoices).toHaveLength(1);
+      expect(result.current.state.company).not.toBeNull();
+      expect(result.current.state.hasQueried).toBe(true);
+    });
+
     it("cancelar un refresh conserva hasQueried", async () => {
       localStorage.setItem("garca_invoices", JSON.stringify([storedInvoice]));
       const { result } = renderHook(() => useInvoices());

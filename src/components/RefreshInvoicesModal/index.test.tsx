@@ -5,8 +5,15 @@ import { RefreshInvoicesModal } from "./index";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 const mockFetchInvoices = vi.fn().mockResolvedValue(true);
+const mockCancelOperation = vi.fn();
+const mockClearError = vi.fn();
+type Company = { cuit: string; razonSocial: string; index: number } | null;
 const mockState = {
-  company: { cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 3 },
+  company: {
+    cuit: "20345678901",
+    razonSocial: "Mi Empresa SA",
+    index: 3,
+  } as Company,
   isLoading: false,
   error: null as string | null,
   errorCode: null as string | null,
@@ -14,7 +21,12 @@ const mockState = {
 };
 
 vi.mock("@/contexts/InvoiceContext", () => ({
-  useInvoiceContext: () => ({ state: mockState, fetchInvoicesWithCompany: mockFetchInvoices }),
+  useInvoiceContext: () => ({
+    state: mockState,
+    fetchInvoicesWithCompany: mockFetchInvoices,
+    cancelOperation: mockCancelOperation,
+    clearError: mockClearError,
+  }),
 }));
 
 vi.mock("@/components/TurnstileWidget", () => ({
@@ -28,6 +40,7 @@ describe("RefreshInvoicesModal", () => {
     vi.clearAllMocks();
     mockState.isLoading = false;
     mockState.error = null;
+    mockState.company = { cuit: "20345678901", razonSocial: "Mi Empresa SA", index: 3 };
   });
 
   it("deja el submit deshabilitado sin password", () => {
@@ -125,12 +138,76 @@ describe("RefreshInvoicesModal", () => {
     expect(screen.queryByText(/Clave incorrecta/)).not.toBeInTheDocument();
   });
 
-  it("muestra solo el splash mientras isLoading, sin backdrop ni tarjeta", () => {
+  it("mientras isLoading muestra el splash sin backdrop ni tarjeta", () => {
     mockState.isLoading = true;
     render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
     expect(screen.getByText(/Actualizando comprobantes/)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Cancelar/ })).not.toBeInTheDocument();
+    // La tarjeta del formulario (y con ella su "Traer comprobantes") no está.
+    expect(screen.queryByRole("button", { name: /Traer comprobantes/ })).not.toBeInTheDocument();
+  });
+
+  it("permite cancelar el fetch en curso", () => {
+    // Sin cancelable, salir del panel a /facturar y emitir una factura mientras
+    // el refresh sigue vivo termina con el fetch aterrizando y descartando la
+    // recién emitida (replaceLocal vacía las emitidas por GARCA).
+    mockState.isLoading = true;
+    const onClose = vi.fn();
+    render(<RefreshInvoicesModal isOpen onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar actualización/ }));
+
+    expect(mockCancelOperation).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("limpia el error del contexto al cerrar", () => {
+    mockState.error = "Credenciales inválidas";
+    render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Cancelar$/ }));
+
+    // El contexto sólo limpiaba el error al arrancar otro fetch: sin esto el
+    // cartel rojo queda en /panel y /ingresar deja de redirigir.
+    expect(mockClearError).toHaveBeenCalledTimes(1);
+  });
+
+  it("bloquea el submit con un rango invertido y muestra el motivo", () => {
+    render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Contraseña"), { target: { value: "secreta" } });
+    fireEvent.click(screen.getByText("armar-turnstile"));
+    fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-08-10" } });
+    fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-01-01" } });
+
+    expect(screen.getByText(/no puede ser posterior/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Traer comprobantes/ })).toBeDisabled();
+  });
+
+  it("bloquea el submit con un rango mayor a un año", () => {
+    render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Contraseña"), { target: { value: "secreta" } });
+    fireEvent.click(screen.getByText("armar-turnstile"));
+    fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2023-01-01" } });
+    fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-01-01" } });
+
+    // El server sólo valida el formato: sin este chequeo, tres años de rango
+    // llegan al scraper.
+    expect(screen.getByText(/no puede ser mayor a 1 año/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Traer comprobantes/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Traer comprobantes/ }));
+    expect(mockFetchInvoices).not.toHaveBeenCalled();
+  });
+
+  it("sin empresa guardada no deja enviar", () => {
+    mockState.company = null;
+    render(<RefreshInvoicesModal isOpen onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Contraseña"), { target: { value: "secreta" } });
+    fireEvent.click(screen.getByText("armar-turnstile"));
+
+    // Antes el botón quedaba habilitado y el submit era un no-op silencioso.
+    expect(screen.getByRole("button", { name: /Traer comprobantes/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Traer comprobantes/ }));
+    expect(mockFetchInvoices).not.toHaveBeenCalled();
   });
 
   it("con isLoading en true, Escape no cierra el modal", () => {

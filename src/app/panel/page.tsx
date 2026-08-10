@@ -112,6 +112,20 @@ export default function PanelPage() {
 
   const isDemo = state.company?.razonSocial?.includes("(Demo)") ?? false;
   const isEmptyPeriod = state.invoices.length === 0;
+  // El modal de actualizar reusa la empresa guardada (CUIT + índice). Sin ella
+  // no hay nada que re-consultar, así que no se ofrece Actualizar: el submit
+  // sería un no-op silencioso. La demo tampoco se actualiza contra ARCA.
+  const canRefresh = !isDemo && state.company !== null;
+  // Consultar otro período ya no exige tirar la sesión: el modal re-trae la
+  // ventana pedida conservando cotizaciones manuales y datos de Monotributo.
+  // Sin empresa guardada queda el camino viejo (limpiar + volver a ingresar),
+  // que es el único posible en ese estado.
+  const handleConsultarOtroPeriodo = canRefresh
+    ? () => setShowRefresh(true)
+    : () => {
+        clearInvoices();
+        router.push("/ingresar");
+      };
   // Sin facturación Y sin categoría de Monotributo: no tenemos nada que
   // mostrar. Suele indicar que la persona no es monotributista activa (p. ej.
   // se dio de baja al pasar a relación de dependencia). Si hay facturas no se
@@ -146,7 +160,7 @@ export default function PanelPage() {
               monotributista para usar este servicio, o{" "}
               <button
                 type="button"
-                onClick={() => { clearInvoices(); router.push("/ingresar"); }}
+                onClick={handleConsultarOtroPeriodo}
                 className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
               >
                 consultá otro período
@@ -158,7 +172,7 @@ export default function PanelPage() {
               categoría de Monotributo y podés{" "}
               <button
                 type="button"
-                onClick={() => { clearInvoices(); router.push("/ingresar"); }}
+                onClick={handleConsultarOtroPeriodo}
                 className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
               >
                 consultar otro período
@@ -176,7 +190,7 @@ export default function PanelPage() {
       {/* Última sincronización + botón para reemplazarla (no aplica a la demo) */}
       {!isDemo && (
         <div className="mx-4 md:mx-0">
-          <LastSyncNotice onRefresh={() => setShowRefresh(true)} />
+          <LastSyncNotice onRefresh={canRefresh ? () => setShowRefresh(true) : undefined} />
         </div>
       )}
 

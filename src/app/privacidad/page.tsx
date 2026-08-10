@@ -4,7 +4,7 @@ export default function PrivacidadPage() {
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-bold text-foreground mb-2">Política de Privacidad</h1>
-      <p className="text-sm text-muted-foreground mb-8">Última actualización: Junio 2026</p>
+      <p className="text-sm text-muted-foreground mb-8">Última actualización: Agosto 2026</p>
 
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mb-8">
         <p className="text-base font-medium text-primary dark:text-white leading-relaxed">
@@ -271,7 +271,7 @@ export default function PrivacidadPage() {
           </p>
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li><strong className="text-foreground">Acceder</strong> a tus datos — están en tu navegador, podés verlos en cualquier momento a través del Servicio o inspeccionando el localStorage.</li>
-            <li><strong className="text-foreground">Eliminar</strong> tus datos — usando el botón &quot;Limpiar Datos&quot; del Servicio, limpiando el localStorage del navegador, o desinstalando la PWA si la hubieras instalado.</li>
+            <li><strong className="text-foreground">Eliminar</strong> tus datos — usando el botón &quot;Limpiar Datos&quot; del Servicio y tildando los tres grupos (si dejás alguno destildado, esos datos siguen en tu navegador), limpiando el localStorage del navegador, o desinstalando la PWA si la hubieras instalado.</li>
             <li><strong className="text-foreground">Exportar</strong> tus datos — mediante las funciones de exportación a PDF, CSV y JSON.</li>
             <li><strong className="text-foreground">Rectificar</strong> tus datos — dado que los datos provienen directamente de ARCA, cualquier corrección debe realizarse en el portal de ARCA.</li>
             <li><strong className="text-foreground">Revocar consentimiento</strong> — podés dejar de usar el Servicio en cualquier momento y eliminar todos tus datos locales con &quot;Limpiar Datos&quot;, tildando los tres grupos.</li>

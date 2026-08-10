@@ -42,6 +42,10 @@ interface InvoiceContextType {
     replaceLocal?: boolean
   ) => Promise<boolean>;
   clearInvoices: () => void;
+  // Este archivo redeclara los tipos del hook en vez de importarlos: lo que se
+  // agrega en UseInvoicesReturn hay que reflejarlo acá o el consumidor no
+  // compila (la asignabilidad estructural del provider lo esconde).
+  clearError: () => void;
   clearCompanies: () => void;
   loadFromStorage: () => void;
   loadDemoData: (

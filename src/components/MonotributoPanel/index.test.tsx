@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 import type { CategoriaMonotributo, VentanaRecategorizacion } from "@/types/monotributo";
@@ -110,33 +110,11 @@ vi.mock("@/hooks/useMonotributo", () => ({
 }));
 
 describe("MonotributoPanel", () => {
-  // jsdom no implementa window.location.reload (loguea "Not implemented:
-  // navigation" y no hace nada), y no se puede espiar la property real
-  // (`vi.spyOn(window.location, "reload")` tira "Cannot redefine property").
-  // Se reemplaza el objeto `location` entero por uno con un reload espiable,
-  // y se restaura el original en cada afterEach para que no se filtre entre tests.
-  const originalLocation = window.location;
-  let mockReload: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     monotributoPanelMocks.monotributoInfo = null;
     monotributoPanelMocks.hookTipoActividad = "servicios";
-    mockReload = vi.fn();
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      writable: true,
-      value: { ...originalLocation, reload: mockReload },
-    });
-  });
-
-  afterEach(() => {
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      writable: true,
-      value: originalLocation,
-    });
   });
 
   it("should be defined", () => {
@@ -210,44 +188,15 @@ describe("MonotributoPanel", () => {
     expect(screen.getByText(/01\/2025/)).toBeInTheDocument();
   });
 
-  it("shows clear data button in no data message", () => {
-    renderPanel({ isCurrentYearData: false });
-    expect(screen.getByText("limpiá los datos")).toBeInTheDocument();
-  });
-
-  it("calls clearInvoices when clear data button is clicked and confirmed", () => {
+  it("el consejo sin datos apunta a Actualizar y no a limpiar los datos", () => {
     renderPanel({ isCurrentYearData: false });
 
-    fireEvent.click(screen.getByText("limpiá los datos"));
-    expect(screen.getByText("¿Qué querés borrar?")).toBeInTheDocument();
-    // Selección default: sólo Comprobantes.
-    fireEvent.click(screen.getByRole("button", { name: /Borrar lo seleccionado/ }));
-
-    expect(mockClearInvoices).toHaveBeenCalled();
-    // Comprobantes es el único grupo borrado: este entry point no navega, y
-    // el efecto de /panel.tsx es el que redirige a /ingresar.
-    expect(mockReload).not.toHaveBeenCalled();
-  });
-
-  it("does not call clearInvoices when clear data is cancelled", () => {
-    renderPanel({ isCurrentYearData: false });
-
-    fireEvent.click(screen.getByText("limpiá los datos"));
-    expect(screen.getByText("¿Qué querés borrar?")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Cancelar"));
-
+    // Limpiar los datos borra cotizaciones manuales y datos de Monotributo y
+    // obliga a rehacer el login: el camino bueno es el modal de Actualizar.
+    expect(screen.getByText(/usá el botón/)).toBeInTheDocument();
+    expect(screen.getByText("Actualizar")).toBeInTheDocument();
+    expect(screen.queryByText("limpiá los datos")).not.toBeInTheDocument();
     expect(mockClearInvoices).not.toHaveBeenCalled();
-  });
-
-  it("recarga la página cuando se borra algo además de Comprobantes", () => {
-    localStorage.setItem("garca_facturador_templates", "[]");
-    renderPanel({ isCurrentYearData: false });
-
-    fireEvent.click(screen.getByText("limpiá los datos"));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Facturador/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Borrar lo seleccionado/ }));
-
-    expect(mockReload).toHaveBeenCalledTimes(1);
   });
 
   it("calls updateTipoActividad when servicios button is clicked", () => {

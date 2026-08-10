@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
-import { ClearDataModal } from "@/components/ClearDataModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 import { useMonotributo } from "@/hooks/useMonotributo";
@@ -124,7 +123,6 @@ export function MonotributoPanel({
       updateTipoActividad(monotributoInfo.tipoActividad);
     }
   }, [hasScrapedActivity, monotributoInfo?.tipoActividad, tipoActividad, updateTipoActividad]);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const outlook = useMemo(
     () =>
@@ -172,15 +170,14 @@ export function MonotributoPanel({
               Los cálculos de Monotributo requieren datos de los últimos 12 meses.
             </p>
             <div className="rounded-lg bg-primary/10 border border-primary/30 p-3">
+              {/* Apunta al modal de Actualizar, no a limpiar los datos: re-traer
+                  la ventana conserva tus cotizaciones manuales y los datos de
+                  Monotributo, mientras que limpiar los borra y obliga a rehacer
+                  el login completo. */}
               <p className="text-xs text-muted-foreground">
-                <strong className="text-foreground">💡 Consejo:</strong> Para ver tu categoría actual,{" "}
-                <button
-                  onClick={() => setShowClearConfirm(true)}
-                  className="text-destructive hover:text-destructive/80 underline font-medium cursor-pointer transition-colors"
-                >
-                  limpiá los datos
-                </button>{" "}
-                y consultá los últimos 12 meses desde hoy.
+                <strong className="text-foreground">💡 Consejo:</strong> Para ver tu categoría actual, usá el botón{" "}
+                <strong className="text-foreground">Actualizar</strong> de arriba y consultá los últimos
+                12 meses desde hoy.
               </p>
             </div>
           </div>
@@ -398,18 +395,6 @@ export function MonotributoPanel({
           </div>
         )}
       </CardContent>
-
-      {/* Modal de borrado selectivo. Sin router.push: si se borraron
-          Comprobantes, el efecto de /panel ya redirige a /ingresar; agregar
-          un push acá haría carrera contra él sobre el mismo cambio de estado. */}
-      <ClearDataModal
-        isOpen={showClearConfirm}
-        onClose={() => setShowClearConfirm(false)}
-        onCleared={(ids) => {
-          setShowClearConfirm(false);
-          if (ids.some((id) => id !== "comprobantes")) window.location.reload();
-        }}
-      />
     </Card>
   );
 }
