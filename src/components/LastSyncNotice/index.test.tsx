@@ -31,6 +31,11 @@ describe("LastSyncNotice", () => {
     expect(screen.getByText(/Fecha de actualización desconocida/)).toBeInTheDocument();
   });
 
+  it("sin timestamp también avisa cuándo hay que actualizar", () => {
+    render(<LastSyncNotice onRefresh={vi.fn()} />);
+    expect(screen.getByText(/Si emitís desde ARCA/)).toBeInTheDocument();
+  });
+
   it("llama onRefresh al clickear Actualizar", () => {
     const onRefresh = vi.fn();
     render(<LastSyncNotice onRefresh={onRefresh} />);
