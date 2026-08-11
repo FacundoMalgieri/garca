@@ -1,10 +1,7 @@
 /**
- * Inventario de todo lo que GARCA guarda en localStorage, agrupado por lo que
- * significa para el usuario. Fuente única de verdad del borrado selectivo: si
- * aparece una key nueva en el código, va acá también, o "Limpiar Datos" miente.
- *
- * Son las 12 keys fijas + el prefijo `garca_tour_` que se escriben en todo
- * src/. No usamos sessionStorage, indexedDB ni cookies.
+ * Inventario de lo que GARCA guarda en localStorage, agrupado por lo que
+ * significa para el usuario. Fuente única del borrado selectivo: una key nueva
+ * en el código va acá también, o "Limpiar Datos" miente.
  */
 
 export type StorageGroupId = "comprobantes" | "facturador" | "preferencias";

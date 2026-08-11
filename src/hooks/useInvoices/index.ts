@@ -18,9 +18,7 @@ const STORAGE_KEY = "garca_invoices";
 const COMPANY_STORAGE_KEY = "garca_company";
 const PDV_STORAGE_KEY = "garca_pdv";
 const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
-// Timestamp del último scrape exitoso. Antes era un reloj de expiración (TTL de
-// 24 h): la sesión ahora persiste indefinidamente y este valor sólo alimenta el
-// aviso de "última actualización". Se escribe únicamente al terminar bien un
+// Timestamp del último scrape exitoso. Se escribe sólo al terminar bien un
 // fetch, no en cada guardado, para que emitir una factura no lo mueva.
 const LAST_SYNC_STORAGE_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
@@ -83,8 +81,7 @@ export interface InvoiceState {
   // /panel and survive a refresh, so navigation guards key on this flag rather
   // than the invoice count to avoid the silent bounce back to /ingresar.
   hasQueried: boolean;
-  // Epoch ms del último scrape exitoso, o null si nunca hubo uno (sesión previa
-  // a este campo, demo, o fetch que nunca corrió). Alimenta LastSyncNotice.
+  // Epoch ms del último scrape exitoso. Alimenta LastSyncNotice.
   lastSyncedAt: number | null;
 }
 
@@ -126,9 +123,7 @@ export interface UseInvoicesReturn {
     dateRange?: DateRange,
     rol?: "EMISOR" | "RECEPTOR",
     turnstileToken?: string,
-    // true en el refresh manual desde /panel: descarta todo lo local (scrapeado
-    // y emitido por GARCA) y se queda sólo con lo que devuelve ARCA. Default
-    // false conserva el comportamiento de /ingresar.
+    // true en el refresh manual: descarta todo lo local y deja sólo lo de ARCA.
     replaceLocal?: boolean
   ) => Promise<boolean>;
   clearInvoices: () => void;
@@ -253,8 +248,7 @@ export function useInvoices(): UseInvoicesReturn {
       const pending = pendingSaveRef.current;
       if (pending) {
         if (!saveToStorage(pending.invoices, pending.company)) {
-          // El write grande falló (cuota llena): el timestamp de "última
-          // actualización", escrito aparte y antes, no puede sobrevivir a un
+          // El timestamp se escribió antes y aparte: no puede sobrevivir a un
           // guardado que no ocurrió.
           try {
             localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
@@ -278,10 +272,7 @@ export function useInvoices(): UseInvoicesReturn {
     return () => {
       const pending = pendingSaveRef.current;
       if (pending) {
-        // Mismo criterio que el flush debounced (ver arriba), pero sin
-        // setState: el componente ya se está desmontando, así que actualizar
-        // estado acá sería un no-op en el mejor caso y un warning de React
-        // en el peor.
+        // Sin setState: el componente ya se está desmontando.
         if (!saveToStorage(pending.invoices, pending.company)) {
           try {
             localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
@@ -327,11 +318,8 @@ export function useInvoices(): UseInvoicesReturn {
           sanitizeCompanyInfo(storedCompany ? JSON.parse(storedCompany) : null) ??
           extractCompanyInfo(invoices);
 
-        // La demo nunca fue pensada para persistir: la escribe el mismo efecto
-        // debounced que una sesión real (loadDemoData marca hasQueried), y sin
-        // TTL quedaría para siempre, mostrando facturas ficticias con fecha de
-        // actualización y ocultando el CTA "Ingresar" del Navbar. Mismo criterio
-        // de detección que /panel: la razón social lleva "(Demo)".
+        // La demo se persiste como una sesión real y sin TTL quedaría para
+        // siempre. Detección por razón social, igual que /panel.
         if (company?.razonSocial?.includes("(Demo)")) {
           clearStoredSession();
           setState((prev) => ({ ...prev, isHydrated: true }));
@@ -366,10 +354,8 @@ export function useInvoices(): UseInvoicesReturn {
   }, []);
 
   /**
-   * Persiste comprobantes y empresa. Devuelve si el write funcionó: el caller
-   * necesita saberlo porque el timestamp de última actualización se escribe
-   * aparte (y antes), y no puede quedar afirmando frescura que el storage no
-   * tiene si acá salta QuotaExceededError.
+   * Persiste comprobantes y empresa. Devuelve si el write funcionó, para que
+   * el caller pueda invalidar el timestamp si saltó QuotaExceededError.
    */
   const saveToStorage = (invoices: AFIPInvoice[], company: CompanyInfo | null): boolean => {
     try {
@@ -401,9 +387,8 @@ export function useInvoices(): UseInvoicesReturn {
   };
 
   /**
-   * Sella el momento del último scrape exitoso. Se llama FUERA del updater de
-   * setState (al lado de persistPuntosDeVenta): un efecto adentro del updater se
-   * invoca dos veces bajo StrictMode en dev y corre en renders descartados.
+   * Sella el último scrape exitoso. Va fuera del updater de setState, que bajo
+   * StrictMode se invoca dos veces y corre en renders descartados.
    */
   const persistLastSync = (ts: number) => {
     try {
@@ -665,9 +650,7 @@ export function useInvoices(): UseInvoicesReturn {
       isLoading: true,
       error: null,
       errorCode: null,
-      // hasQueried viene de prev: false en /ingresar (sesión limpia) y true
-      // durante un refresh desde /panel. Resetearlo acá vaciaba la sesión
-      // previa si el fetch fallaba (ver paths de fallo más abajo).
+      // hasQueried viene de prev: resetearlo acá vaciaba la sesión al fallar.
       progress: { message: "Iniciando...", progress: 0, type: "start" },
     }));
 
@@ -773,8 +756,7 @@ export function useInvoices(): UseInvoicesReturn {
               code: sanitizeErrorCode(finalResult.errorCode),
               reused: tokenReused,
             });
-            // No se tocan invoices/company/hasQueried: un fetch fallido no debe
-            // destruir la sesión previa (ver comentario al inicio del try).
+            // Un fetch fallido no debe destruir la sesión previa.
             setState((prev) => ({
               ...prev,
               isLoading: false,
@@ -807,9 +789,8 @@ export function useInvoices(): UseInvoicesReturn {
             // Conservar las emitidas por GARCA a través del re-fetch: el row
             // autoritativo de AFIP reemplaza al placeholder (sin duplicar) y las
             // emitidas que AFIP todavía no indexó se mantienen. Ver mergeFetchedInvoices.
-            // replaceLocal (refresh manual desde /panel): se descarta todo lo
-            // local, incluidas las emitidas por GARCA, y queda sólo lo que trae
-            // ARCA. mergeFetchedInvoices([], fetched) devuelve fetched tal cual.
+            // Con replaceLocal, mergeFetchedInvoices([], fetched) devuelve
+            // fetched tal cual: se descartan también las emitidas por GARCA.
             const emittedByGarca = replaceLocal
               ? []
               : prev.invoices.filter((i) => (i as { emittedByGarca?: boolean }).emittedByGarca);
@@ -906,8 +887,7 @@ export function useInvoices(): UseInvoicesReturn {
           : "CLIENT";
       trackUmamiEvent(UMAMI_EVENTS.ArcInvoicesFail, { code: clientCode, reused: tokenReused });
 
-      // Updater en vez de objeto completo: una excepción (red caída, etc.) no
-      // debe destruir la sesión previa. Ver comentario al inicio del try.
+      // Updater y no objeto completo: una excepción no debe destruir la sesión.
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -957,13 +937,8 @@ export function useInvoices(): UseInvoicesReturn {
 
   /**
    * Descarta el error del último fetch sin tocar el resto de la sesión.
-   *
-   * Antes el error sólo se limpiaba al arrancar un fetch nuevo o con
-   * `clearInvoices`. Como un fallo ya no destruye la sesión, quedaba un estado
-   * nuevo (`hasQueried: true` + `error != null`) que sobrevivía para siempre:
-   * `InvoiceTable` mostraba el cartel rojo encima de la lista vieja y
-   * `/ingresar` dejaba de redirigir al panel porque su guarda mira `!error`.
-   * Quien cierra el modal de actualizar llama a esto para cerrar el fallo.
+   * Sin esto, `hasQueried: true` + `error != null` sobrevive para siempre:
+   * InvoiceTable muestra el cartel rojo y /ingresar deja de redirigir.
    */
   const clearError = useCallback(() => {
     setState((prev) => ({ ...prev, error: null, errorCode: null }));

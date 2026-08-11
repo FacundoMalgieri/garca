@@ -28,10 +28,8 @@ export function Navbar() {
   const isOnPanel = pathname === "/panel";
   const hasTour = isOnPanel || pathname === "/calculadora-monotributo";
 
-  // El botón vive en las rutas de la app, no en las de marketing, y aparece si
-  // queda CUALQUIER cosa guardada: con el gate viejo (invoices.length > 0),
-  // borrar los comprobantes escondía el botón y dejaba las plantillas y los
-  // clientes sin forma de borrarse.
+  // Aparece si queda cualquier cosa guardada: con el gate viejo
+  // (invoices.length > 0) las plantillas quedaban sin forma de borrarse.
   const isAppRoute = pathname === "/panel" || pathname === "/facturar";
   const [puedeLimpiar, setPuedeLimpiar] = useState(false);
   useEffect(() => {
@@ -57,9 +55,8 @@ export function Navbar() {
     setShowClearConfirm(false);
     setIsOpen(false);
     if (ids.some((id) => id !== "comprobantes")) {
-      // Las preferencias son estado React que sobrevive al borrado de la key y
-      // se re-persiste al primer cambio. Recargar re-inicializa todos los hooks
-      // desde storage vacío.
+      // Las preferencias viven en estado React que se re-persiste al primer
+      // cambio; recargar re-inicializa los hooks desde storage vacío.
       window.location.reload();
       return;
     }

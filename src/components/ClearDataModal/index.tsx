@@ -14,9 +14,8 @@ interface ClearDataModalProps {
 }
 
 /**
- * Borrado selectivo. Reemplaza al ConfirmDialog de todo-o-nada: las plantillas
- * del facturador y los clientes recordados no están en ARCA, así que no se
- * pueden perder por default.
+ * Borrado selectivo: las plantillas y los clientes recordados no están en ARCA,
+ * así que no se pueden perder por default.
  */
 export function ClearDataModal({ isOpen, onClose, onCleared }: ClearDataModalProps) {
   const { clearInvoices } = useInvoiceContext();
@@ -27,8 +26,7 @@ export function ClearDataModal({ isOpen, onClose, onCleared }: ClearDataModalPro
     setMounted(true);
   }, []);
 
-  // Se resetea a la selección default en cada apertura: un modal destructivo
-  // no debe recordar que "facturador" quedó tildado de la vez anterior.
+  // Reset en cada apertura: un modal destructivo no debe recordar la selección.
   useEffect(() => {
     if (isOpen) setSelected(["comprobantes"]);
   }, [isOpen]);
@@ -41,8 +39,7 @@ export function ClearDataModal({ isOpen, onClose, onCleared }: ClearDataModalPro
 
   const handleConfirm = () => {
     if (selected.length === 0) return;
-    // Comprobantes va por clearInvoices: además de las keys tiene que resetear
-    // el estado en memoria del contexto.
+    // Comprobantes va por clearInvoices, que además resetea el estado en memoria.
     if (selected.includes("comprobantes")) {
       clearInvoices();
     }
