@@ -279,8 +279,20 @@ export function sumWindow(
     if (month < currentMonth) {
       // Past month - use historical data
       historico += historicalMap.get(month) || 0
+    } else if (month === currentMonth) {
+      // El mes en curso tiene las dos cosas: lo que ya facturaste (real, y no se
+      // puede desfacturar) y lo que falta del mes (proyección). El input de la
+      // UI es el TOTAL del mes, no un extra, así que el real es un piso: se
+      // cuenta entero como histórico y sólo el excedente proyectado suma arriba.
+      //
+      // Ignorar el real acá subestimaba la ventana en la dirección peligrosa:
+      // con Agosto facturado y sin proyectar, el mes valía $0.
+      const real = historicalMap.get(month) || 0
+      const proyeccion = projections[month] || 0
+      historico += real
+      proyectado += Math.max(0, proyeccion - real)
     } else {
-      // Current or future month - use projection
+      // Future month - use projection
       proyectado += projections[month] || 0
     }
   }
@@ -348,13 +360,14 @@ export function calculateProjection(
   // Count future months in the window
   const mesesFuturos = ventana.filter(m => m >= currentMonth).length
   
-  // Calculate historical total only for past months in the window
-  const pastMonthsInWindow = ventana.filter(m => m < currentMonth)
+  // Base de la recomendación: todo lo que YA está facturado en la ventana. Los
+  // meses cerrados y también lo que va del mes en curso — es plata ya emitida,
+  // no un pronóstico, así que tiene que salir del disponible. Sin el mes en
+  // curso la recomendación repartía plata ya gastada y empujaba arriba del tope.
   const historicalMap = new Map(historical.map(h => [h.month, h.totalArs]))
-  const totalHistoricoEnVentana = pastMonthsInWindow.reduce(
-    (sum, m) => sum + (historicalMap.get(m) || 0),
-    0
-  )
+  const totalHistoricoEnVentana = ventana
+    .filter(m => m <= currentMonth)
+    .reduce((sum, m) => sum + (historicalMap.get(m) || 0), 0)
   
   // Determine effective target: explicit selection or next category up from historical
   const effectiveTarget = targetCategoria || getAutoTargetCategory(totalHistoricoEnVentana, categorias)

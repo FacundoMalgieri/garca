@@ -314,6 +314,49 @@ describe("projection utilities", () => {
       expect(result.proyectado).toBe(5500000) // Jun + Jul
       expect(result.total).toBe(10000000)
     })
+
+    it("cuenta lo ya facturado en el mes en curso, aunque no haya proyección", () => {
+      // El mes actual está abierto pero ya tiene facturación real. Ignorarla
+      // subestima la ventana justo en la dirección peligrosa: te muestra más
+      // lejos del tope de lo que estás.
+      const today = new Date(2026, 7, 11) // 11/08/2026
+      const ventana = ["2026-07", "2026-08"]
+      const historical = [
+        { month: "2026-07", totalArs: 3_000_000, invoiceCount: 2 },
+        { month: "2026-08", totalArs: 2_000_000, invoiceCount: 3 },
+      ]
+
+      const result = sumWindow(ventana, historical, {}, today)
+
+      expect(result.historico).toBe(5_000_000)
+      expect(result.total).toBe(5_000_000)
+    })
+
+    it("proyectar MÁS que lo ya facturado en el mes en curso pisa el real", () => {
+      // El input es el total del mes, no un extra: si proyectás 5M y ya
+      // facturaste 2M, el mes cierra en 5M (2M reales + 3M por facturar).
+      const today = new Date(2026, 7, 11)
+      const ventana = ["2026-08"]
+      const historical = [{ month: "2026-08", totalArs: 2_000_000, invoiceCount: 3 }]
+
+      const result = sumWindow(ventana, historical, { "2026-08": 5_000_000 }, today)
+
+      expect(result.total).toBe(5_000_000)
+      expect(result.historico).toBe(2_000_000)
+      expect(result.proyectado).toBe(3_000_000)
+    })
+
+    it("proyectar MENOS que lo ya facturado no baja el total", () => {
+      // Lo facturado no se puede desfacturar: es un piso.
+      const today = new Date(2026, 7, 11)
+      const ventana = ["2026-08"]
+      const historical = [{ month: "2026-08", totalArs: 2_000_000, invoiceCount: 3 }]
+
+      const result = sumWindow(ventana, historical, { "2026-08": 500_000 }, today)
+
+      expect(result.total).toBe(2_000_000)
+      expect(result.proyectado).toBe(0)
+    })
   })
 
   describe("getAutoTargetCategory", () => {
@@ -439,6 +482,44 @@ describe("projection utilities", () => {
       expect(result.categoriaResultante).toBeDefined()
       expect(result.mesesFuturos).toBe(5)
       expect(result.ventana.length).toBe(12)
+    })
+
+    it("la recomendación descuenta lo ya facturado en el mes en curso", () => {
+      // Sin esto, el mes en curso se trata como si estuviera en blanco y la
+      // recomendación reparte plata que ya gastaste: te empuja arriba del tope.
+      const today = new Date(2026, 7, 11) // 11/08/2026
+      const ventana = ["2026-07", "2026-08", "2026-09"]
+      const categorias = MONOTRIBUTO_DATA.categorias
+      const catG = categorias.find((c) => c.categoria === "G")!
+
+      const conFacturacionEsteMes = calculateProjection(
+        ventana,
+        [
+          { month: "2026-07", totalArs: 10_000_000, invoiceCount: 5 },
+          { month: "2026-08", totalArs: 6_000_000, invoiceCount: 4 },
+        ],
+        {},
+        catG,
+        0,
+        categorias,
+        today
+      )
+
+      const sinFacturacionEsteMes = calculateProjection(
+        ventana,
+        [{ month: "2026-07", totalArs: 10_000_000, invoiceCount: 5 }],
+        {},
+        catG,
+        0,
+        categorias,
+        today
+      )
+
+      // 2 meses futuros (Ago y Sep). Los $6M de Agosto tienen que salir del
+      // disponible, así que la recomendación baja $3M por mes.
+      expect(sinFacturacionEsteMes.montoRecomendadoMensual - conFacturacionEsteMes.montoRecomendadoMensual).toBe(
+        3_000_000
+      )
     })
   })
 
