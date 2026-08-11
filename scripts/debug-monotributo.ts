@@ -269,21 +269,39 @@ async function probeNavigationAssumptions(
   }
 
   // 3. ¿Sirve el goto directo? En pestaña aparte para no romper el portal.
+  //
+  // No alcanza con que cargue el jumbotron: lo que decide si el atajo sirve como
+  // fix es que la categoría quede EXTRAÍBLE con el mismo regex que usa el step.
+  // Un Inicio.aspx que renderiza el nombre pero no la categoría (porque el SSO
+  // entró a medias) se vería como éxito mirando sólo el jumbotron.
   const probe = await context.newPage();
   try {
+    const t0 = Date.now();
     await probe.goto("https://monotributo.afip.gob.ar/app/Inicio.aspx", {
       waitUntil: "domcontentloaded",
       timeout: 30_000,
     });
+    const msGoto = Date.now() - t0;
     await probe.waitForTimeout(3000);
     const url = probe.url();
     const jumbotron = await probe.locator(".jumbotron_body h2.h3").count();
+
+    // Mismo selector y mismo regex que extractMonotributoInfo().
+    const pLead = await probe.locator(".jumbotron_body p.lead").allTextContents().catch(() => []);
+    const conCategoria = pLead.find((t) => t.includes("Categoría"));
+    const match = conCategoria?.match(/Categoría\s+([A-K])\s+(.+)/i);
+
     out.gotoDirecto = {
       url,
+      msGoto,
       jumbotron,
-      funciona: !url.includes("auth.afip.gob.ar") && jumbotron > 0,
+      pLead,
+      categoriaParseada: match ? { categoria: match[1].toUpperCase(), actividad: match[2].trim() } : null,
+      // El atajo sirve sólo si ARCA no rebotó a login Y el dato se puede leer.
+      funciona: !url.includes("auth.afip.gob.ar") && jumbotron > 0 && match !== null && match !== undefined,
     };
-    log("3) goto directo →", JSON.stringify(out.gotoDirecto));
+    log("3) goto directo →", JSON.stringify(out.gotoDirecto, null, 2));
+    await safeDump(probe, "9-goto-directo");
   } catch (e) {
     out.gotoDirecto = { error: e instanceof Error ? e.message : String(e) };
     log("3) goto directo falló:", e instanceof Error ? e.message : e);
