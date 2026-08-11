@@ -112,14 +112,11 @@ export default function PanelPage() {
 
   const isDemo = state.company?.razonSocial?.includes("(Demo)") ?? false;
   const isEmptyPeriod = state.invoices.length === 0;
-  // El modal de actualizar reusa la empresa guardada (CUIT + índice). Sin ella
-  // no hay nada que re-consultar, así que no se ofrece Actualizar: el submit
-  // sería un no-op silencioso. La demo tampoco se actualiza contra ARCA.
+  // El modal reusa la empresa guardada; sin ella no hay qué re-consultar. La
+  // demo tampoco se actualiza contra ARCA.
   const canRefresh = !isDemo && state.company !== null;
-  // Consultar otro período ya no exige tirar la sesión: el modal re-trae la
-  // ventana pedida conservando cotizaciones manuales y datos de Monotributo.
-  // Sin empresa guardada queda el camino viejo (limpiar + volver a ingresar),
-  // que es el único posible en ese estado.
+  // El modal conserva cotizaciones manuales y datos de Monotributo, que
+  // clearInvoices tira. Sin empresa guardada queda el camino viejo.
   const handleConsultarOtroPeriodo = canRefresh
     ? () => setShowRefresh(true)
     : () => {

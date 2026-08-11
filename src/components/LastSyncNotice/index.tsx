@@ -3,18 +3,13 @@
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
 
 interface LastSyncNoticeProps {
-  /**
-   * Ausente cuando no hay de dónde re-consultar (sin empresa guardada): en ese
-   * caso no se ofrece Actualizar, porque el modal no tendría CUIT ni índice de
-   * empresa y el submit sería un no-op silencioso.
-   */
+  /** Ausente sin empresa guardada: ahí no hay con qué re-consultar. */
   onRefresh?: () => void;
 }
 
 /**
- * Recordatorio neutro de cuándo se trajeron los comprobantes por última vez.
- * Sin umbrales ni escalada de color a propósito: informa, no alarma. Reemplaza
- * al TTL de 24 h que antes forzaba a re-scrapear.
+ * Recordatorio de cuándo se trajeron los comprobantes por última vez. Sin
+ * umbrales ni escalada de color a propósito: informa, no alarma.
  */
 export function LastSyncNotice({ onRefresh }: LastSyncNoticeProps) {
   const { state } = useInvoiceContext();

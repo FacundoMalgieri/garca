@@ -19,13 +19,8 @@ interface RefreshInvoicesModalProps {
 }
 
 /**
- * Re-trae los comprobantes sin rehacer el login: el CUIT y el índice de empresa
- * salen de la sesión guardada y sólo se pide la clave (que no persistimos) más
- * el rango, que no guardamos a propósito.
- *
- * Pasa replaceLocal: descarta todo lo local, incluidas las emitidas por GARCA,
- * y se queda con lo que devuelve ARCA. Una emitida que ARCA todavía no indexó
- * reaparece en el refresh siguiente.
+ * Re-trae los comprobantes reusando la empresa guardada. Reemplaza todo lo
+ * local con lo que devuelve ARCA (replaceLocal).
  */
 export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalProps) {
   const { state, fetchInvoicesWithCompany, cancelOperation, clearError } = useInvoiceContext();
@@ -35,11 +30,7 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
   const defaultRange = getDefaultDateRange();
   const [fechaDesde, setFechaDesde] = useState(defaultRange.from);
   const [fechaHasta, setFechaHasta] = useState(defaultRange.to);
-  // La sección de error se muestra sólo después de un intento propio. El
-  // cierre por `handleClose` ya llama a `clearError()`, pero el contexto puede
-  // traer un error de otro origen (un fetch fallido de /ingresar, o un cierre
-  // que no pasó por handleClose): esta bandera evita que el modal lo adopte
-  // como si fuera el resultado de su propio submit.
+  // Evita adoptar un error del contexto que venga de otro origen.
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
@@ -61,9 +52,7 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
     turnstileRef.current?.reset();
   };
 
-  // Mismo tope que /ingresar (rango invertido y más de 366 días): el server
-  // sólo valida el formato, así que si el modal no lo chequea un rango de
-  // varios años llega derecho al scraper.
+  // El server sólo valida formato; el tope de 366 días es client-side.
   const dateError = validateDateRange(fechaDesde, fechaHasta);
 
   const puedeEnviar =
@@ -71,33 +60,21 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
     turnstileToken !== null &&
     !state.isLoading &&
     dateError === null &&
-    // Sin empresa guardada no hay CUIT ni índice con qué re-consultar: el
-    // submit sería un no-op silencioso.
+    // Sin empresa no hay CUIT ni índice: el submit sería un no-op silencioso.
     state.company !== null;
 
   const handleClose = () => {
-    // Durante la carga sólo se ve el splash con su propio Cancelar (ver el
-    // branch de `state.isLoading` más abajo), pero el listener de Escape del
-    // hook de a11y sigue atado a `document` sin importar qué se esté
-    // renderizando. Escape queda inerte a propósito: es una tecla fácil de
-    // apretar sin querer y abortar un scraping de varios minutos por accidente
-    // es peor que no hacer nada; para cortar está el botón explícito.
-    // Se gatea acá adentro (no en el `isOpen` que recibe useModalA11y) porque
-    // alternar ese argumento dispara el cleanup de foco-restore del hook en
-    // cada transición true→false→true, lo que saca el foco al fondo de la
-    // página durante la carga.
+    // Escape inerte durante el fetch: para cortar está el botón del splash.
+    // Se gatea acá y no en el `isOpen` de useModalA11y, que al alternar
+    // dispararía su cleanup de foco-restore.
     if (state.isLoading) return;
     setPassword("");
     rearmTurnstile();
-    // El error del contexto no se limpia solo: sin esto, un refresh fallido
-    // deja el cartel rojo en InvoiceTable y rompe el redirect de /ingresar
-    // para el resto de la sesión.
+    // Sin esto el error queda pegado en InvoiceTable y en /ingresar.
     clearError();
     onClose();
   };
 
-  // Aborta el fetch en curso y vuelve al panel. `cancelOperation` conserva
-  // `hasQueried`, así que /panel no expulsa al usuario a /ingresar.
   const handleCancelFetch = () => {
     cancelOperation();
     setPassword("");
@@ -130,14 +107,8 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
 
   if (!active) return null;
 
-  // Mientras el fetch está en curso se esconde la tarjeta del formulario: si
-  // el backdrop/tarjeta quedan montados encima (ambos son `fixed` con z-index
-  // explícito, así que compiten por la misma capa), el splash termina tapado
-  // por la tarjeta opaca y el scraping se ve "colgado" sin spinner ni
-  // progreso. Encima del splash queda un único botón para cortar: la petición
-  // SÍ se aborta (`cancelOperation` corta `invoicesAbortRef`), así que un
-  // refresh que quedó largo no puede aterrizar más tarde y pisar lo que el
-  // usuario hizo mientras tanto (p. ej. una factura recién emitida).
+  // La tarjeta se desmonta durante el fetch: montada taparía el splash, que
+  // compite con ella por la misma capa `fixed`.
   if (state.isLoading) {
     return createPortal(
       <>
