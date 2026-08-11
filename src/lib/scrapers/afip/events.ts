@@ -132,6 +132,12 @@ export const SCRAPER_EVENTS = {
   extractComplete: (count: number) => 
     createEvent("extract", `Se encontraron ${count} comprobante(s)`, 95),
   
+  // Refresco de la categoría de Monotributo dentro del scrape de comprobantes
+  // (95-100). Va acá y no al 30 como en el flujo de empresas: en este flujo los
+  // comprobantes ya están extraídos y la barra no puede volver para atrás.
+  monotributoRefresh: () =>
+    createEvent("monotributo", "Actualizando tu categoría de Monotributo...", 97),
+
   // Complete
   complete: (count: number) => 
     createEvent("complete", `¡Listo! ${count} comprobante(s) obtenidos`, 100, { count }),

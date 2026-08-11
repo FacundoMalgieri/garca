@@ -23,6 +23,7 @@ import { extractInvoices } from "./steps/extraction";
 import { applyFilters } from "./steps/filters";
 import { login } from "./steps/login";
 import { scrapeMonotributoInfo } from "./steps/monotributo";
+import { scrapeMonotributoBestEffort } from "./steps/monotributo/best-effort";
 import { navigateToCompanySelection, navigateToInvoices } from "./steps/navigation";
 import { downloadXMLs } from "./steps/xml-download";
 import { handleError, withTimeout } from "./utils";
@@ -360,6 +361,25 @@ export async function scrapeAFIPInvoicesWithEvents(
       puntosDeVenta = await scrapePuntosDeVentaBestEffort(page);
     }
 
+    // Categoría de Monotributo (best-effort). Va acá, al final y en una pestaña
+    // aparte, por dos razones:
+    //
+    // 1. Después de extraer: una caída del portal de Monotributo —que pasa, ver
+    //    monotributoResponde— no puede costar los comprobantes ya obtenidos.
+    // 2. Pestaña propia sobre el portal: `page` es la de RCEL y navegarla al
+    //    portal para buscar el servicio rompería la sesión que usa el resto del
+    //    flujo. El contexto comparte cookies, así que la pestaña nueva abre el
+    //    portal ya logueado.
+    //
+    // Sin esto, la categoría sólo se podía traer en el login de empresas: si ese
+    // intento fallaba, el usuario quedaba sin su categoría de ARCA hasta un
+    // login completo nuevo, y el botón Actualizar no la recuperaba.
+    let monotributoInfo = null;
+    if (!isCancelled()) {
+      emit(SCRAPER_EVENTS.monotributoRefresh());
+      monotributoInfo = await scrapeMonotributoBestEffort(context);
+    }
+
     // Complete event
     emit(SCRAPER_EVENTS.complete(invoices.length));
     console.log("[AFIP Scraper] ✅ Successfully scraped", invoices.length, "invoices");
@@ -371,6 +391,7 @@ export async function scrapeAFIPInvoicesWithEvents(
       company: company || undefined,
       availableCompanies: availableCompanies.length > 1 ? availableCompanies : undefined,
       puntosDeVenta: puntosDeVenta ?? undefined,
+      monotributoInfo,
     };
   } catch (error) {
     console.error("[AFIP Scraper] ❌ Error:", error);
