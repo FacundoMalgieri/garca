@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   // Standalone output for Docker deployment
   output: "standalone",
+  // playwright-core lee browsers.json en runtime, no con un require estático, así
+  // que el file tracing no lo detecta y el standalone quedaba sin él: todas las
+  // rutas de scraping tiraban 500 con "Cannot find module .../browsers.json".
+  outputFileTracingIncludes: {
+    "/api/arca/**": ["./node_modules/playwright-core/browsers.json"],
+  },
   // Security + cache headers
   async headers() {
     return [
