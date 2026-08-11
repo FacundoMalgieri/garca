@@ -8,6 +8,7 @@ import { dedupeInvoices, mergeFetchedInvoices } from "@/lib/facturador/dedupe";
 import { sanitizePuntosDeVenta } from "@/lib/facturador/puntos-venta";
 import {
   sanitizeCompanyInfo,
+  sanitizeDateRange,
   sanitizeInvoices,
   sanitizeManualFxRates,
   sanitizeMonotributoInfo,
@@ -22,6 +23,13 @@ const MONOTRIBUTO_STORAGE_KEY = "garca_monotributo";
 // fetch, no en cada guardado, para que emitir una factura no lo mueva.
 const LAST_SYNC_STORAGE_KEY = "garca_invoices_ts";
 const MANUAL_FX_STORAGE_KEY = "garca_manual_fx_rates";
+/**
+ * Rango que se le pidió a ARCA en la última consulta. Se guarda porque los
+ * comprobantes solos no lo dicen: un mes sin facturas puede ser un mes flojo o
+ * un mes que nunca se consultó, y de esa diferencia depende si el acumulado de
+ * una ventana de recategorización es el total real o un pedazo. Ver computeCobertura.
+ */
+const QUERIED_RANGE_STORAGE_KEY = "garca_queried_range";
 
 /** Borra del storage todo lo que compone una sesión de comprobantes. */
 function clearStoredSession() {
@@ -32,6 +40,7 @@ function clearStoredSession() {
     localStorage.removeItem(MONOTRIBUTO_STORAGE_KEY);
     localStorage.removeItem(LAST_SYNC_STORAGE_KEY);
     localStorage.removeItem(MANUAL_FX_STORAGE_KEY);
+    localStorage.removeItem(QUERIED_RANGE_STORAGE_KEY);
   } catch {
     // Silently fail
   }
@@ -83,6 +92,10 @@ export interface InvoiceState {
   hasQueried: boolean;
   // Epoch ms del último scrape exitoso. Alimenta LastSyncNotice.
   lastSyncedAt: number | null;
+  // Rango que se le pidió a ARCA en esa consulta. null = desconocido (sesión
+  // guardada por una versión que no lo persistía, o demo). Sin esto no se puede
+  // saber si una ventana de recategorización quedó cubierta: ver computeCobertura.
+  queriedRange: DateRange | null;
 }
 
 /**
@@ -133,7 +146,8 @@ export interface UseInvoicesReturn {
   loadDemoData: (
     invoices: AFIPInvoice[],
     company: CompanyInfo | null,
-    monotributoInfo: MonotributoAFIPInfo | null
+    monotributoInfo: MonotributoAFIPInfo | null,
+    queriedRange: DateRange | null
   ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;
@@ -159,6 +173,7 @@ export function useInvoices(): UseInvoicesReturn {
     isHydrated: false,
     hasQueried: false,
     lastSyncedAt: null,
+    queriedRange: null,
   });
 
   const [companiesState, setCompaniesState] = useState<CompaniesState>({
@@ -298,6 +313,16 @@ export function useInvoices(): UseInvoicesReturn {
       const storedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
       const storedPdv = localStorage.getItem(PDV_STORAGE_KEY);
       const storedMonotributo = localStorage.getItem(MONOTRIBUTO_STORAGE_KEY);
+      const storedRange = localStorage.getItem(QUERIED_RANGE_STORAGE_KEY);
+
+      // Va en su propio try/catch por lo mismo que PDV: un JSON corrupto acá no
+      // puede tirar la hidratación entera y dejar al usuario deslogueado.
+      let queriedRange: DateRange | null = null;
+      try {
+        queriedRange = storedRange ? sanitizeDateRange(JSON.parse(storedRange)) : null;
+      } catch {
+        queriedRange = null;
+      }
 
       if (storedInvoices !== null) {
         // Presence of the key means a query completed and was persisted, even
@@ -337,7 +362,16 @@ export function useInvoices(): UseInvoicesReturn {
         } catch {
           puntosDeVenta = null;
         }
-        setState((prev) => ({ ...prev, invoices, company, puntosDeVenta, isHydrated: true, hasQueried: true, lastSyncedAt }));
+        setState((prev) => ({
+          ...prev,
+          invoices,
+          company,
+          puntosDeVenta,
+          isHydrated: true,
+          hasQueried: true,
+          lastSyncedAt,
+          queriedRange,
+        }));
       } else {
         setState((prev) => ({ ...prev, isHydrated: true, lastSyncedAt }));
       }
@@ -393,6 +427,18 @@ export function useInvoices(): UseInvoicesReturn {
   const persistLastSync = (ts: number) => {
     try {
       localStorage.setItem(LAST_SYNC_STORAGE_KEY, String(ts));
+    } catch {
+      // Silently fail - localStorage might be full or unavailable
+    }
+  };
+
+  /**
+   * Sella el rango que se le pidió a ARCA. Va aparte de saveToStorage por lo
+   * mismo que puntosDeVenta: sólo cambia al consultar, no en cada flush.
+   */
+  const persistQueriedRange = (range: DateRange) => {
+    try {
+      localStorage.setItem(QUERIED_RANGE_STORAGE_KEY, JSON.stringify(range));
     } catch {
       // Silently fail - localStorage might be full or unavailable
     }
@@ -693,7 +739,7 @@ export function useInvoices(): UseInvoicesReturn {
         }
 
         let buffer = "";
-        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; puntosDeVenta?: PuntoDeVenta[]; error?: string; errorCode?: string } | null = null;
+        let finalResult: { success: boolean; invoices?: AFIPInvoice[]; company?: { cuit: string; razonSocial: string }; puntosDeVenta?: PuntoDeVenta[]; monotributoInfo?: MonotributoAFIPInfo | null; error?: string; errorCode?: string } | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -782,8 +828,18 @@ export function useInvoices(): UseInvoicesReturn {
 
           const puntosDeVenta = finalResult.puntosDeVenta ?? null;
           persistPuntosDeVenta(puntosDeVenta);
+
+          // El scrape de comprobantes trae la categoría best-effort. Se guarda
+          // sólo si vino: ARCA se cae seguido y un refresh sin categoría no
+          // puede dejar al usuario peor que antes de apretar Actualizar.
+          if (finalResult.monotributoInfo) {
+            setMonotributoInfo(finalResult.monotributoInfo);
+            saveMonotributoToStorage(finalResult.monotributoInfo);
+          }
           const syncedAt = Date.now();
           persistLastSync(syncedAt);
+          // El rango va con el scrape: describe exactamente a estos comprobantes.
+          persistQueriedRange(range);
 
           setState((prev) => {
             // Conservar las emitidas por GARCA a través del re-fetch: el row
@@ -806,6 +862,7 @@ export function useInvoices(): UseInvoicesReturn {
               isHydrated: true,
               hasQueried: true,
               lastSyncedAt: syncedAt,
+              queriedRange: range,
             };
           });
 
@@ -849,6 +906,14 @@ export function useInvoices(): UseInvoicesReturn {
         persistPuntosDeVenta(puntosDeVenta);
         const syncedAt = Date.now();
         persistLastSync(syncedAt);
+        persistQueriedRange(range);
+
+        // Ver el success path del SSE: sólo se guarda si vino.
+        const monotributoDelScrape = sanitizeMonotributoInfo(data.monotributoInfo);
+        if (monotributoDelScrape) {
+          setMonotributoInfo(monotributoDelScrape);
+          saveMonotributoToStorage(monotributoDelScrape);
+        }
 
         setState((prev) => {
           // Ver comentario en el success path del SSE (mergeFetchedInvoices y replaceLocal).
@@ -867,6 +932,7 @@ export function useInvoices(): UseInvoicesReturn {
             isHydrated: true,
             hasQueried: true,
             lastSyncedAt: syncedAt,
+            queriedRange: range,
           };
         });
 
@@ -967,6 +1033,7 @@ export function useInvoices(): UseInvoicesReturn {
       isHydrated: true,
       hasQueried: false,
       lastSyncedAt: null,
+      queriedRange: null,
     });
   }, []);
 
@@ -978,7 +1045,11 @@ export function useInvoices(): UseInvoicesReturn {
   const loadDemoData = useCallback((
     invoices: AFIPInvoice[],
     company: CompanyInfo | null,
-    info: MonotributoAFIPInfo | null
+    info: MonotributoAFIPInfo | null,
+    // El rango que la demo simula haber consultado. Sin esto la cobertura de las
+    // ventanas queda "desconocida" y el panel deja de poder afirmar la ventana
+    // cubierta, aunque el dataset de la demo sí la cubra.
+    queriedRange: DateRange | null
   ) => {
     setState({
       invoices,
@@ -991,6 +1062,7 @@ export function useInvoices(): UseInvoicesReturn {
       isHydrated: true,
       hasQueried: true,
       lastSyncedAt: null,
+      queriedRange,
     });
     setMonotributoInfo(info);
     saveMonotributoToStorage(info);

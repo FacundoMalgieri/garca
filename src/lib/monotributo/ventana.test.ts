@@ -65,11 +65,20 @@ const INVOICES: AFIPInvoice[] = [
 
 const TODAY = new Date(2026, 7, 4) // 04/08/2026
 
+/** Rango que cubre la ventana vigente (Jul 2025 - Jun 2026) entera. */
+const RANGO_COMPLETO = { from: "2025-07-01", to: "2026-07-31" }
+/**
+ * Rango de 12 meses que NO cubre la ventana vigente: le falta Julio 2025.
+ * Es la forma del bug real — el default de la app es "hoy menos 12 meses", que
+ * siempre deja afuera el primer mes de la ventana ya cerrada.
+ */
+const RANGO_SIN_JULIO = { from: "2025-08-01", to: "2026-07-31" }
+
 describe("buildVentanaRecategorizacion", () => {
   it("marks the in-progress window as partial (Ene-Dic 2026 with 7 of 12 months)", () => {
     const proxima = getNextRecategorizacionDates(TODAY)[0]
 
-    const ventana = buildVentanaRecategorizacion(proxima, INVOICES, {}, TODAY)
+    const ventana = buildVentanaRecategorizacion(proxima, INVOICES, {}, RANGO_COMPLETO, TODAY)
 
     expect(ventana.label).toBe("Enero 2027")
     expect(ventana.desde).toBe("2026-01")
@@ -84,7 +93,7 @@ describe("buildVentanaRecategorizacion", () => {
   it("marks the last closed window as complete (Jul 2025 - Jun 2026)", () => {
     const vigente = getLastRecategorizacionDate(TODAY)
 
-    const ventana = buildVentanaRecategorizacion(vigente, INVOICES, {}, TODAY)
+    const ventana = buildVentanaRecategorizacion(vigente, INVOICES, {}, RANGO_COMPLETO, TODAY)
 
     expect(ventana.desde).toBe("2025-07")
     expect(ventana.hasta).toBe("2026-06")
@@ -98,16 +107,56 @@ describe("buildVentanaRecategorizacion", () => {
       getNextRecategorizacionDates(new Date(2030, 7, 4))[0],
       INVOICES,
       {},
+      RANGO_COMPLETO,
       new Date(2030, 7, 4)
     )
 
     expect(ventana.tieneDatos).toBe(false)
     expect(ventana.ingresos).toBe(0)
   })
+
+  it("expone la cobertura de la ventana según el rango consultado", () => {
+    const vigente = getLastRecategorizacionDate(TODAY)
+
+    const ventana = buildVentanaRecategorizacion(vigente, INVOICES, {}, RANGO_SIN_JULIO, TODAY)
+
+    expect(ventana.cobertura.estado).toBe("parcial")
+    expect(ventana.cobertura.faltantes).toEqual(["2025-07"])
+  })
+
+  it("marca cobertura completa cuando el rango cubre la ventana entera", () => {
+    const vigente = getLastRecategorizacionDate(TODAY)
+
+    const ventana = buildVentanaRecategorizacion(vigente, INVOICES, {}, RANGO_COMPLETO, TODAY)
+
+    expect(ventana.cobertura.estado).toBe("completa")
+  })
+
+  it("marca cobertura desconocida cuando no se sabe qué rango se consultó", () => {
+    const vigente = getLastRecategorizacionDate(TODAY)
+
+    const ventana = buildVentanaRecategorizacion(vigente, INVOICES, {}, null, TODAY)
+
+    expect(ventana.cobertura.estado).toBe("desconocida")
+  })
 })
 
 describe("resolveCategoriaVigente", () => {
-  const ventanaCerrada = buildVentanaRecategorizacion(getLastRecategorizacionDate(TODAY), INVOICES, {}, TODAY)
+  const ventanaCerrada = buildVentanaRecategorizacion(
+    getLastRecategorizacionDate(TODAY),
+    INVOICES,
+    {},
+    RANGO_COMPLETO,
+    TODAY
+  )
+  /** La misma ventana, pero consultada con el rango que se come Julio 2025. */
+  const ventanaSinCubrir = buildVentanaRecategorizacion(
+    getLastRecategorizacionDate(TODAY),
+    INVOICES,
+    {},
+    RANGO_SIN_JULIO,
+    TODAY
+  )
 
   it("prefers the category reported by ARCA", () => {
     const categoria = resolveCategoriaVigente({
@@ -145,9 +194,45 @@ describe("resolveCategoriaVigente", () => {
       getLastRecategorizacionDate(new Date(2030, 7, 4)),
       INVOICES,
       {},
+      RANGO_COMPLETO,
       new Date(2030, 7, 4)
     )
 
     expect(resolveCategoriaVigente({ ventanaCerrada: vacia, categorias: CATEGORIAS })).toBeNull()
+  })
+
+  it("NO deriva la categoría si la consulta no cubrió la ventana entera", () => {
+    // El bug: con Julio 2025 sin consultar, la ventana suma menos y la derivada
+    // cae una categoría abajo. Vale más no decir nada que decir la letra mal.
+    const categoria = resolveCategoriaVigente({
+      categoriaARCA: null,
+      ventanaCerrada: ventanaSinCubrir,
+      categorias: CATEGORIAS,
+    })
+
+    expect(categoria).toBeNull()
+  })
+
+  it("NO deriva la categoría si no se sabe qué rango se consultó", () => {
+    const sinRango = buildVentanaRecategorizacion(
+      getLastRecategorizacionDate(TODAY),
+      INVOICES,
+      {},
+      null,
+      TODAY
+    )
+
+    expect(resolveCategoriaVigente({ ventanaCerrada: sinRango, categorias: CATEGORIAS })).toBeNull()
+  })
+
+  it("la categoría de ARCA gana aunque la cobertura sea parcial", () => {
+    // ARCA es la verdad legal: no depende de qué período consultamos nosotros.
+    const categoria = resolveCategoriaVigente({
+      categoriaARCA: "H",
+      ventanaCerrada: ventanaSinCubrir,
+      categorias: CATEGORIAS,
+    })
+
+    expect(categoria?.categoria).toBe("H")
   })
 })

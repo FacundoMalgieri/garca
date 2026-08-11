@@ -27,6 +27,46 @@ function pagoMensualDe(categoria: CategoriaMonotributo, tipoActividad: TipoActiv
   return tipoActividad === "servicios" ? categoria.total.servicios : categoria.total.venta;
 }
 
+/** Primer día del mes en DD/MM/YYYY, para que el usuario lo copie al formulario. */
+function primerDiaDe(monthKey: string): string {
+  const [year, month] = monthKey.split("-");
+  return `01/${month}/${year}`;
+}
+
+/** Último día del mes en DD/MM/YYYY. El día 0 del mes siguiente es éste. */
+function ultimoDiaDe(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  const dia = new Date(year, month, 0).getDate();
+  return `${String(dia).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+}
+
+/**
+ * Por qué no hay categoría vigente, y qué hacer al respecto.
+ *
+ * Los tres casos son distintos para el usuario y sólo uno tiene arreglo a mano:
+ * si faltan meses de la ventana, la salida es consultar el rango exacto — y hay
+ * que decirle cuál, porque no tiene forma de deducir que le falta Julio 2025.
+ */
+function describeFaltaCategoria(ventana: VentanaRecategorizacion): string {
+  const rango = `${primerDiaDe(ventana.desde)} a ${ultimoDiaDe(ventana.hasta)}`;
+
+  // Dos salidas, y las dos sirven: Actualizar reintenta leerla de ARCA (el
+  // scrape de comprobantes la trae best-effort, así que no hace falta re-login),
+  // y consultar el rango exacto de la ventana la deja calculable.
+  const reintento = "Probá Actualizar para reintentar leerla de ARCA";
+
+  if (ventana.cobertura.estado === "parcial") {
+    const faltantes = ventana.cobertura.faltantes.map(formatWindowMonth).join(", ");
+    return `No pudimos leerla de ARCA y la consultamos incompleta: falta ${faltantes} de la ventana ${formatWindowMonth(ventana.desde)} a ${formatWindowMonth(ventana.hasta)}. ${reintento}, o consultá el período ${rango} para calcularla.`;
+  }
+
+  if (ventana.cobertura.estado === "desconocida") {
+    return `No pudimos leerla de ARCA y no sabemos qué período se consultó en esta sesión. ${reintento}, o volvé a consultar el período ${rango} para calcularla.`;
+  }
+
+  return `No pudimos leerla de ARCA y no hay comprobantes en la última ventana cerrada (${formatWindowMonth(ventana.desde)} a ${formatWindowMonth(ventana.hasta)}). ${reintento}.`;
+}
+
 type OutlookTone = "amber" | "success" | "muted";
 
 const TONE_CLASSES: Record<OutlookTone, { box: string; accent: string; detail: string }> = {
@@ -153,7 +193,7 @@ export function MonotributoPanel({
           <p className="text-xs text-muted-foreground -mt-1">
             {monotributoInfo
               ? `Categoría vigente informada por ARCA · próxima recategorización ${ventanaProxima.label}`
-              : `Categoría vigente según ${formatWindowMonth(ventanaVigente.desde)} a ${formatWindowMonth(ventanaVigente.hasta)} · próxima recategorización ${ventanaProxima.label}`}
+              : `Categoría vigente según ${formatWindowMonth(ventanaVigente.desde)} a ${formatWindowMonth(ventanaVigente.hasta)} (no pudimos leerla de ARCA) · próxima recategorización ${ventanaProxima.label}`}
           </p>
         )}
       </CardHeader>
@@ -216,10 +256,7 @@ export function MonotributoPanel({
             {!categoriaVigente && (
               <div className="rounded-lg border-2 border-muted bg-muted/30 p-4 text-center space-y-1">
                 <p className="text-sm font-medium text-foreground">Categoría vigente no disponible</p>
-                <p className="text-xs text-muted-foreground">
-                  No pudimos leerla de ARCA y el período consultado no cubre la última ventana cerrada (
-                  {formatWindowMonth(ventanaVigente.desde)} a {formatWindowMonth(ventanaVigente.hasta)}).
-                </p>
+                <p className="text-xs text-muted-foreground">{describeFaltaCategoria(ventanaVigente)}</p>
               </div>
             )}
 
@@ -234,6 +271,15 @@ export function MonotributoPanel({
                     <span className="text-2xl font-bold text-foreground leading-none">
                       {categoriaVigente.categoria}
                     </span>
+                    {/* De dónde salió la letra. Sin esto, una categoría que
+                        nosotros inferimos de lo facturado se lee igual que la que
+                        informa ARCA — y son cosas distintas: la nuestra depende
+                        de qué período se consultó, la de ARCA es la verdad legal. */}
+                    {!monotributoInfo && (
+                      <span className="text-[9px] text-muted-foreground mt-1 leading-tight">
+                        calculada por nosotros
+                      </span>
+                    )}
                   </div>
 
                   <svg className={`w-5 h-5 ${tone.accent} mt-4`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -284,6 +330,16 @@ export function MonotributoPanel({
                   <span className="text-muted-foreground">Proyectado a 12 meses:</span>
                   <span className="font-mono font-medium">{formatPesos(ventanaProxima.ingresosAnualizados)}</span>
                 </div>
+              )}
+              {/* Meses de la ventana que la consulta no trajo: suman $0 y tiran
+                  el acumulado (y la proyección) para abajo. Se avisa porque el
+                  error va en la dirección peligrosa — parecés más lejos del tope
+                  de lo que estás. */}
+              {ventanaProxima.cobertura.estado === "parcial" && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 pt-1">
+                  Falta {ventanaProxima.cobertura.faltantes.map(formatWindowMonth).join(", ")} en lo consultado: el
+                  acumulado y la proyección están subestimados.
+                </p>
               )}
             </div>
 

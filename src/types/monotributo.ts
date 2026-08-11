@@ -55,6 +55,35 @@ export interface VentanaRecategorizacion {
   ingresosAnualizados: number | null;
   /** Hubo comprobantes del período consultado dentro de esta ventana */
   tieneDatos: boolean;
+  /**
+   * ¿La consulta a ARCA trajo todos los meses de esta ventana? Con cobertura
+   * parcial `ingresos` está subestimado y no se puede derivar la categoría.
+   */
+  cobertura: CoberturaVentana;
+}
+
+/**
+ * Estado de cobertura de una ventana: ¿la consulta a ARCA trajo TODOS los meses
+ * de la ventana, o el rango consultado dejó meses afuera?
+ *
+ * Es distinto de `VentanaRecategorizacion.completa`, que es sobre el calendario
+ * (¿ya pasaron los 12 meses?). Acá se pregunta por los datos: un mes que nunca
+ * se consultó suma $0 y es indistinguible de un mes sin facturación, así que una
+ * ventana con cobertura parcial subestima los ingresos y baja la categoría.
+ *
+ * `desconocida`: no se sabe qué rango se consultó (sesión guardada por una
+ * versión que no lo persistía). No se puede afirmar ni negar la cobertura.
+ */
+export type EstadoCobertura = "completa" | "parcial" | "desconocida"
+
+export interface CoberturaVentana {
+  estado: EstadoCobertura
+  /** Meses ya cerrados de la ventana que la consulta cubrió por completo */
+  mesesCubiertos: number
+  /** Meses de la ventana que ya cerraron (los que pueden tener facturación) */
+  mesesCerrados: number
+  /** Meses cerrados que la consulta NO cubrió, en orden (YYYY-MM) */
+  faltantes: string[]
 }
 
 export interface MonotributoStatus {

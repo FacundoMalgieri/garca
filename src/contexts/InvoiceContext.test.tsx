@@ -113,7 +113,7 @@ describe("InvoiceContext – addEmittedInvoice", () => {
 
     // Load scraped invoice as if it came from a fetch
     await act(async () => {
-      result.current.loadDemoData([scraped], null, null);
+      result.current.loadDemoData([scraped], null, null, { from: "2026-01-01", to: "2026-12-31" });
     });
 
     await act(async () => {

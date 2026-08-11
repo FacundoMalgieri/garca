@@ -23,6 +23,9 @@ function ventana(overrides: Partial<VentanaRecategorizacion> = {}): VentanaRecat
     completa: false,
     ingresosAnualizados: null,
     tieneDatos: true,
+    // El outlook no mira la cobertura (eso lo decide resolveCategoriaVigente),
+    // así que el default es la ventana bien consultada.
+    cobertura: { estado: "completa", mesesCubiertos: 7, mesesCerrados: 7, faltantes: [] },
     ...overrides,
   }
 }

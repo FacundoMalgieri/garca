@@ -23,6 +23,7 @@ interface InvoiceState {
   isHydrated: boolean;
   hasQueried: boolean;
   lastSyncedAt: number | null;
+  queriedRange: DateRange | null;
 }
 
 interface InvoiceContextType {
@@ -51,7 +52,8 @@ interface InvoiceContextType {
   loadDemoData: (
     invoices: AFIPInvoice[],
     company: CompanyInfo | null,
-    monotributoInfo: MonotributoAFIPInfo | null
+    monotributoInfo: MonotributoAFIPInfo | null,
+    queriedRange: DateRange | null
   ) => void;
   cancelOperation: () => void;
   isOperationInProgress: boolean;

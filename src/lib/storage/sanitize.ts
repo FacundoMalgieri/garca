@@ -149,6 +149,34 @@ export function sanitizeMonotributoInfo(raw: unknown): MonotributoAFIPInfo | nul
 }
 
 // ============================================================================
+// RANGO CONSULTADO
+// ============================================================================
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Rango de fechas de la última consulta a ARCA (YYYY-MM-DD).
+ *
+ * Excepción al criterio de coercionar del módulo: acá se descarta. El rango sólo
+ * se usa para decidir si una ventana de recategorización quedó cubierta, y un
+ * rango a medias o con formato raro haría pasar por cubierta una ventana que no
+ * lo está — o sea, la UI afirmando una categoría que no puede saber. Null
+ * ("desconocido") es un estado que la UI ya sabe mostrar; un rango falso, no.
+ */
+export function sanitizeDateRange(raw: unknown): { from: string; to: string } | null {
+  if (!isRecord(raw)) return null;
+
+  const from = asString(raw.from);
+  const to = asString(raw.to);
+
+  if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) return null;
+  // Invertido no puede ser lo que dice ser: no describe ningún período.
+  if (from > to) return null;
+
+  return { from, to };
+}
+
+// ============================================================================
 // COTIZACIONES MANUALES
 // ============================================================================
 
