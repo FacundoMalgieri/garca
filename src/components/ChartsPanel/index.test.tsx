@@ -3,7 +3,7 @@ import { beforeEach,describe, expect, it, vi } from "vitest";
 import type { AFIPInvoice } from "@/types/afip-scraper";
 import type { MonotributoData } from "@/types/monotributo";
 
-import { ChartsPanel } from "./index";
+import { ChartsPanel, prepareMonthlyData } from "./index";
 
 import { fireEvent,render, screen } from "@testing-library/react";
 
@@ -139,6 +139,13 @@ vi.mock("@/contexts/InvoiceContext", () => ({
   }),
 }));
 
+/** Ventana que cubre los meses de mockInvoices (Ago-Nov 2025). */
+const VENTANA_TEST = {
+  desde: "2025-08",
+  hasta: "2026-07",
+  cobertura: { estado: "completa" as const, mesesCubiertos: 12, mesesCerrados: 12, faltantes: [] },
+};
+
 const mockMonotributoData: MonotributoData = {
   categorias: [
     {
@@ -197,6 +204,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -208,6 +216,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -221,6 +230,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={false}
       />
     );
@@ -235,6 +245,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -258,6 +269,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -269,6 +281,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -281,6 +294,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -293,6 +307,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={null}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -305,6 +320,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -316,6 +332,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -327,6 +344,7 @@ describe("ChartsPanel", () => {
     render(
       <ChartsPanel
         categoriaLimite={mockCategoriaLimite}
+        ventana={VENTANA_TEST}
         isCurrentYearData={true}
       />
     );
@@ -335,3 +353,97 @@ describe("ChartsPanel", () => {
     expect(screen.getByText("Facturas en CLP")).toBeInTheDocument();
   });
 });
+
+describe("prepareMonthlyData", () => {
+  /** Total en pesos de los mocks, por mes. NC de Septiembre resta. */
+  // Ago 2025: 60500 CLP sin cotización → excluido del total
+  // Sep 2025: -121000 (nota de crédito)
+  // Oct 2025: 2000 USD × 1000 = 2.000.000
+  // Nov 2025: 1.210.000
+
+  it("sin ventana devuelve todos los meses del período consultado", () => {
+    const data = prepareMonthlyData(mockInvoices, {});
+
+    // Sin sufijo de año: los mocks son todos 2025 y el label sólo lo agrega
+    // cuando el período cruza años.
+    expect(data.map((d) => d.month)).toEqual(["Ago", "Sep", "Oct", "Nov"]);
+  });
+
+  it("con ventana deja afuera los meses que no son de la ventana", () => {
+    // El bug: el gráfico acumulaba los 13 meses del período consultado y los
+    // comparaba contra un tope ANUAL. Cruzar esa línea no significaba nada.
+    const data = prepareMonthlyData(mockInvoices, {}, { desde: "2025-10", hasta: "2026-09" });
+
+    expect(data.map((d) => d.month)).toEqual(["Oct", "Nov"]);
+  });
+
+  it("el acumulado arranca de cero en la ventana, sin arrastrar lo anterior", () => {
+    const data = prepareMonthlyData(mockInvoices, {}, { desde: "2025-10", hasta: "2026-09" });
+
+    // Oct: 2.000.000 (y NO 2.000.000 - 121.000 de la NC de Septiembre)
+    expect(data[0].acumulado).toBe(2_000_000);
+    expect(data[1].acumulado).toBe(3_210_000);
+  });
+
+  it("excluye los meses posteriores a la ventana", () => {
+    const data = prepareMonthlyData(mockInvoices, {}, { desde: "2025-08", hasta: "2025-09" });
+
+    expect(data.map((d) => d.month)).toEqual(["Ago", "Sep"]);
+  });
+});
+
+describe("ChartsPanel · subtítulo del progreso", () => {
+  it("nombra la ventana de recategorización, no 'el período consultado'", () => {
+    // Un acumulado del período consultado comparado contra un tope anual no
+    // quiere decir nada. El subtítulo tiene que decir sobre qué 12 meses corre.
+    render(
+      <ChartsPanel
+        categoriaLimite={null}
+        ventana={{
+          desde: "2026-01",
+          hasta: "2026-12",
+          cobertura: { estado: "completa", mesesCubiertos: 7, mesesCerrados: 7, faltantes: [] },
+        }}
+      />
+    );
+
+    expect(screen.getByText(/Ene 2026 a Dic 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/Acumulado del período consultado/)).not.toBeInTheDocument();
+  });
+})
+
+describe("ChartsPanel · ventana sin datos", () => {
+  const SIN_DATOS = { desde: "2030-01", hasta: "2030-12" };
+
+  it("no dibuja un gráfico vacío: explica que la consulta no cubre la ventana", () => {
+    // Un área en cero se lee como "no facturaste nada en la ventana", que es una
+    // conclusión distinta de "no consultamos esos meses".
+    render(
+      <ChartsPanel
+        categoriaLimite={null}
+        ventana={{
+          ...SIN_DATOS,
+          cobertura: { estado: "parcial", mesesCubiertos: 0, mesesCerrados: 12, faltantes: ["2030-01"] },
+        }}
+      />
+    );
+
+    expect(screen.queryByTestId("area-chart")).not.toBeInTheDocument();
+    expect(screen.getByText(/no cubre/i)).toBeInTheDocument();
+  });
+
+  it("cuando la ventana está bien cubierta y no hay facturación, lo dice sin culpar a la consulta", () => {
+    render(
+      <ChartsPanel
+        categoriaLimite={null}
+        ventana={{
+          ...SIN_DATOS,
+          cobertura: { estado: "completa", mesesCubiertos: 12, mesesCerrados: 12, faltantes: [] },
+        }}
+      />
+    );
+
+    expect(screen.getByText(/sin facturación/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no cubre/i)).not.toBeInTheDocument();
+  });
+})
