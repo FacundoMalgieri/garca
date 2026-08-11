@@ -169,6 +169,13 @@ export interface AFIPScraperResultWithCompany extends AFIPScraperResult {
   availableCompanies?: AFIPCompany[];
   /** Puntos de venta habilitados (con su universo de comprobantes). Best-effort. */
   puntosDeVenta?: PuntoDeVenta[];
+  /**
+   * Categoría de Monotributo leída de ARCA en esta corrida. Best-effort, igual
+   * que puntosDeVenta: se scrapea también acá (y no sólo en el flujo de
+   * empresas) para que el modal Actualizar pueda recuperarla sin re-login
+   * cuando el intento del login falló por una caída del portal de Monotributo.
+   */
+  monotributoInfo?: MonotributoAFIPInfo | null;
 }
 
 /**
