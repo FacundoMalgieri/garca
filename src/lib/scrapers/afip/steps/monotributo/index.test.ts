@@ -98,9 +98,21 @@ function createFakePage(options: FakePageOptions = {}) {
  * @param newPage - Página que devuelve el evento "page" (pestaña nueva). null =
  *   nunca se abre pestaña.
  * @param sequence - Log compartido con la página, para verificar el orden.
+ * @param probeFails - true simula el host de Monotributo colgado: el goto de la
+ *   sonda nunca resuelve (en la vida real, timeout).
  */
-function createFakeContext(newPage: unknown = null, sequence: string[] = []) {
+function createFakeContext(newPage: unknown = null, sequence: string[] = [], probeFails = false) {
+  const probePage = {
+    goto: vi.fn().mockImplementation(() => {
+      sequence.push("probe");
+      return probeFails ? Promise.reject(new Error("Timeout")) : Promise.resolve(null);
+    }),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+
   return {
+    probePage,
+    newPage: vi.fn().mockResolvedValue(probePage),
     waitForEvent: vi.fn().mockImplementation(() => {
       sequence.push("armListener");
       return newPage ? Promise.resolve(newPage) : Promise.reject(new Error("sin pestaña nueva"));
@@ -147,6 +159,40 @@ describe("scrapeMonotributoInfo", () => {
 
     expect(fake.clicks).toBeGreaterThanOrEqual(2);
     expect(fake.page.url()).toBe(MONOTRIBUTO_URL);
+  });
+
+  it("no clickea nada si el host de Monotributo no responde", async () => {
+    // El modo de falla real (05/08 y 11/08 de 2026): monotributo.afip.gob.ar
+    // acepta la conexión y no contesta nunca. Los triggers del portal entonces
+    // no navegan a ningún lado y el step quemaba 32s clickeando al vacío.
+    const fake = createFakePage({ navigatesOnClick: 1 });
+    const context = createFakeContext(null, fake.sequence, true);
+
+    const result = await scrapeMonotributoInfo(fake.page as never, context as never);
+
+    expect(result.success).toBe(false);
+    expect(result.info).toBeNull();
+    expect(fake.clicks).toBe(0);
+  });
+
+  it("sondea el host antes de clickear el portal", async () => {
+    const fake = createFakePage({ navigatesOnClick: 1 });
+    const context = createFakeContext(null, fake.sequence);
+
+    await scrapeMonotributoInfo(fake.page as never, context as never);
+
+    expect(fake.sequence.indexOf("probe")).toBeGreaterThanOrEqual(0);
+    expect(fake.sequence.indexOf("probe")).toBeLessThan(fake.sequence.indexOf("trigger:click"));
+  });
+
+  it("cierra la pestaña de la sonda incluso cuando el host no responde", async () => {
+    // Una pestaña huérfana por consulta se acumula en el browser del server.
+    const fake = createFakePage();
+    const context = createFakeContext(null, fake.sequence, true);
+
+    await scrapeMonotributoInfo(fake.page as never, context as never);
+
+    expect(context.probePage.close).toHaveBeenCalled();
   });
 
   it("corta después de un número acotado de intentos", async () => {
