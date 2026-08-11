@@ -473,6 +473,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                           placeholder={formatCurrency(recommendedRounded)}
                           ariaLabel={`Facturación proyectada para ${getMonthShortLabel(month)}`}
                           name={`projection-${month}`}
+                          min={yaFacturado}
                         />
                         {yaFacturado > 0 && (
                           <p
@@ -483,10 +484,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                             <span className="font-mono text-foreground">
                               ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                             </span>{" "}
-                            este mes
-                            {projectedValue > 0 && projectedValue < yaFacturado
-                              ? " · se cuenta este monto, no el proyectado"
-                              : ""}
+                            este mes · es el mínimo del mes
                           </p>
                         )}
                       </div>
@@ -604,12 +602,19 @@ function CurrencyInput({
   placeholder,
   ariaLabel,
   name,
+  min = 0,
 }: {
   value: number
   onChange: (value: number) => void
   placeholder?: string
   ariaLabel?: string
   name?: string
+  /**
+   * Piso del campo, aplicado al SALIR y no al tipear: clavarlo en cada tecla
+   * pelearía con el teclado (borrar todo para escribir otro número saltaría al
+   * piso en el primer dígito).
+   */
+  min?: number
 }) {
   const [displayValue, setDisplayValue] = useState(formatCurrency(value))
 
@@ -637,7 +642,11 @@ function CurrencyInput({
   const handleBlur = () => {
     // Re-format on blur to clean up
     const numValue = parseCurrency(displayValue)
-    setDisplayValue(formatCurrency(numValue))
+    // Abajo del piso no es un valor posible: se sube y se avisa al padre, así el
+    // campo no queda mostrando un número que no va a pasar.
+    const clamped = Math.max(numValue, min)
+    setDisplayValue(formatCurrency(clamped))
+    if (clamped !== numValue) onChange(clamped)
   }
 
   return (

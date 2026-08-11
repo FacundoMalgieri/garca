@@ -5,6 +5,7 @@ import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
 import {
   addMonths,
   annualizeWindowTotal,
+  buildRecommendationPlan,
   calculateProjection,
   countClosedMonths,
   distributeEvenly,
@@ -356,6 +357,59 @@ describe("projection utilities", () => {
 
       expect(result.total).toBe(2_000_000)
       expect(result.proyectado).toBe(0)
+    })
+  })
+
+  describe("buildRecommendationPlan", () => {
+    const TODAY = new Date(2026, 7, 11) // 11/08/2026
+
+    it("suma la recomendación sobre lo ya facturado en el mes en curso", () => {
+      // El monto recomendado es facturación NUEVA por mes. En el mes en curso
+      // parte del mes ya está facturado, así que su total es piso + nuevo. Poner
+      // la recomendación pelada dejaba el input mostrando menos que el piso.
+      const plan = buildRecommendationPlan(
+        ["2026-08", "2026-09"],
+        265_646,
+        [{ month: "2026-08", totalArs: 7_500_000, invoiceCount: 4 }],
+        TODAY
+      )
+
+      expect(plan["2026-08"]).toBe(7_765_646)
+      expect(plan["2026-09"]).toBe(265_646)
+    })
+
+    it("nunca deja el mes en curso por debajo de lo ya facturado", () => {
+      // Sin disponible (ya te pasaste), el plan del mes en curso es exactamente
+      // lo facturado: no hay nada más que facturar.
+      const plan = buildRecommendationPlan(
+        ["2026-08", "2026-09"],
+        0,
+        [{ month: "2026-08", totalArs: 7_500_000, invoiceCount: 4 }],
+        TODAY
+      )
+
+      expect(plan["2026-08"]).toBe(7_500_000)
+      expect(plan["2026-09"]).toBe(0)
+    })
+
+    it("deja los meses futuros con la recomendación pelada", () => {
+      const plan = buildRecommendationPlan(["2026-09", "2026-10"], 1_000_000, [], TODAY)
+
+      expect(plan).toEqual({ "2026-09": 1_000_000, "2026-10": 1_000_000 })
+    })
+
+    it("el plan aterriza exactamente en el disponible que se repartió", () => {
+      // Invariante: lo ya facturado + (recomendado x meses) = el total del plan.
+      const futuros = ["2026-08", "2026-09", "2026-10"]
+      const plan = buildRecommendationPlan(
+        futuros,
+        1_000_000,
+        [{ month: "2026-08", totalArs: 4_000_000, invoiceCount: 2 }],
+        TODAY
+      )
+
+      const total = futuros.reduce((sum, m) => sum + plan[m], 0)
+      expect(total).toBe(4_000_000 + 3 * 1_000_000)
     })
   })
 

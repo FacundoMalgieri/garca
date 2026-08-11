@@ -5,7 +5,7 @@ import type { MonthKey, ProjectionData, ProjectionResult } from "@/types/project
 
 import { ProjectionPanel } from "./index"
 
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 
 vi.mock("@/lib/analytics/umami", () => ({
   trackUmamiEvent: vi.fn(),
@@ -22,6 +22,9 @@ const mocks: {
   futureMonths: MonthKey[]
   monthlyProjections: Record<MonthKey, number>
 } = { monthlyTotals: [], futureMonths: [], monthlyProjections: {} }
+
+/** Spy compartido: el factory del mock corre en CADA render del hook. */
+const setMonthProjection = vi.hoisted(() => vi.fn())
 
 const CAT_G = MONOTRIBUTO_DATA.categorias.find((c) => c.categoria === "G")
 if (!CAT_G) throw new Error("Categoría G no existe en MONOTRIBUTO_DATA")
@@ -58,7 +61,7 @@ vi.mock("@/hooks/useProjection", () => ({
       setTargetRecategorizacion: vi.fn(),
       setTargetCategoria: vi.fn(),
       setMargenSeguridad: vi.fn(),
-      setMonthProjection: vi.fn(),
+      setMonthProjection,
       setAllProjections: vi.fn(),
       applyRecommendation: vi.fn(),
       clearProjections: vi.fn(),
@@ -85,6 +88,31 @@ describe("ProjectionPanel", () => {
     render(<ProjectionPanel tipoActividad="servicios" />)
 
     expect(screen.getByTestId("ya-facturado-2026-08")).toHaveTextContent("6.000.000")
+  })
+
+  it("al salir del input, el mes en curso no puede quedar abajo de lo facturado", () => {
+    // Es el caso que confundía: con la categoría objetivo baja, la recomendación
+    // ponía $265.646 en un mes con $7.500.000 ya emitidos. El campo mostraba un
+    // número que no iba a pasar. El total de un mes no puede bajar de lo emitido.
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyTotals = [{ month: "2026-08", totalArs: 7_500_000, invoiceCount: 4 }]
+    mocks.monthlyProjections = { "2026-08": 265_646 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    fireEvent.blur(screen.getByRole("textbox", { name: /Ago/ }))
+
+    expect(setMonthProjection).toHaveBeenCalledWith("2026-08", 7_500_000)
+  })
+
+  it("no toca el input cuando la proyección ya supera lo facturado", () => {
+    mocks.futureMonths = ["2026-08"]
+    mocks.monthlyTotals = [{ month: "2026-08", totalArs: 7_500_000, invoiceCount: 4 }]
+    mocks.monthlyProjections = { "2026-08": 9_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    fireEvent.blur(screen.getByRole("textbox", { name: /Ago/ }))
+
+    expect(setMonthProjection).not.toHaveBeenCalled()
   })
 
   it("no muestra piso en los meses futuros, que no tienen nada facturado", () => {
