@@ -490,7 +490,8 @@ describe("projection utilities", () => {
       const today = new Date(2026, 7, 11) // 11/08/2026
       const ventana = ["2026-07", "2026-08", "2026-09"]
       const categorias = MONOTRIBUTO_DATA.categorias
-      const catG = categorias.find((c) => c.categoria === "G")!
+      const catG = categorias.find((c) => c.categoria === "G")
+      if (!catG) throw new Error("Categoría G no existe en MONOTRIBUTO_DATA")
 
       const conFacturacionEsteMes = calculateProjection(
         ventana,

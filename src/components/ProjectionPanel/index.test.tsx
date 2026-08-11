@@ -23,7 +23,8 @@ const mocks: {
   monthlyProjections: Record<MonthKey, number>
 } = { monthlyTotals: [], futureMonths: [], monthlyProjections: {} }
 
-const CAT_G = MONOTRIBUTO_DATA.categorias.find((c) => c.categoria === "G")!
+const CAT_G = MONOTRIBUTO_DATA.categorias.find((c) => c.categoria === "G")
+if (!CAT_G) throw new Error("Categoría G no existe en MONOTRIBUTO_DATA")
 
 vi.mock("@/hooks/useProjection", () => ({
   useProjection: () => {
