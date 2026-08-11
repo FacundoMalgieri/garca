@@ -33,7 +33,7 @@ export function LastSyncNotice({ onRefresh }: LastSyncNoticeProps) {
         )}{" "}
         {onRefresh
           ? "Si emitís desde ARCA, actualizá para verlos acá."
-          : "No tenemos guardada la empresa de la sesión, así que para actualizarlos vas a tener que ingresar de nuevo con tu clave fiscal."}
+          : "No tenemos guardada la empresa de la sesión, así que para actualizarlos usá \"Limpiar Datos\" y volvé a ingresar."}
       </p>
       {onRefresh && (
         <button

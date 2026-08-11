@@ -176,8 +176,8 @@ export function MonotributoPanel({
                   el login completo. */}
               <p className="text-xs text-muted-foreground">
                 <strong className="text-foreground">💡 Consejo:</strong> Para ver tu categoría actual, usá el botón{" "}
-                <strong className="text-foreground">Actualizar</strong> de arriba y consultá los últimos
-                12 meses desde hoy.
+                <strong className="text-foreground">Actualizar</strong> de arriba —o &quot;Limpiar Datos&quot; si no
+                aparece— y consultá los últimos 12 meses desde hoy.
               </p>
             </div>
           </div>

@@ -51,6 +51,8 @@ describe("LastSyncNotice", () => {
     // abriría un modal con el CUIT vacío y un submit que no hace nada.
     expect(screen.queryByRole("button", { name: /Actualizar/ })).not.toBeInTheDocument();
     expect(screen.getByText(/10\/08\/2026/)).toBeInTheDocument();
-    expect(screen.getByText(/ingresar de nuevo con tu clave fiscal/)).toBeInTheDocument();
+    // La salida es Limpiar Datos: /ingresar rebota a /panel mientras hasQueried
+    // siga en true, así que no sirve como instrucción.
+    expect(screen.getByText(/Limpiar Datos.*volvé a ingresar/)).toBeInTheDocument();
   });
 });
