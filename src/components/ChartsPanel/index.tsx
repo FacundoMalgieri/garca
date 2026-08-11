@@ -18,7 +18,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
-import type { CategoriaMonotributo } from "@/types/monotributo";
+import type { CategoriaMonotributo, VentanaRecategorizacion } from "@/types/monotributo";
 
 interface ChartsPanelProps {
   /**
@@ -27,6 +27,13 @@ interface ChartsPanelProps {
    * período consultado, que no coincide con la ventana de recategorización.
    */
   categoriaLimite: CategoriaMonotributo | null;
+  /**
+   * Ventana de recategorización sobre la que corre el acumulado. Es la que le da
+   * sentido a comparar contra el tope de la categoría: los dos son 12 meses.
+   * Se pide la cobertura para poder explicar un acumulado vacío: "no facturaste"
+   * y "no consultamos esos meses" se ven igual en el gráfico y no son lo mismo.
+   */
+  ventana: Pick<VentanaRecategorizacion, "desde" | "hasta" | "cobertura">;
   isCurrentYearData?: boolean;
 }
 
@@ -38,11 +45,18 @@ const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: "mensual", label: "Mensual", icon: <BarChartIcon /> },
 ];
 
-export function ChartsPanel({ categoriaLimite, isCurrentYearData = true }: ChartsPanelProps) {
+export function ChartsPanel({ categoriaLimite, ventana, isCurrentYearData = true }: ChartsPanelProps) {
   const { state, manualExchangeRates } = useInvoiceContext();
   const [activeTab, setActiveTab] = useState<TabType>("progreso");
 
+  // El tab Mensual sí muestra todo el período consultado: son barras por mes,
+  // no se comparan contra ningún tope. El acumulado del progreso, en cambio, va
+  // acotado a la ventana.
   const monthlyData = useMemo(() => prepareMonthlyData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
+  const ventanaData = useMemo(
+    () => prepareMonthlyData(state.invoices, manualExchangeRates, ventana),
+    [state.invoices, manualExchangeRates, ventana]
+  );
   const distributionData = useMemo(() => prepareDistributionData(state.invoices, manualExchangeRates), [state.invoices, manualExchangeRates]);
 
   if (!isCurrentYearData) {
@@ -79,7 +93,9 @@ export function ChartsPanel({ categoriaLimite, isCurrentYearData = true }: Chart
 
         {/* Chart Content */}
         <div className="min-h-[400px]">
-          {activeTab === "progreso" && <ProgresoChart monthlyData={monthlyData} currentCategory={categoriaLimite} />}
+          {activeTab === "progreso" && (
+            <ProgresoChart monthlyData={ventanaData} currentCategory={categoriaLimite} ventana={ventana} />
+          )}
           {activeTab === "distribucion" && <DistribucionChart distributionData={distributionData} />}
           {activeTab === "mensual" && <MensualChart monthlyData={monthlyData} />}
         </div>
@@ -127,9 +143,27 @@ function calculateTotalEnPesos(
   return importeTotal;
 }
 
-function prepareMonthlyData(
+const MONTH_NAMES_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+/** "2026-01" → "Ene 2026" */
+function formatVentanaMonth(monthKey: string): string {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTH_NAMES_SHORT[month - 1]} ${year}`;
+}
+
+/**
+ * Totales por mes, con acumulado corrido.
+ *
+ * `ventana` acota a los meses de una ventana de recategorización. Sin ella, el
+ * acumulado corría sobre TODO el período consultado —13 meses en la sesión que
+ * expuso el bug— y después se comparaba contra el tope ANUAL de la categoría:
+ * la línea se cruzaba sin que eso significara nada. Exportada para poder
+ * testear el filtro y el acumulado sin depender del render de recharts.
+ */
+export function prepareMonthlyData(
   invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number; xmlData?: { exchangeRate?: number } }[],
   manualRates: Record<string, number> = {},
+  ventana?: { desde: string; hasta: string },
 ): MonthlyDataPoint[] {
   const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   
@@ -149,6 +183,10 @@ function prepareMonthlyData(
     const yearNum = parseInt(year);
     const key = `${year}-${month}`; // Unique key per year-month
     const sortKey = yearNum * 100 + monthNum; // YYYYMM for chronological sorting
+
+    // Fuera de la ventana no suma. Comparación lexicográfica: las dos puntas son
+    // YYYY-MM con el mes en dos dígitos.
+    if (ventana && (key < ventana.desde || key > ventana.hasta)) return;
 
     const multiplier = getInvoiceMultiplier(invoice.tipo);
     const totalEnPesos = calculateTotalEnPesos(
@@ -352,9 +390,11 @@ function roundUpToNiceValue(value: number): number {
 
 function ProgresoChart({
   monthlyData,
+  ventana,
   currentCategory,
 }: {
   monthlyData: MonthlyDataPoint[];
+  ventana: Pick<VentanaRecategorizacion, "desde" | "hasta" | "cobertura">;
   currentCategory: { categoria: string; ingresosBrutos: number } | null;
 }) {
   // Calculate Y-axis domain to always show the category limit line
@@ -374,10 +414,19 @@ function ProgresoChart({
       <div className="mb-4 flex-none">
         <h3 className="text-sm font-medium text-muted-foreground">Ingresos Acumulados vs Límites de Categorías</h3>
         <p className="text-xs text-muted-foreground/70">
-          Acumulado del período consultado
+          Acumulado de la ventana {formatVentanaMonth(ventana.desde)} a {formatVentanaMonth(ventana.hasta)}
           {currentCategory ? ` · la línea es el tope de tu categoría ${currentCategory.categoria}` : ""}
         </p>
       </div>
+      {monthlyData.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-center px-6">
+          <p className="text-sm text-muted-foreground max-w-sm">
+            {ventana.cobertura.estado === "completa"
+              ? "Ventana sin facturación: no hay comprobantes en estos 12 meses."
+              : "El período consultado no cubre esta ventana, así que no hay nada que acumular. Consultá la ventana completa para verla."}
+          </p>
+        </div>
+      ) : (
       <ChartReady>
         {({ width, height }) => (
           <AreaChart width={width} height={height} data={monthlyData}>
@@ -435,6 +484,7 @@ function ProgresoChart({
           </AreaChart>
         )}
       </ChartReady>
+      )}
     </div>
   );
 }
