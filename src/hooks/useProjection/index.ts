@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
 import {
+  buildRecommendationPlan,
   calculateProjection,
   formatMonthKey,
   getCategoriaByLetter,
@@ -239,19 +240,18 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
   const applyRecommendation = useCallback(() => {
     if (!projectionResult || futureMonths.length === 0) return
 
-    const recommended = projectionResult.montoRecomendadoMensual
-    const newProjections: Record<MonthKey, number> = {}
-
-    for (const month of futureMonths) {
-      newProjections[month] = recommended
-    }
-
+    // El mes en curso arranca de lo que ya facturaste, no de cero: el recomendado
+    // es facturación nueva. Ver buildRecommendationPlan.
     setProjectionData(prev => ({
       ...prev,
-      monthlyProjections: newProjections,
+      monthlyProjections: buildRecommendationPlan(
+        futureMonths,
+        projectionResult.montoRecomendadoMensual,
+        monthlyTotals
+      ),
       updatedAt: new Date().toISOString(),
     }))
-  }, [projectionResult, futureMonths])
+  }, [projectionResult, futureMonths, monthlyTotals])
 
   const clearProjections = useCallback(() => {
     setProjectionData(prev => ({

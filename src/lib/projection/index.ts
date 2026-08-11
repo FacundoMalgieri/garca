@@ -403,6 +403,36 @@ export function calculateProjection(
 }
 
 /**
+ * Reparte el monto recomendado sobre los meses que faltan.
+ *
+ * El recomendado es facturación NUEVA por mes: sale de dividir el disponible
+ * (tope − margen − lo ya facturado en la ventana) entre los meses restantes. En
+ * los meses futuros el total del mes es ese monto y nada más, pero el mes EN
+ * CURSO ya tiene facturado: su total es piso + lo nuevo.
+ *
+ * Poner el recomendado pelado en el mes en curso dejaba el input mostrando menos
+ * que lo ya facturado —"$265.646" con $7.500.000 emitidos— o sea un número que
+ * no iba a pasar. Con esto el plan aterriza exacto en tope − margen.
+ */
+export function buildRecommendationPlan(
+  futureMonths: MonthKey[],
+  recomendadoMensual: number,
+  historical: MonthlyTotal[],
+  today: Date = new Date()
+): Record<MonthKey, number> {
+  const currentMonth = formatMonthKey(today)
+  const historicalMap = new Map(historical.map(h => [h.month, h.totalArs]))
+
+  const plan: Record<MonthKey, number> = {}
+  for (const month of futureMonths) {
+    const piso = month === currentMonth ? historicalMap.get(month) || 0 : 0
+    plan[month] = piso + recomendadoMensual
+  }
+
+  return plan
+}
+
+/**
  * Distribute an amount evenly across future months
  */
 export function distributeEvenly(
