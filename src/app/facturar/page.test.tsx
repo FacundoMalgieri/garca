@@ -7,7 +7,18 @@ import { fireEvent, render, screen } from "@testing-library/react";
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
-let ctx: any;
+// Sólo lo que FacturarPage lee del contexto; las facturas son parciales a propósito.
+type MockCtx = {
+  state: {
+    isHydrated: boolean;
+    company: { cuit: string; razonSocial: string; index: number } | null;
+    invoices: { fecha: string; tipo: string; moneda: string; importeTotal: number }[];
+  };
+  manualExchangeRates: Record<string, number>;
+  monotributoInfo?: { categoria: string };
+};
+
+let ctx: MockCtx;
 vi.mock("@/contexts/InvoiceContext", () => ({ useInvoiceContext: () => ctx }));
 vi.mock("@/hooks/useTemplates", () => ({ useTemplates: () => ({ templates: [], save: vi.fn(), remove: vi.fn() }) }));
 vi.mock("@/hooks/useMonotributo", () => ({
@@ -22,9 +33,9 @@ vi.mock("@/hooks/useMonotributo", () => ({
     status: { margenDisponible: 1000000 },
   }),
 }));
-vi.mock("@/components/facturador/EmissionForm", () => ({ EmissionForm: ({ onPreview }: any) => <button onClick={() => onPreview({ id: "x" })}>form-preview</button> }));
+vi.mock("@/components/facturador/EmissionForm", () => ({ EmissionForm: ({ onPreview }: { onPreview: (p: { id: string }) => void }) => <button onClick={() => onPreview({ id: "x" })}>form-preview</button> }));
 vi.mock("@/components/facturador/EmissionModal", () => ({
-  EmissionModal: ({ isOpen, margenDisponible }: any) => (
+  EmissionModal: ({ isOpen, margenDisponible }: { isOpen: boolean; margenDisponible: number | null }) => (
     <>
       {isOpen ? <div>modal-abierto</div> : null}
       <span data-testid="margen">{margenDisponible === null ? "null" : String(margenDisponible)}</span>

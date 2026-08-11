@@ -126,7 +126,8 @@ describe("useEmission", () => {
     expect((body.original as { numeroCompleto: string }).numeroCompleto).toBe("0003-00000089");
 
     // 2) Invoice appendeado al contexto (lo que hace que baje el ingreso)
-    const appended = result.current.ctx.state.invoices.at(-1)!;
+    const invoices = result.current.ctx.state.invoices;
+    const appended = invoices[invoices.length - 1];
     expect(appended.tipo.toLowerCase()).toContain("nota de credito");
     expect(appended.tipoComprobante).toBe(13);
     expect(appended.moneda).toBe("ARS");
@@ -267,7 +268,8 @@ describe("useEmission", () => {
     await act(async () => { await result.current.emission.confirm({ kind: "facturaC", plantilla: {} as never }, {} as never); });
     await waitFor(() => expect(result.current.emission.phase).toBe("done"));
 
-    const appended = result.current.ctx.state.invoices.at(-1)!;
+    const invoices = result.current.ctx.state.invoices;
+    const appended = invoices[invoices.length - 1];
     expect(appended.numero).toBe(97);
   });
 });

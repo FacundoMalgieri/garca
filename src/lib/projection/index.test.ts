@@ -28,6 +28,12 @@ import {
   sumWindow,
 } from "./index"
 
+function requireCategoria(letra: string, categorias: Parameters<typeof getCategoriaByLetter>[1]) {
+  const encontrada = getCategoriaByLetter(letra, categorias)
+  if (!encontrada) throw new Error(`Categoría ${letra} no existe en MONOTRIBUTO_DATA`)
+  return encontrada
+}
+
 describe("projection utilities", () => {
   describe("formatMonthKey", () => {
     it("formats date to YYYY-MM", () => {
@@ -236,8 +242,8 @@ describe("projection utilities", () => {
       // Derivado de la data (no montos hardcodeados) para que no rompa en cada
       // recategorización semestral cuando ARCA actualiza las escalas.
       const categorias = MONOTRIBUTO_DATA.categorias
-      const A = getCategoriaByLetter("A", categorias)!
-      const G = getCategoriaByLetter("G", categorias)!
+      const A = requireCategoria("A", categorias)
+      const G = requireCategoria("G", categorias)
 
       // Justo bajo el tope de A → A (el límite es inclusivo)
       expect(getCategoriaForTotal(A.ingresosBrutos - 1, categorias)?.categoria).toBe("A")
@@ -337,7 +343,7 @@ describe("projection utilities", () => {
 
     it("returns the minimum category that accommodates the income", () => {
       const categorias = MONOTRIBUTO_DATA.categorias
-      const F = getCategoriaByLetter("F", categorias)!
+      const F = requireCategoria("F", categorias)
 
       // Un ingreso apenas por encima del tope de F entra en G → target es G
       const target = getAutoTargetCategory(F.ingresosBrutos + 1, categorias)
