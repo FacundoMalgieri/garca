@@ -6,7 +6,11 @@ import type { VentanaRecategorizacion } from "@/types/monotributo"
 import { getRecategorizacionOutlook } from "./outlook"
 
 const CATEGORIAS = MONOTRIBUTO_DATA.categorias
-const cat = (letra: string) => CATEGORIAS.find((c) => c.categoria === letra)!
+const cat = (letra: string) => {
+  const encontrada = CATEGORIAS.find((c) => c.categoria === letra)
+  if (!encontrada) throw new Error(`Categoría ${letra} no existe en MONOTRIBUTO_DATA`)
+  return encontrada
+}
 
 function ventana(overrides: Partial<VentanaRecategorizacion> = {}): VentanaRecategorizacion {
   return {

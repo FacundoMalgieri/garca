@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [
@@ -15,6 +15,9 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     include: ["**/*.test.{ts,tsx}"],
+    // Sin esto, un worktree en .claude/worktrees/ hace correr la suite dos veces
+    // y la copia falla por resolución de módulos.
+    exclude: [...configDefaults.exclude, "**/.claude/**"],
     coverage: {
       provider: "istanbul",
       reporter: ["text", "json", "html"],

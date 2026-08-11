@@ -114,9 +114,9 @@ describe("InvoiceTable", () => {
     it("'Mostrar más' reveals the next page", () => {
       const { container } = renderTable();
       const btn = getShowMoreButton();
-      expect(btn).not.toBeNull();
+      if (!btn) throw new Error("no apareció el botón 'mostrar más'");
 
-      fireEvent.click(btn!);
+      fireEvent.click(btn);
 
       expect(countDesktopRows(container)).toBe(Math.min(PAGE_SIZE * 2, TOTAL));
     });
@@ -138,9 +138,9 @@ describe("InvoiceTable", () => {
       typeSearch("acme");
 
       const btn = getShowMoreButton();
-      expect(btn).not.toBeNull();
+      if (!btn) throw new Error("no apareció el botón 'mostrar más'");
 
-      fireEvent.click(btn!);
+      fireEvent.click(btn);
 
       expect(countDesktopRows(container)).toBe(Math.min(PAGE_SIZE * 2, MATCH_COUNT));
     });
