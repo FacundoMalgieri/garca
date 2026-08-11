@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LastSyncNotice } from "./index";
 
@@ -12,12 +12,47 @@ vi.mock("@/contexts/InvoiceContext", () => ({
 describe("LastSyncNotice", () => {
   beforeEach(() => {
     mockState.lastSyncedAt = null;
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("muestra la fecha del último scrape", () => {
     mockState.lastSyncedAt = new Date(2026, 7, 10).getTime();
     render(<LastSyncNotice onRefresh={vi.fn()} />);
     expect(screen.getByText(/10\/08\/2026/)).toBeInTheDocument();
+  });
+
+  it("dice 'hoy' cuando el scrape fue hoy", () => {
+    // La pregunta real frente al banner es "¿esto está fresco?", y una fecha
+    // absoluta obliga a calcularlo mentalmente. Sin escalada de color: informa.
+    vi.setSystemTime(new Date(2026, 7, 11, 18, 0));
+    mockState.lastSyncedAt = new Date(2026, 7, 11, 9, 30).getTime();
+
+    render(<LastSyncNotice onRefresh={vi.fn()} />);
+
+    expect(screen.getByText(/actualizados hoy/i)).toBeInTheDocument();
+  });
+
+  it("dice 'ayer' por día calendario, no por 24 horas", () => {
+    // 20:00 de ayer a 08:00 de hoy son 12 horas, pero es ayer.
+    vi.setSystemTime(new Date(2026, 7, 11, 8, 0));
+    mockState.lastSyncedAt = new Date(2026, 7, 10, 20, 0).getTime();
+
+    render(<LastSyncNotice onRefresh={vi.fn()} />);
+
+    expect(screen.getByText(/actualizados ayer/i)).toBeInTheDocument();
+  });
+
+  it("cuenta los días cuando hace más de dos", () => {
+    vi.setSystemTime(new Date(2026, 7, 11, 8, 0));
+    mockState.lastSyncedAt = new Date(2026, 7, 8, 20, 0).getTime();
+
+    render(<LastSyncNotice onRefresh={vi.fn()} />);
+
+    expect(screen.getByText(/hace 3 días/i)).toBeInTheDocument();
   });
 
   it("avisa cuándo hay que actualizar", () => {
