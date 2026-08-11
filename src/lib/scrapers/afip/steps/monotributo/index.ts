@@ -28,6 +28,40 @@ function isMonotributoUrl(url: string): boolean {
 }
 
 /**
+ * ¿Contesta el host de Monotributo?
+ *
+ * El modo de falla confirmado en prod (05/08/2026 y otra vez el 11/08) es
+ * monotributo.afip.gob.ar aceptando la conexión TCP y no respondiendo nunca.
+ * Con el host así, los triggers del portal no navegan a ningún lado —ni pestaña
+ * nueva, ni error— y el step quemaba 32s clickeando al vacío antes de rendirse.
+ *
+ * El goto directo no sirve para traer el dato (sin el handoff de SSO ARCA tira
+ * SesionExpirada.aspx), pero sí para preguntar si el host está vivo: cuesta
+ * ~730ms y no toca la página que comparte el scrape de empresas. Verificado el
+ * 11/08/2026 contra ARCA real: sondear primero no ensucia la sesión, el step
+ * siguió extrayendo la categoría normalmente.
+ *
+ * `waitUntil: "commit"` a propósito: alcanza con que lleguen los headers, no
+ * hace falta esperar que la página cargue.
+ */
+async function monotributoResponde(context: BrowserContext): Promise<boolean> {
+  let probe: Page | null = null;
+  try {
+    probe = await context.newPage();
+    await probe.goto(URLS.MONOTRIBUTO_APP, {
+      waitUntil: "commit",
+      timeout: MONOTRIBUTO_TIMEOUTS.PROBE,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    // Una pestaña huérfana por consulta se acumula en el browser del server.
+    await probe?.close().catch(() => {});
+  }
+}
+
+/**
  * Result of Monotributo scraping.
  */
 export interface MonotributoScrapingResult {
@@ -56,6 +90,13 @@ export async function scrapeMonotributoInfo(
   console.log("[AFIP Monotributo] Starting Monotributo info fetch...");
 
   try {
+    // Antes de tocar el portal: si el host de Monotributo no contesta, ningún
+    // click va a navegar y sólo se pierde tiempo. Ver monotributoResponde.
+    if (!(await monotributoResponde(context))) {
+      console.log("[AFIP Monotributo] El host no responde, salteo el step");
+      return { success: false, info: null, error: "El portal de Monotributo de ARCA no responde" };
+    }
+
     // Navigate to Monotributo via service card / search
     const monotributoPage = await navigateToMonotributo(page, context, deadline);
 

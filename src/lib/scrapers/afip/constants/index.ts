@@ -64,6 +64,12 @@ export const MONOTRIBUTO_TIMEOUTS = {
    * del corte de Cloudflare.
    */
   STEP_BUDGET: 45000,
+  /**
+   * Sonda de liveness del host de Monotributo. Medido el 11/08/2026: contesta en
+   * ~730ms. 5s da margen para un host lento sin volver a pagar los 32s de
+   * clickear triggers que, con el host caído, no navegan a ningún lado.
+   */
+  PROBE: 5000,
 } as const;
 // Headless por defecto. Poné AFIP_HEADLESS=false en el entorno (dev) para
 // ver la ventana de Chromium y observar el scraping/emisión en vivo.
@@ -78,6 +84,12 @@ export const URLS = {
   LOGIN: "https://auth.afip.gob.ar/contribuyente_/login.xhtml",
   PORTAL: "https://portalcf.cloud.afip.gob.ar/portal/app/",
   RCEL: "https://fe.arca.gob.ar/rcel/jsp/index_bis.jsp",
+  /**
+   * App de Monotributo. NO sirve para entrar directo: sin el handoff de SSO del
+   * catálogo de servicios, ARCA redirige a SesionExpirada.aspx (verificado el
+   * 11/08/2026 con sesión viva). Se usa sólo como sonda de "¿el host contesta?".
+   */
+  MONOTRIBUTO_APP: "https://monotributo.afip.gob.ar/app/Inicio.aspx",
 } as const;
 
 // ============================================================================
