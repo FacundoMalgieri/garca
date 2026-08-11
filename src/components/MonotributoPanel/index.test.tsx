@@ -66,6 +66,7 @@ function ventana(overrides: Partial<VentanaRecategorizacion> = {}): VentanaRecat
     completa: true,
     ingresosAnualizados: 7500000,
     tieneDatos: true,
+    cobertura: { estado: "completa", mesesCubiertos: 12, mesesCerrados: 12, faltantes: [] },
     ...overrides,
   };
 }
@@ -281,6 +282,103 @@ describe("MonotributoPanel", () => {
 
     expect(screen.getByText("Categoría vigente no disponible")).toBeInTheDocument();
     expect(screen.queryByText("CATEGORÍA ACTUAL")).not.toBeInTheDocument();
+  });
+
+  it("marca la categoría como calculada cuando no vino de ARCA", () => {
+    // Sin esto el panel muestra una letra sin decir de dónde salió. La derivada
+    // es una inferencia nuestra sobre lo facturado; la de ARCA es la verdad
+    // legal. Confundirlas es lo que hizo que una G calculada pasara por vigente.
+    monotributoPanelMocks.monotributoInfo = null;
+
+    renderPanel({ categoriaVigente: CAT_G });
+
+    expect(screen.getByText(/calculada por nosotros/i)).toBeInTheDocument();
+    expect(screen.getByText(/no pudimos leerla de ARCA/i)).toBeInTheDocument();
+  });
+
+  it("no la marca como calculada cuando ARCA sí la informó", () => {
+    monotributoPanelMocks.monotributoInfo = baseMonotributoInfo({ categoria: "G" });
+
+    renderPanel({ categoriaVigente: CAT_G });
+
+    expect(screen.queryByText(/calculada por nosotros/i)).not.toBeInTheDocument();
+  });
+
+  it("nombra los meses que faltan y el rango exacto a consultar", () => {
+    // Un "no disponible" sin el qué-hacer es un callejón sin salida: el usuario
+    // no tiene forma de adivinar que le falta Julio 2025.
+    renderPanel({
+      categoriaVigente: null,
+      ventanaVigente: ventana({
+        label: "Julio 2026",
+        desde: "2025-07",
+        hasta: "2026-06",
+        cobertura: {
+          estado: "parcial",
+          mesesCubiertos: 10,
+          mesesCerrados: 12,
+          faltantes: ["2025-07", "2025-08"],
+        },
+      }),
+    });
+
+    expect(screen.getByText(/Jul 2025, Ago 2025/)).toBeInTheDocument();
+    expect(screen.getByText(/01\/07\/2025/)).toBeInTheDocument();
+    expect(screen.getByText(/30\/06\/2026/)).toBeInTheDocument();
+  });
+
+  it("avisa que el acumulado de la ventana en curso está incompleto", () => {
+    // Subestimar acá es peligroso en la dirección mala: proyecta de menos y te
+    // deja creyendo que no te recategorizás cuando sí.
+    renderPanel({
+      ventanaProxima: ventana({
+        ingresos: 14_000_000,
+        mesesCerrados: 7,
+        completa: false,
+        ingresosAnualizados: 24_000_000,
+        cobertura: {
+          estado: "parcial",
+          mesesCubiertos: 5,
+          mesesCerrados: 7,
+          faltantes: ["2026-01", "2026-02"],
+        },
+      }),
+    });
+
+    expect(screen.getByText(/Ene 2026, Feb 2026/)).toBeInTheDocument();
+  });
+
+  it("no avisa nada cuando la ventana en curso está bien cubierta", () => {
+    renderPanel({ ventanaProxima: VENTANA_PARCIAL });
+
+    expect(screen.queryByText(/sin consultar/i)).not.toBeInTheDocument();
+  });
+
+  it("ofrece Actualizar como segunda salida cuando no hay categoría", () => {
+    // El scrape de comprobantes ahora reintenta leer la categoría de ARCA, así
+    // que Actualizar la puede recuperar sin re-login. Antes no existía esa salida.
+    renderPanel({
+      categoriaVigente: null,
+      ventanaVigente: ventana({
+        cobertura: { estado: "parcial", mesesCubiertos: 11, mesesCerrados: 12, faltantes: ["2025-07"] },
+      }),
+    });
+
+    expect(screen.getByText(/Actualizar/)).toBeInTheDocument();
+  });
+
+  it("distingue no-saber-el-período de no-tener-datos", () => {
+    renderPanel({
+      categoriaVigente: null,
+      ventanaVigente: ventana({
+        label: "Julio 2026",
+        desde: "2025-07",
+        hasta: "2026-06",
+        cobertura: { estado: "desconocida", mesesCubiertos: 0, mesesCerrados: 12, faltantes: [] },
+      }),
+    });
+
+    expect(screen.getByText(/no sabemos qué período/i)).toBeInTheDocument();
   });
 
   it("syncs tipoActividad from scraped monotributoInfo when hook disagrees", () => {

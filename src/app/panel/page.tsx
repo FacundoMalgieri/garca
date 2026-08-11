@@ -58,8 +58,20 @@ export default function PanelPage() {
       }
     }
 
-    const vigente = buildVentanaRecategorizacion(recategInfo.vigente, state.invoices, manualExchangeRates);
-    const proxima = buildVentanaRecategorizacion(recategInfo.proxima, state.invoices, manualExchangeRates);
+    // El rango consultado entra al cálculo: define si el acumulado de cada
+    // ventana es su total real o sólo la parte que se llegó a consultar.
+    const vigente = buildVentanaRecategorizacion(
+      recategInfo.vigente,
+      state.invoices,
+      manualExchangeRates,
+      state.queriedRange
+    );
+    const proxima = buildVentanaRecategorizacion(
+      recategInfo.proxima,
+      state.invoices,
+      manualExchangeRates,
+      state.queriedRange
+    );
 
     return {
       ventanaVigente: vigente,
@@ -67,7 +79,7 @@ export default function PanelPage() {
       hasCurrentYearData: vigente.tieneDatos || proxima.tieneDatos,
       fxCurrenciesNeedingRate: needingRate,
     };
-  }, [state.invoices, manualExchangeRates, recategInfo]);
+  }, [state.invoices, state.queriedRange, manualExchangeRates, recategInfo]);
 
   const { data: monotributoData, tipoActividad } = useMonotributo(
     hasCurrentYearData ? ventanaVigente.ingresos : 0
@@ -77,7 +89,7 @@ export default function PanelPage() {
     () =>
       resolveCategoriaVigente({
         categoriaARCA: monotributoInfo?.categoria,
-        ventanaCerrada: ventanaVigente.tieneDatos ? ventanaVigente : null,
+        ventanaCerrada: ventanaVigente,
         categorias: monotributoData.categorias,
       }),
     [monotributoInfo?.categoria, ventanaVigente, monotributoData.categorias]
@@ -213,6 +225,7 @@ export default function PanelPage() {
         <section id="graficos">
           <ChartsPanel
             categoriaLimite={categoriaVigente}
+            ventana={ventanaProxima}
             isCurrentYearData={hasCurrentYearData}
           />
         </section>

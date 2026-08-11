@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { LoadingSpinner, PlayIcon } from "@/components/ui/icons";
 import { useInvoiceContext } from "@/contexts/InvoiceContext";
+import { getDefaultDateRange } from "@/hooks/useInvoices";
 import type { MonotributoAFIPInfo } from "@/types/afip-scraper";
 
 const DEMO_COMPANY = {
@@ -80,7 +81,9 @@ export function HeroDemoButton({ widthClassName = "w-full sm:w-52" }: { widthCla
       // Push demo data through the provider so Navbar / /panel observe the
       // change synchronously via React state; the debounced save effect in
       // useInvoices will persist invoices + company to localStorage.
-      loadDemoData(adjustedInvoices, DEMO_COMPANY, DEMO_MONOTRIBUTO_INFO);
+      // La demo simula exactamente lo que haría un usuario real: consultar los
+      // últimos 12 meses. Declararlo mantiene honesta la cobertura de ventanas.
+      loadDemoData(adjustedInvoices, DEMO_COMPANY, DEMO_MONOTRIBUTO_INFO, getDefaultDateRange());
       router.push("/panel");
     } catch (error) {
       console.error("Error loading demo data:", error);

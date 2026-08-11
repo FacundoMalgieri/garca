@@ -6,6 +6,7 @@ import {
   asStringArray,
   isRecord,
   sanitizeCompanyInfo,
+  sanitizeDateRange,
   sanitizeInvoices,
   sanitizeManualFxRates,
   sanitizeMonotributoInfo,
@@ -227,5 +228,36 @@ describe("sanitizeProjectionData", () => {
 
   it("normaliza targetCategoria no-string a null", () => {
     expect(sanitizeProjectionData({ ...DATA, targetCategoria: 5 })?.targetCategoria).toBeNull();
+  });
+});
+
+describe("sanitizeDateRange", () => {
+  it("acepta un rango con las dos fechas en YYYY-MM-DD", () => {
+    expect(sanitizeDateRange({ from: "2025-07-01", to: "2026-06-30" })).toEqual({
+      from: "2025-07-01",
+      to: "2026-06-30",
+    });
+  });
+
+  it("descarta el rango si falta una punta", () => {
+    // A diferencia del resto del módulo, acá se descarta en vez de coercionar:
+    // un rango a medias haría pasar por cubierta una ventana que no lo está, y
+    // la UI concluiría una categoría con datos incompletos.
+    expect(sanitizeDateRange({ from: "2025-07-01" })).toBeNull();
+    expect(sanitizeDateRange({ to: "2026-06-30" })).toBeNull();
+  });
+
+  it("descarta fechas que no son YYYY-MM-DD", () => {
+    expect(sanitizeDateRange({ from: "01/07/2025", to: "30/06/2026" })).toBeNull();
+    expect(sanitizeDateRange({ from: "2025-07-01", to: "ayer" })).toBeNull();
+  });
+
+  it("descarta lo que no es un objeto", () => {
+    expect(sanitizeDateRange(null)).toBeNull();
+    expect(sanitizeDateRange("2025-07-01")).toBeNull();
+  });
+
+  it("descarta un rango invertido", () => {
+    expect(sanitizeDateRange({ from: "2026-06-30", to: "2025-07-01" })).toBeNull();
   });
 });

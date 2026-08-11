@@ -231,6 +231,18 @@ export function EmissionModal({ isOpen, mode = "emit", plantilla, invoiceToVoid,
               </div>
             )}
 
+            {/* Sin categoría vigente no hay margen que calcular, y quedarse
+                callado deja al usuario emitiendo a ciegas contra su tope. Sólo
+                aplica a facturas: una NC resta, no puede acercarte al tope. */}
+            {!esNC && preview && margenDisponible === null && (
+              <div
+                data-testid="tope-desconocido"
+                className="rounded-lg border border-muted bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+              >
+                No podemos calcular cuánto te queda hasta el tope: nos falta tu categoría vigente. Revisala en el panel.
+              </div>
+            )}
+
             {previewBlockers.length > 0 && (
               <div
                 data-testid="preview-blockers"

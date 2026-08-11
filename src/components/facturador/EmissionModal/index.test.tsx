@@ -84,6 +84,27 @@ describe("EmissionModal", () => {
     expect(screen.getByTestId("modal-total")).toHaveTextContent("200.000,00");
     expect(screen.getByTestId("tope-alert")).toHaveTextContent(/2\.340\.000/);
   });
+  it("sin categoría vigente avisa que no puede calcular el margen, en vez de callarse", () => {
+    // margenDisponible es null cuando no se pudo resolver la categoría vigente
+    // (ARCA no respondió y la consulta no cubre la ventana). Antes ese caso
+    // mostraba una alerta calculada con una categoría posiblemente equivocada;
+    // ahora no hay alerta, y desaparecer sin decir nada deja al usuario emitiendo
+    // a ciegas contra su tope.
+    mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
+    render(<EmissionModal {...baseProps} margenDisponible={null} />);
+
+    expect(screen.queryByTestId("tope-alert")).not.toBeInTheDocument();
+    expect(screen.getByTestId("tope-desconocido")).toHaveTextContent(/no podemos calcular/i);
+  });
+
+  it("no avisa nada del tope en una nota de crédito sin categoría", () => {
+    // Una NC resta: no puede acercarte al tope.
+    mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
+    render(<EmissionModal {...ncProps} invoiceToVoid={SCRAPED_INV} margenDisponible={null} />);
+
+    expect(screen.queryByTestId("tope-desconocido")).not.toBeInTheDocument();
+  });
+
   it("botón Emitir deshabilitado hasta checkbox + tipear EMITIR", () => {
     mockState = { phase: "preview", preview: PREVIEW, result: null, error: null };
     render(<EmissionModal {...baseProps} />);

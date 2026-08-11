@@ -94,6 +94,7 @@ describe("useInvoices", () => {
         isHydrated: true,
         hasQueried: false,
         lastSyncedAt: null,
+        queriedRange: null,
       });
     });
 
@@ -139,6 +140,26 @@ describe("useInvoices", () => {
 
       expect(result.current.state.invoices).toHaveLength(1);
       expect(result.current.state.company).toEqual(mockCompany);
+    });
+
+    it("hidrata el rango consultado desde localStorage", () => {
+      // Sin el rango no se puede saber si un mes sin facturas es un mes flojo o
+      // un mes que nunca se consultó. Ver computeCobertura.
+      localStorage.setItem("garca_invoices", JSON.stringify([]));
+      localStorage.setItem("garca_queried_range", JSON.stringify({ from: "2025-07-01", to: "2026-06-30" }));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.queriedRange).toEqual({ from: "2025-07-01", to: "2026-06-30" });
+    });
+
+    it("deja el rango en null si lo guardado no tiene forma de rango", () => {
+      localStorage.setItem("garca_invoices", JSON.stringify([]));
+      localStorage.setItem("garca_queried_range", JSON.stringify({ from: "2025-07-01" }));
+
+      const { result } = renderHook(() => useInvoices());
+
+      expect(result.current.state.queriedRange).toBeNull();
     });
   });
 
@@ -201,6 +222,21 @@ describe("useInvoices", () => {
       expect(localStorage.getItem("garca_invoices_ts")).toBeNull();
       expect(localStorage.getItem("garca_manual_fx_rates")).toBeNull();
     });
+
+    it("limpia el rango consultado", () => {
+      // Un rango que sobrevive a los comprobantes que describe haría pasar por
+      // cubierta una ventana de la que no queda ni un dato.
+      localStorage.setItem("garca_queried_range", JSON.stringify({ from: "2025-07-01", to: "2026-06-30" }));
+
+      const { result } = renderHook(() => useInvoices());
+
+      act(() => {
+        result.current.clearInvoices();
+      });
+
+      expect(result.current.state.queriedRange).toBeNull();
+      expect(localStorage.getItem("garca_queried_range")).toBeNull();
+    });
   });
 
   describe("loadDemoData", () => {
@@ -237,7 +273,10 @@ describe("useInvoices", () => {
       const { result } = renderHook(() => useInvoices());
 
       act(() => {
-        result.current.loadDemoData(demoInvoices, demoCompany, demoMonotributo);
+        result.current.loadDemoData(demoInvoices, demoCompany, demoMonotributo, {
+          from: "2025-01-01",
+          to: "2025-12-31",
+        });
       });
 
       expect(result.current.state.invoices).toHaveLength(1);
@@ -246,6 +285,18 @@ describe("useInvoices", () => {
       expect(localStorage.getItem("garca_monotributo")).toEqual(
         JSON.stringify(demoMonotributo)
       );
+    });
+
+    it("la demo declara el rango que simula haber consultado", () => {
+      // Sin rango la demo caería en cobertura "desconocida" y el panel dejaría
+      // de mostrar la ventana como cubierta, aunque el dataset sí lo esté.
+      const { result } = renderHook(() => useInvoices());
+
+      act(() => {
+        result.current.loadDemoData([], null, null, { from: "2025-08-11", to: "2026-08-11" });
+      });
+
+      expect(result.current.state.queriedRange).toEqual({ from: "2025-08-11", to: "2026-08-11" });
     });
   });
 
@@ -561,6 +612,65 @@ describe("useInvoices", () => {
         });
       });
       expect(ret).toBe(true);
+    });
+
+    it("guarda la categoría de Monotributo que vino con los comprobantes", async () => {
+      // El scrape de comprobantes ahora la trae best-effort, así que el botón
+      // Actualizar recupera la categoría sin re-login cuando el intento del
+      // login falló por una caída del portal de Monotributo.
+      const monotributo = {
+        categoria: "H",
+        tipoActividad: "servicios" as const,
+        actividadDescripcion: "LOCACIONES DE SERVICIOS",
+        proximaRecategorizacion: "Enero 2027",
+        nombreCompleto: "PEREZ JUAN CARLOS",
+        cuit: "20301234563",
+      };
+      mockFetch.mockResolvedValueOnce(
+        createMockSSEResponse([
+          {
+            type: "result",
+            message: "ok",
+            data: { success: true, invoices: [], monotributoInfo: monotributo },
+          },
+        ])
+      );
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.monotributoInfo).toEqual(monotributo);
+      expect(localStorage.getItem("garca_monotributo")).toEqual(JSON.stringify(monotributo));
+    });
+
+    it("no borra la categoría que ya teníamos si el scrape no la trajo", async () => {
+      // ARCA se cae seguido: un refresh sin categoría no puede dejar al usuario
+      // peor que antes de apretar Actualizar.
+      const previa = {
+        categoria: "H",
+        tipoActividad: "servicios" as const,
+        actividadDescripcion: "LOCACIONES DE SERVICIOS",
+        proximaRecategorizacion: "Enero 2027",
+        nombreCompleto: "PEREZ JUAN CARLOS",
+        cuit: "20301234563",
+      };
+      localStorage.setItem("garca_monotributo", JSON.stringify(previa));
+      mockFetch.mockResolvedValueOnce(successSSE());
+      const { result } = renderHook(() => useInvoices());
+
+      await act(async () => {
+        await result.current.fetchInvoicesWithCompany("20345678901", "password", 0, {
+          from: "2025-01-01",
+          to: "2025-11-29",
+        });
+      });
+
+      expect(result.current.monotributoInfo).toEqual(previa);
     });
 
     it("returns false when the fetch fails (so the caller can re-arm Turnstile)", async () => {

@@ -48,10 +48,15 @@ export default function FacturarPage() {
   // ventana cerrada), no contra la que sugiere el acumulado parcial de la
   // ventana en curso: esa subestima la categoría y dispara alertas falsas.
   const margenDisponible = useMemo(() => {
-    const ventanaCerrada = buildVentanaRecategorizacion(recategInfo.vigente, state.invoices, manualExchangeRates);
+    const ventanaCerrada = buildVentanaRecategorizacion(
+      recategInfo.vigente,
+      state.invoices,
+      manualExchangeRates,
+      state.queriedRange
+    );
     const categoriaVigente = resolveCategoriaVigente({
       categoriaARCA: monotributoInfo?.categoria,
-      ventanaCerrada: ventanaCerrada.tieneDatos ? ventanaCerrada : null,
+      ventanaCerrada,
       categorias: monotributoData.categorias,
     });
     if (!categoriaVigente || !hasCurrentYearData) return null;
@@ -59,6 +64,7 @@ export default function FacturarPage() {
   }, [
     recategInfo.vigente,
     state.invoices,
+    state.queriedRange,
     manualExchangeRates,
     monotributoInfo?.categoria,
     monotributoData.categorias,
