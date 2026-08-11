@@ -453,6 +453,11 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               <div className="grid gap-1.5">
                 {futureMonths.map((month) => {
                   const projectedValue = projectionData.monthlyProjections[month] || 0
+                  // El mes en curso ya puede tener facturación real. Es el piso
+                  // del mes —no se puede desfacturar— así que se muestra al lado
+                  // del input: sin esto no aparecía en ninguna de las dos listas
+                  // y el usuario no tenía forma de ver que ya había facturado.
+                  const yaFacturado = historicalMap.get(month) || 0
                   return (
                     <div
                       key={month}
@@ -469,6 +474,21 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                           ariaLabel={`Facturación proyectada para ${getMonthShortLabel(month)}`}
                           name={`projection-${month}`}
                         />
+                        {yaFacturado > 0 && (
+                          <p
+                            data-testid={`ya-facturado-${month}`}
+                            className="mt-1 text-[11px] text-muted-foreground"
+                          >
+                            Ya facturaste{" "}
+                            <span className="font-mono text-foreground">
+                              ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                            </span>{" "}
+                            este mes
+                            {projectedValue > 0 && projectedValue < yaFacturado
+                              ? " · se cuenta este monto, no el proyectado"
+                              : ""}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )
