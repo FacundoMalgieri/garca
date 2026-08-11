@@ -24,6 +24,26 @@ export default [
         ignores: ['node_modules/', '.next/', 'out/', 'build/', '*.config.js', '*.config.mjs', '*.config.ts'],
     },
     {
+        // Helpers de Node en CommonJS (los scripts de .claude/skills/). El bloque
+        // principal sólo matchea {js,jsx,ts,tsx}, así que a un .cjs le quedaba
+        // aplicando js.configs.recommended SIN globals y cada `process`/`console`
+        // salía no-undef — 8 errores que hacían fallar el hook de pre-push.
+        files: ['**/*.cjs'],
+        languageOptions: {
+            sourceType: 'commonjs',
+            globals: {
+                require: 'readonly',
+                module: 'readonly',
+                exports: 'readonly',
+                process: 'readonly',
+                console: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                Buffer: 'readonly',
+            },
+        },
+    },
+    {
         files: ['**/*.{js,jsx,ts,tsx}'],
         languageOptions: {
             parser: typescriptParser,
