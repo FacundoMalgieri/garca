@@ -333,6 +333,10 @@ describe("Navbar", () => {
     // Dialog should close
     expect(screen.queryByText("¿Qué querés borrar?")).not.toBeInTheDocument();
 
+    // Cancelar no destruye nada, aunque Comprobantes venga tildado por default
+    expect(mockClearInvoices).not.toHaveBeenCalled();
+    expect(localStorage.getItem("garca_invoices")).toBe("[]");
+
     // Redirect should NOT have been triggered
     expect(mockRouterPush).not.toHaveBeenCalledWith("/");
   });

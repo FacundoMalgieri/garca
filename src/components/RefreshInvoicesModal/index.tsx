@@ -113,11 +113,11 @@ export function RefreshInvoicesModal({ isOpen, onClose }: RefreshInvoicesModalPr
     return createPortal(
       <>
         <LoadingSplash isLoading message="Actualizando comprobantes…" progress={state.progress} />
-        <div className="fixed inset-x-0 bottom-4 z-[110] flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[110] flex justify-center px-4">
           <button
             type="button"
             onClick={handleCancelFetch}
-            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-lg transition-colors hover:bg-muted cursor-pointer"
+            className="pointer-events-auto rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-lg transition-colors hover:bg-muted cursor-pointer"
           >
             Cancelar actualización
           </button>
