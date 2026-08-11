@@ -143,7 +143,7 @@ describe("MonotributoPanel", () => {
   it("shows the closed window that defines the current category in the header", () => {
     renderPanel();
     expect(screen.getByText(/Categoría vigente según Jul 2025 a Jun 2026/)).toBeInTheDocument();
-    expect(screen.getByText(/próxima recategorización Enero 2027/)).toBeInTheDocument();
+    expect(screen.getByText(/próxima recategorización Enero 2027/i)).toBeInTheDocument();
   });
 
   it("displays the current category and the estimate for the next recategorization", () => {
@@ -352,6 +352,15 @@ describe("MonotributoPanel", () => {
     renderPanel({ ventanaProxima: VENTANA_PARCIAL });
 
     expect(screen.queryByText(/sin consultar/i)).not.toBeInTheDocument();
+  });
+
+  it("sin categoría, el subtítulo no dice de dónde salió una que no existe", () => {
+    // Se contradecía con la tarjeta de abajo: "Categoría vigente según Jul 2025
+    // a Jun 2026" arriba y "Categoría vigente no disponible" debajo.
+    renderPanel({ categoriaVigente: null });
+
+    expect(screen.queryByText(/Categoría vigente según/)).not.toBeInTheDocument();
+    expect(screen.getByText(/próxima recategorización Enero 2027/i)).toBeInTheDocument();
   });
 
   it("ofrece Actualizar como segunda salida cuando no hay categoría", () => {

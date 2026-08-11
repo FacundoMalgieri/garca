@@ -191,9 +191,14 @@ export function MonotributoPanel({
         </CardTitle>
         {isCurrentYearData && (
           <p className="text-xs text-muted-foreground -mt-1">
-            {monotributoInfo
-              ? `Categoría vigente informada por ARCA · próxima recategorización ${ventanaProxima.label}`
-              : `Categoría vigente según ${formatWindowMonth(ventanaVigente.desde)} a ${formatWindowMonth(ventanaVigente.hasta)} (no pudimos leerla de ARCA) · próxima recategorización ${ventanaProxima.label}`}
+            {/* Sin categoría no se declara ninguna fuente: la tarjeta de abajo
+                explica por qué no hay, y un "según <ventana>" acá se contradecía
+                con ella. */}
+            {!categoriaVigente
+              ? `Próxima recategorización ${ventanaProxima.label}`
+              : monotributoInfo
+                ? `Categoría vigente informada por ARCA · próxima recategorización ${ventanaProxima.label}`
+                : `Categoría vigente según ${formatWindowMonth(ventanaVigente.desde)} a ${formatWindowMonth(ventanaVigente.hasta)} (no pudimos leerla de ARCA) · próxima recategorización ${ventanaProxima.label}`}
           </p>
         )}
       </CardHeader>
