@@ -7,11 +7,11 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { type ClientIndex,resolveClient } from "@/lib/facturador/client-index";
 import { COND_IVA_RECEPTOR } from "@/lib/facturador/codes";
 import { normalizeDocNumber } from "@/lib/facturador/cuit";
-import { defaultVtoPago,dmyToISO, isoToDMY,previousMonthPeriod } from "@/lib/facturador/dates";
+import { defaultVtoPago,dmyToISO, formatDMY,isoToDMY,previousMonthPeriod } from "@/lib/facturador/dates";
 import {
   CONCEPTO_OPTIONS, COND_IVA_OPTIONS, FORMA_PAGO_OPTIONS, TIPO_DOC_OPTIONS,
 UNIDAD_OPTIONS, } from "@/lib/facturador/select-options";
-import { totalImporte, validateEmissionInput } from "@/lib/facturador/validation";
+import { totalImporte, validateEmissionInput, vtoPagoError } from "@/lib/facturador/validation";
 import type { PuntoDeVenta } from "@/types/afip-scraper";
 import type { Concepto, LineaFactura, Plantilla } from "@/types/facturador";
 
@@ -174,8 +174,15 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
   };
 
   const applyMesAnterior = () => {
-    const { desde, hasta } = previousMonthPeriod(new Date());
-    setPeriodo({ desde, hasta, vtoPago: form.periodo?.vtoPago ?? defaultVtoPago(new Date()) });
+    const hoy = new Date();
+    const { desde, hasta } = previousMonthPeriod(hoy);
+    // El vto que arrastra una plantilla guardada queda en el pasado apenas cambia
+    // el mes, y RCEL rechaza la pantalla 1 sin decir por qué. Antes este atajo lo
+    // preservaba siempre: refrescaba desde/hasta y dejaba el vencimiento vencido.
+    // Ahora se conserva sólo si todavía entra en la ventana que acepta AFIP.
+    const actual = form.periodo?.vtoPago;
+    const vtoPago = actual && vtoPagoError(actual, hoy) === null ? actual : defaultVtoPago(hoy);
+    setPeriodo({ desde, hasta, vtoPago });
   };
 
   // Cuando llegan los PV scrapeados, si el PV actual no puede emitir Factura C
@@ -291,9 +298,11 @@ export function EmissionForm({ initial, onPreview, onUpdateTemplate, onSaveAsNew
             </div>
             <div>
               <label className={labelCls}>Vto. pago</label>
-              {/* max: AFIP no acepta un vencimiento a más de 10 días (lo valida
-                  validateEmissionInput). El input nativo ya no deja elegirlo. */}
-              <input type="date" data-testid="periodo-vto" className={inputCls} value={dmyToISO(form.periodo?.vtoPago ?? "")} max={dmyToISO(defaultVtoPago(new Date()))} onChange={(e) => setPeriodo({ vtoPago: isoToDMY(e.target.value) })} />
+              {/* AFIP acepta el vencimiento sólo en [hoy, hoy+10] (lo valida
+                  validateEmissionInput). El input nativo ya no deja elegir fuera
+                  de esa ventana — el piso importa tanto como el techo: una fecha
+                  pasada la rechaza RCEL recién en la pantalla 1, en silencio. */}
+              <input type="date" data-testid="periodo-vto" className={inputCls} value={dmyToISO(form.periodo?.vtoPago ?? "")} min={dmyToISO(formatDMY(new Date()))} max={dmyToISO(defaultVtoPago(new Date()))} onChange={(e) => setPeriodo({ vtoPago: isoToDMY(e.target.value) })} />
             </div>
           </div>
         </div>

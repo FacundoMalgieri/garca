@@ -1,15 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { addDays, defaultVtoPago, dmyToISO, formatDMY } from "@/lib/facturador/dates";
 import type { Plantilla } from "@/types/facturador";
 
 import { EmissionForm } from "./index";
 
 import { fireEvent, render, screen } from "@testing-library/react";
 
+// AFIP sólo acepta el vencimiento en [hoy, hoy+10], así que una fecha fija acá
+// pudriría la suite sola al mes siguiente — justo el bug que estos tests cubren.
+const VTO_VIGENTE = defaultVtoPago(new Date());
+
 const BASE: Plantilla = {
   id: "1", nombre: "Cliente X", puntoDeVenta: "3", concepto: "servicios",
   cliente: { condicionIVA: "1", tipoDoc: "80", nroDoc: "30707915281", razonSocial: "CLIENTE X SA", condicionVenta: ["6"] },
-  periodo: { desde: "01/06/2026", hasta: "30/06/2026", vtoPago: "13/07/2026" },
+  periodo: { desde: "01/06/2026", hasta: "30/06/2026", vtoPago: VTO_VIGENTE },
   lineas: [{ descripcion: "Servicios", cantidad: 1, unidad: "7", precioUnitario: 180000 }],
 };
 
@@ -80,6 +85,42 @@ describe("EmissionForm", () => {
     render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
     const vto = screen.getByTestId("periodo-vto") as HTMLInputElement;
     expect(vto.max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("el vencimiento tampoco deja elegir una fecha anterior a hoy", () => {
+    render(<EmissionForm initial={BASE} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    const vto = screen.getByTestId("periodo-vto") as HTMLInputElement;
+    expect(vto.min).toBe(dmyToISO(formatDMY(new Date())));
+  });
+
+  // El caso real del 03/09/2026: el atajo refrescaba desde/hasta y dejaba intacto
+  // un vencimiento ya vencido. RCEL lo rechaza en la pantalla 1 con un alert que
+  // nadie ve, y la emisión moría 30s después esperando la pantalla 2.
+  it("'mes anterior' también refresca un vencimiento de pago vencido", () => {
+    const stale: Plantilla = { ...BASE, periodo: { desde: "01/01/2026", hasta: "31/01/2026", vtoPago: "10/02/2026" } };
+    render(<EmissionForm initial={stale} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    const vto = screen.getByTestId("periodo-vto") as HTMLInputElement;
+    expect(vto.value).toBe("2026-02-10");
+
+    fireEvent.click(screen.getByText(/mes anterior/i));
+    expect(vto.value).toBe(dmyToISO(VTO_VIGENTE));
+  });
+
+  it("'mes anterior' respeta un vencimiento de pago que sigue vigente", () => {
+    // Válido pero distinto del default, para que reemplazarlo se note.
+    const elegido = formatDMY(addDays(new Date(), 3));
+    const p: Plantilla = { ...BASE, periodo: { ...BASE.periodo, vtoPago: elegido } };
+    render(<EmissionForm initial={p} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+
+    fireEvent.click(screen.getByText(/mes anterior/i));
+    expect((screen.getByTestId("periodo-vto") as HTMLInputElement).value).toBe(dmyToISO(elegido));
+  });
+
+  it("no deja emitir con un vencimiento de pago vencido", () => {
+    const stale: Plantilla = { ...BASE, periodo: { ...BASE.periodo, vtoPago: "10/02/2020" } };
+    render(<EmissionForm initial={stale} onPreview={vi.fn()} onUpdateTemplate={vi.fn()} onSaveAsNew={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /previsualizar y emitir/i })).toBeDisabled();
+    expect(screen.getByTestId("validation-errors")).toHaveTextContent(/anterior a hoy/i);
   });
 
   // El caso real reportado el 06/08/2026: un CUIT válido pegado desde otra app
