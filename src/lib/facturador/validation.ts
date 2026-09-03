@@ -15,6 +15,41 @@ function parseDMY(s: string): Date | null {
   return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
 }
 
+/** Medianoche local: acá se comparan días, no instantes. */
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/** Días que AFIP admite entre hoy y el vencimiento para el pago. */
+export const VTO_PAGO_MAX_DIAS = 10;
+
+/**
+ * Valida el vencimiento de pago contra la ventana que acepta RCEL: [hoy, hoy+10].
+ *
+ * El techo ya estaba; el piso faltaba, y esa era la mitad que rompía. Una plantilla
+ * guardada conserva el `vtoPago` tal cual se guardó, así que al mes siguiente queda
+ * en el pasado: pasaba la validación, RCEL rechazaba la pantalla 1 con un alert
+ * nativo —que Playwright descarta solo, sin handler de `dialog`— y la emisión moría
+ * 30s más tarde esperando `#idivareceptor`, un selector de la pantalla 2 a la que
+ * nunca había llegado. Caso real del 03/09/2026.
+ *
+ * @param vto   - Fecha en DD/MM/YYYY (el formato que guarda la Plantilla).
+ * @param today - Hoy, inyectable para tests.
+ * @returns El mensaje de error, o null si la fecha sirve.
+ */
+export function vtoPagoError(vto: string, today: Date): string | null {
+  const vtoDay = parseDMY(vto);
+  if (!vtoDay) return "El vencimiento de pago no es una fecha válida";
+
+  if (vtoDay.getTime() < startOfDay(today).getTime()) {
+    return "El vencimiento de pago no puede ser anterior a hoy";
+  }
+  if (vtoDay.getTime() > startOfDay(addDays(today, VTO_PAGO_MAX_DIAS)).getTime()) {
+    return `El vencimiento de pago no puede superar los ${VTO_PAGO_MAX_DIAS} días desde hoy`;
+  }
+  return null;
+}
+
 /** Suma total de las líneas, cada una redondeada a 2 decimales. */
 export function totalImporte(p: Plantilla): number {
   return round2(p.lineas.reduce((acc, l) => acc + lineSubtotal(l), 0));
@@ -39,15 +74,15 @@ export function validateEmissionInput(p: Plantilla, today: Date): ValidationResu
     errors.push("El importe total debe ser mayor a 0");
   }
 
-  const vto = p.periodo?.vtoPago;
+  // El vencimiento sólo viaja a RCEL fuera de "productos" (ver buildFillPlan), así
+  // que ahí un valor viejo tiene que frenar la emisión acá en vez de llegar a la
+  // pantalla 1 y volver como un timeout sin explicación. Que falte no se valida:
+  // no hay evidencia de que RCEL lo exija, y bloquear por las dudas rompería un
+  // camino que hoy funciona.
+  const vto = p.concepto !== "productos" ? p.periodo?.vtoPago : undefined;
   if (vto) {
-    const vtoDate = parseDMY(vto);
-    const max = addDays(today, 10);
-    const vtoDay = vtoDate ? new Date(vtoDate.getFullYear(), vtoDate.getMonth(), vtoDate.getDate()) : null;
-    const maxDay = new Date(max.getFullYear(), max.getMonth(), max.getDate());
-    if (!vtoDay || vtoDay.getTime() > maxDay.getTime()) {
-      errors.push("El vencimiento de pago no puede superar los 10 días desde hoy");
-    }
+    const err = vtoPagoError(vto, today);
+    if (err) errors.push(err);
   }
 
   return { ok: errors.length === 0, errors };

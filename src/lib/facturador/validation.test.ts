@@ -41,6 +41,38 @@ describe("validateEmissionInput", () => {
     expect(r.errors).toContain("El vencimiento de pago no puede superar los 10 días desde hoy");
   });
 
+  // El caso real del 03/09/2026: la plantilla guardada conserva el vtoPago tal
+  // cual se guardó, así que al mes siguiente queda en el pasado. Sólo se validaba
+  // el techo, así que pasaba; RCEL rechazaba la pantalla 1 con un alert nativo y
+  // la emisión moría 30s después esperando un selector de la pantalla 2.
+  it("rechaza vtoPago anterior a hoy", () => {
+    const bad = { ...base, periodo: { vtoPago: "13/06/2026" } };
+    const r = validateEmissionInput(bad, today);
+    expect(r.ok).toBe(false);
+    expect(r.errors).toContain("El vencimiento de pago no puede ser anterior a hoy");
+  });
+
+  it("acepta vtoPago igual a hoy", () => {
+    expect(validateEmissionInput({ ...base, periodo: { vtoPago: "03/07/2026" } }, today).ok).toBe(true);
+  });
+
+  it("acepta vtoPago justo en el tope de hoy+10", () => {
+    expect(validateEmissionInput({ ...base, periodo: { vtoPago: "13/07/2026" } }, today).ok).toBe(true);
+  });
+
+  it("rechaza vtoPago con formato que RCEL no entiende", () => {
+    const r = validateEmissionInput({ ...base, periodo: { vtoPago: "2026-07-13" } }, today);
+    expect(r.ok).toBe(false);
+    expect(r.errors).toContain("El vencimiento de pago no es una fecha válida");
+  });
+
+  // Para "productos" el fill-plan ni siquiera manda el bloque de período, así que
+  // un vtoPago viejo colgado en la plantilla no puede romper nada.
+  it("ignora el vtoPago cuando el concepto es productos", () => {
+    const productos = { ...base, concepto: "productos" as const, periodo: { vtoPago: "13/06/2026" } };
+    expect(validateEmissionInput(productos, today).ok).toBe(true);
+  });
+
   it("no valida CUIT si el tipoDoc no es CUIT", () => {
     const cf = { ...base, cliente: { ...base.cliente, condicionIVA: "5", tipoDoc: "96", nroDoc: "12345678" } };
     expect(validateEmissionInput(cf, today).ok).toBe(true);
