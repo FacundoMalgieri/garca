@@ -26,6 +26,14 @@ function formatMargin(value: number): string {
 /** Opciones de margen de seguridad, en pesos. */
 const MARGENES = [0, 200_000, 500_000, 1_000_000, 2_000_000]
 
+/**
+ * Debajo de esto, el descuadre es redondeo y no una decisión.
+ *
+ * Repartir el recomendado entre los meses deja restos de pocos pesos: sin este
+ * piso, el panel ofrecía "redistribuir $2" y la alarma roja saltaba por nada.
+ */
+const RESIDUO_IGNORABLE = 1_000
+
 /** Número de meses en palabras, para que la frase no diga "1 meses". */
 function mesesEnPalabras(n: number): string {
   const palabras = ["Cero", "Un", "Dos", "Tres", "Cuatro", "Cinco", "Seis", "Siete", "Ocho", "Nueve", "Diez", "Once", "Doce"]
@@ -199,7 +207,11 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   // Plata del objetivo que no está asignada a ningún mes. No es un error:
   // facturar menos del tope es una decisión válida, así que se ofrece repartirla
   // sin teñirla de alerta.
-  const sinAsignar = Math.max(0, projectionResult.margenRestante)
+  const sinAsignar = projectionResult.margenRestante >= RESIDUO_IGNORABLE ? projectionResult.margenRestante : 0
+  // El espejo del sobrante. Se arregla con el MISMO reparto: cuando el
+  // disponible queda por debajo de lo cargado, los meses abiertos bajan en vez
+  // de subir.
+  const exceso = projectionResult.margenRestante <= -RESIDUO_IGNORABLE ? -projectionResult.margenRestante : 0
   const mesesAbiertos = futureMonths.filter((month) => !projectionData.lockedMonths.includes(month))
   const puedeRedistribuir = sinAsignar > 0 && mesesAbiertos.length > 0
 
@@ -487,14 +499,17 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                     title={conCandado ? "Fijo — el reparto no lo toca" : "Fijar este mes"}
                     onClick={() => toggleMonthLock(month)}
                     className={cn(
-                      "shrink-0 rounded-md px-1.5 py-1 text-sm cursor-pointer transition-colors",
+                      // Ancho fijo: si la etiqueta cambiara de ancho al tocarla,
+                      // toda la fila saltaría en cada click.
+                      "shrink-0 w-[4.6rem] text-center rounded-full px-2 py-1 text-[11px] font-medium",
+                      "cursor-pointer transition-colors border",
                       "focus-visible:outline-2 focus-visible:outline-success",
                       conCandado
-                        ? "text-success bg-success/10"
-                        : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
+                        ? "text-success border-success/30 bg-success/10"
+                        : "text-muted-foreground border-border hover:bg-muted"
                     )}
                   >
-                    {conCandado ? "🔒" : "🔓"}
+                    {conCandado ? "Fijo" : "Abierto"}
                   </button>
                   <div className="flex-1">
                     <CurrencyInput
@@ -555,6 +570,31 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                 >
                   Redistribuir entre los {mesesAbiertos.length === 1 ? "meses abiertos" : `${mesesAbiertos.length} meses abiertos`}
                 </button>
+              </div>
+            )}
+
+            {exceso > 0 && (
+              <div
+                data-testid="te-pasas"
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 mt-1 rounded-lg bg-destructive/10 border border-destructive/30"
+              >
+                <span className="text-xs text-destructive">
+                  Hay que recortar{" "}
+                  <span className="font-mono tabular-nums font-medium">
+                    ${exceso.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                  </span>{" "}
+                  para entrar en {projectionResult.categoriaObjetivo}
+                  {mesesAbiertos.length === 0 && " · todos los meses están fijos, soltá alguno para reajustar"}
+                </span>
+                {mesesAbiertos.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={redistribute}
+                    className="text-xs font-medium text-destructive hover:underline cursor-pointer focus-visible:outline-2 focus-visible:outline-destructive rounded"
+                  >
+                    Recortar {mesesAbiertos.length === 1 ? "el mes abierto" : `los ${mesesAbiertos.length} meses abiertos`}
+                  </button>
+                )}
               </div>
             )}
 

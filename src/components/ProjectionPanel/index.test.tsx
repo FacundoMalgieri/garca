@@ -453,3 +453,113 @@ describe("ProjectionPanel · candados y redistribución", () => {
     expect(screen.queryByTestId("sin-asignar")).not.toBeInTheDocument()
   })
 })
+
+describe("ProjectionPanel · volver adentro de la categoría", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.lockedMonths = []
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyProjections = {}
+  })
+
+  const abrirDesglose = () => fireEvent.click(screen.getByText("Ajustar mes por mes"))
+
+  it("ofrece recortar cuando te pasaste del tope", () => {
+    // Es el mismo reparto: con el disponible por debajo de lo cargado, los meses
+    // abiertos bajan en vez de subir.
+    mocks.resultOverrides = { margenRestante: -10_000_000, categoriaObjetivo: "H" }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    const aviso = screen.getByTestId("te-pasas")
+    expect(aviso).toHaveTextContent("10.000.000")
+
+    fireEvent.click(screen.getByRole("button", { name: /recortar/i }))
+    expect(redistribute).toHaveBeenCalled()
+  })
+
+  it("no ofrece recortar si no hay meses abiertos donde recortar", () => {
+    mocks.resultOverrides = { margenRestante: -10_000_000 }
+    mocks.lockedMonths = ["2026-08", "2026-09"]
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.queryByRole("button", { name: /recortar/i })).not.toBeInTheDocument()
+    // Pero sí explica por qué no puede hacer nada, en vez de no mostrar nada.
+    expect(screen.getByTestId("te-pasas")).toHaveTextContent(/fijos/i)
+  })
+
+  it("no mezcla los dos avisos", () => {
+    mocks.resultOverrides = { margenRestante: 8_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.getByTestId("sin-asignar")).toBeInTheDocument()
+    expect(screen.queryByTestId("te-pasas")).not.toBeInTheDocument()
+  })
+
+  it("el candado se lee como palabra, no sólo como emoji", () => {
+    // 🔓 y 🔒 se distinguen sólo por el arco a 14px: el estado no puede depender
+    // de eso.
+    mocks.lockedMonths = ["2026-08"]
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.getByTestId("candado-2026-08")).toHaveTextContent(/fijo/i)
+    expect(screen.getByTestId("candado-2026-09")).toHaveTextContent(/abierto/i)
+  })
+})
+
+describe("ProjectionPanel · ruido y referencias", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.lockedMonths = []
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyProjections = {}
+  })
+
+  const abrirDesglose = () => fireEvent.click(screen.getByText("Ajustar mes por mes"))
+
+  it("no ofrece repartir migajas de redondeo", () => {
+    // Repartir $2 entre cuatro meses no es una acción: es ruido.
+    mocks.resultOverrides = { margenRestante: 2 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.queryByTestId("sin-asignar")).not.toBeInTheDocument()
+  })
+
+  it("no alarma por migajas de redondeo cuando te pasás", () => {
+    mocks.resultOverrides = { margenRestante: -2 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.queryByTestId("te-pasas")).not.toBeInTheDocument()
+  })
+
+  it("el aviso de exceso no dice 'tope', que es otra referencia", () => {
+    // El aviso mide contra tope − margen y el total contra el tope pelado: si
+    // los dos dicen "tope", muestran dos números distintos para lo mismo.
+    mocks.resultOverrides = { margenRestante: -24_249_896, categoriaObjetivo: "H" }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    const aviso = screen.getByTestId("te-pasas")
+    expect(aviso).toHaveTextContent("24.249.896")
+    expect(aviso).not.toHaveTextContent(/tope/i)
+    expect(aviso).toHaveTextContent(/recortar/i)
+  })
+})
