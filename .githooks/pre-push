@@ -21,10 +21,13 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
 
   [ -z "$lista" ] && continue
 
-  # Mensajes (con la regla de importes).
+  # Mensajes, SIN la regla de importes: esa se evalúa en commit-msg, una vez, al
+  # escribir el mensaje. Acá se recorre historia ya escrita —y tras una
+  # reescritura, toda— donde las cifras que quedan son de demo y documentación.
+  # Repetir ahí la regla sólo produce ruido, y un guard ruidoso se ignora.
   : > "$tmp"
   for sha in $lista; do git log -1 --format=%B "$sha" >> "$tmp"; done
-  "$raiz/.githooks/scan-private-data.sh" "un mensaje de commit que estás pusheando" "$tmp" mensaje || fallo=1
+  "$raiz/.githooks/scan-private-data.sh" "un mensaje de commit que estás pusheando" "$tmp" || fallo=1
 
   # Contenido agregado.
   : > "$tmp"
