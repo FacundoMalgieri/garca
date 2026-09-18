@@ -23,6 +23,33 @@ function formatMargin(value: number): string {
   return `$${(value / 1000).toFixed(0)}k`
 }
 
+/** Opciones de margen de seguridad, en pesos. */
+const MARGENES = [0, 200_000, 500_000, 1_000_000, 2_000_000]
+
+/** Número de meses en palabras, para que la frase no diga "1 meses". */
+function mesesEnPalabras(n: number): string {
+  const palabras = ["Cero", "Un", "Dos", "Tres", "Cuatro", "Cinco", "Seis", "Siete", "Ocho", "Nueve", "Diez", "Once", "Doce"]
+  if (n === 1) return "Un mes"
+  return `${palabras[n] ?? n} meses`
+}
+
+/**
+ * Monto abreviado para los extremos de la barra.
+ *
+ * Ahí el número compite con la respuesta principal: lo que importa es la
+ * magnitud, no el peso exacto. El exacto vive en el desglose.
+ */
+function formatCompact(value: number): string {
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000
+    // toFixed(1) sobre 23.02 da "23,0": la decimal no aporta y ensucia el número.
+    const texto = m.toFixed(1).endsWith(".0") ? m.toFixed(0) : m.toFixed(1)
+    return `$${texto.replace(".", ",")}M`
+  }
+  if (value >= 1_000) return `$${Math.round(value / 1_000)}k`
+  return `$${Math.round(value).toLocaleString("es-AR")}`
+}
+
 /**
  * Format number as currency string (e.g., 3.500.000,50)
  * Uses Argentine format: . for thousands, , for decimals
@@ -136,6 +163,27 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     : 0
   const disponiblePercent = Math.max(100 - totalPercent - marginPercent, 0)
 
+  // La recomendación reparte el disponible entre los meses que faltan. Si no hay
+  // disponible, no hay nada que recomendar: es el caso "ya te pasaste".
+  const noHayMargen = projectionResult.excedeObjetivo && projectionResult.totalProyectado === 0
+
+  // Caer arriba del objetivo es el dato que más le importa al usuario y hoy vivía
+  // como una línea perdida en el resumen. Va en la frase principal.
+  const subeDeCategoria = projectionResult.categoriaResultante !== projectionResult.categoriaObjetivo
+
+  const mesesLabel = mesesEnPalabras(futureMonths.length)
+
+  const mesRecategorizacion = (
+    recategorizacionOptions.find((o) => o.month === projectionData.targetRecategorizacion)?.label ?? ""
+  )
+    .split(" ")[0]
+    .toLowerCase()
+
+  // Meses ya cerrados de la ventana, para el mini-gráfico del desglose.
+  const mesesCerrados = projectionResult.ventana
+    .filter((month) => !futureMonths.includes(month))
+    .map((month) => ({ month, total: historicalMap.get(month) || 0 }))
+
   // Export handlers
   const getExportData = () => ({
     companyInfo: state.company,
@@ -211,378 +259,215 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
             onExportJSON={handleExportJSON}
           />
         </div>
-        <p className="text-sm text-muted-foreground">
-          Calculá cuánto podés facturar para mantenerte en tu categoría objetivo
-        </p>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Settings Row */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          {/* Target Recategorization */}
-          <div>
-            <label htmlFor="projection-target-recategorizacion" className="text-xs text-muted-foreground block mb-1.5">
-              Recategorización
-            </label>
-            <select
-              id="projection-target-recategorizacion"
-              name="projection-target-recategorizacion"
-              value={projectionData.targetRecategorizacion}
-              onChange={(e) => setTargetRecategorizacion(e.target.value)}
-              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              {recategorizacionOptions.map((opt) => (
-                <option key={opt.month} value={opt.month}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Target Category */}
-          <div>
-            <label htmlFor="projection-target-categoria" className="text-xs text-muted-foreground block mb-1.5">
-              Categoría objetivo
-            </label>
-            <select
-              id="projection-target-categoria"
-              name="projection-target-categoria"
-              value={projectionData.targetCategoria || ""}
-              onChange={(e) => setTargetCategoria(e.target.value || null)}
-              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Automático</option>
-              {categorias.map((cat) => (
-                <option key={cat.categoria} value={cat.categoria}>
-                  {cat.categoria} - ${(cat.ingresosBrutos / 1000000).toFixed(1)}M
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Margin Setting */}
-          <div>
-            <label htmlFor="projection-margen-seguridad" className="text-xs text-muted-foreground block mb-1.5">
-              Margen seguridad
-            </label>
-            <select
-              id="projection-margen-seguridad"
-              name="projection-margen-seguridad"
-              value={projectionData.margenSeguridad}
-              onChange={(e) => setMargenSeguridad(Number(e.target.value))}
-              className="w-full px-3 py-2 text-base md:text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value={0}>Sin margen</option>
-              <option value={100000}>$100k</option>
-              <option value={200000}>$200k</option>
-              <option value={500000}>$500k</option>
-              <option value={1000000}>$1M</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Exclusion warning — total over the Monotributo ceiling (BUG-3) */}
-        {projectionResult.excluido && (
-          <div className="rounded-xl border-2 border-destructive/50 bg-gradient-to-br from-destructive/10 to-destructive/5 p-5 text-center">
-            <div className="text-destructive text-xl font-bold mb-2">⛔ Superás el tope del Monotributo</div>
+        {/* ── La respuesta ────────────────────────────────────────────────
+            El panel contesta UNA pregunta: cuánto podés facturar por mes sin
+            pasarte. Va primero y es el elemento más grande; todo lo demás es
+            evidencia o ajuste. */}
+        {projectionResult.excluido ? (
+          <div className="rounded-xl border-2 border-destructive/50 bg-destructive/5 p-5">
+            <p className="text-destructive text-xl font-bold mb-1">Superás el tope del Monotributo</p>
             <p className="text-sm text-muted-foreground">
-              Con esta proyección quedarías <strong className="text-foreground">excluido del Monotributo</strong> y
+              Con esta proyección quedarías <strong className="text-foreground">excluido</strong> y
               deberías pasar a <strong className="text-foreground">Responsable Inscripto</strong>.
             </p>
           </div>
-        )}
-
-        {/* Recommendation Card */}
-        {projectionResult.excedeObjetivo && projectionResult.totalProyectado === 0 ? (
-          <div className="rounded-xl border-2 border-destructive/50 bg-gradient-to-br from-destructive/10 to-destructive/5 p-5 text-center">
-            <div className="text-destructive text-xl font-bold mb-2">⚠️ Límite excedido</div>
+        ) : noHayMargen ? (
+          <div className="rounded-xl border-2 border-destructive/50 bg-destructive/5 p-5">
+            <p className="text-destructive text-xl font-bold mb-1">Ya excediste tu objetivo</p>
             <p className="text-sm text-muted-foreground">
-              Con tus ingresos actuales ya excedés el objetivo.
-              La categoría mínima posible sería <strong className="text-foreground">{projectionResult.categoriaResultante}</strong>.
+              Con lo que llevás facturado, la categoría más baja posible es{" "}
+              <strong className="text-foreground">{projectionResult.categoriaResultante}</strong>.
+            </p>
+          </div>
+        ) : futureMonths.length === 0 ? (
+          <div>
+            <p className="text-sm text-muted-foreground">La ventana ya está cerrada</p>
+            <p className="text-3xl font-bold font-mono tabular-nums mt-1">
+              ${projectionResult.totalVentana.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+            </p>
+            <p className="text-sm mt-1">
+              Cerrás en categoría{" "}
+              <strong className="text-success">{projectionResult.categoriaResultante}</strong>.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Facturación recomendada
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-emerald-500 dark:text-emerald-400">
-                    ${recommendedRounded.toLocaleString("es-AR")}
-                  </span>
-                  <span className="text-muted-foreground text-sm">/mes</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <span className="text-xs text-muted-foreground">Categoría objetivo</span>
-                  <span className="text-lg font-bold text-emerald-500 dark:text-emerald-400">{projectionResult.categoriaObjetivo}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  × {futureMonths.length} meses restantes
-                </span>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Hasta la recategorización de {mesRecategorizacion} podés facturar
+            </p>
+            <p
+              data-testid="monto-recomendado"
+              className="text-4xl sm:text-5xl font-bold font-mono tabular-nums tracking-tight text-success mt-1 mb-1"
+            >
+              ${recommendedRounded.toLocaleString("es-AR")}{" "}
+              <span className="font-sans text-lg font-medium text-muted-foreground tracking-normal">por mes</span>
+            </p>
+            <p className="text-sm" data-testid="frase-consecuencia">
+              {mesesLabel} a ese ritmo y cerrás el año en categoría{" "}
+              <strong className={cn(subeDeCategoria ? "text-destructive" : "text-success")}>
+                {projectionResult.categoriaResultante}
+              </strong>
+              {subeDeCategoria ? (
+                <>, arriba de tu objetivo {projectionResult.categoriaObjetivo}.</>
+              ) : (
+                <>, con ${Math.abs(distanciaAlLimite).toLocaleString("es-AR", { maximumFractionDigits: 0 })} de aire.</>
+              )}
+            </p>
           </div>
         )}
 
-        {/* Visual Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Progreso hacia límite de {projectionResult.categoriaObjetivo}</span>
-            <span>{totalPercent.toFixed(0)}%</span>
-          </div>
-          <div className="flex h-4 rounded-full bg-muted overflow-hidden">
-            {/* Historical segment */}
+        {/* ── La prueba ───────────────────────────────────────────────────
+            Único gráfico en reposo. Sin leyenda: los dos números de abajo
+            etiquetan los segmentos, que es lo mismo que decían las cuatro
+            entradas que había antes. */}
+        <div>
+          <div className="flex h-3 rounded-full bg-muted overflow-hidden">
             {historicalPercent > 0 && (
-              <div 
-                className={cn(
-                  "transition-all duration-500",
-                  isOverActualLimit ? "bg-destructive" : "bg-emerald-500"
-                )}
+              <div
+                className={cn("transition-all duration-500", isOverActualLimit ? "bg-destructive" : "bg-success")}
                 style={{ flexGrow: historicalPercent, flexShrink: 1, flexBasis: 0 }}
               />
             )}
-            {/* Projected segment */}
             {projectedPercent > 0 && (
-              <div 
+              <div
                 className={cn(
                   "transition-all duration-500 border-l-2 border-background",
-                  isOverActualLimit 
-                    ? "bg-red-400" 
-                    : isOverSafetyMargin 
-                      ? "bg-amber-400" 
-                      : "bg-sky-400",
-                  historicalPercent === 0 && "border-l-0",
+                  isOverActualLimit ? "bg-destructive/60" : isOverSafetyMargin ? "bg-amber-400" : "bg-sky-400",
+                  historicalPercent === 0 && "border-l-0"
                 )}
                 style={{ flexGrow: projectedPercent, flexShrink: 1, flexBasis: 0 }}
               />
             )}
-            {/* Disponible (space between projected and margin) */}
             {disponiblePercent > 0 && (
               <div style={{ flexGrow: disponiblePercent, flexShrink: 1, flexBasis: 0 }} />
             )}
-            {/* Safety margin segment — guaranteed min-width via flex-shrink: 0 */}
             {projectionData.margenSeguridad > 0 && !isOverActualLimit && (
-              <div 
+              <div
                 className="bg-amber-500/60 border-l-2 border-background transition-all duration-500"
-                style={{ flexGrow: marginPercent, flexShrink: 0, flexBasis: 0, minWidth: 24 }}
+                style={{ flexGrow: marginPercent, flexShrink: 0, flexBasis: 0, minWidth: 16 }}
               />
             )}
           </div>
-          {/* Legend */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className={cn("inline-block w-2.5 h-2.5 rounded-sm", isOverActualLimit ? "bg-destructive" : "bg-emerald-500")} />
-              Histórico ({historicalPercent.toFixed(0)}%)
+          <div className="flex justify-between gap-3 mt-1.5 text-xs text-muted-foreground">
+            <span>
+              <span className="font-mono tabular-nums text-foreground">
+                {formatCompact(projectionResult.totalHistorico)}
+              </span>{" "}
+              ya facturado
             </span>
-            {projectedPercent > 0 && (
-              <span className="flex items-center gap-1.5">
-                <span className={cn(
-                  "inline-block w-2.5 h-2.5 rounded-sm",
-                  isOverActualLimit ? "bg-red-400" : isOverSafetyMargin ? "bg-amber-400" : "bg-sky-400"
-                )} />
-                Proyectado ({projectedPercent.toFixed(0)}%)
-              </span>
-            )}
-            {disponiblePercent > 0 && (
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-muted border border-border" />
-                Disponible ({disponiblePercent.toFixed(0)}%)
-              </span>
-            )}
-            {projectionData.margenSeguridad > 0 && (
-              <span className={cn(
-                "flex items-center gap-1.5 font-medium",
-                isOverSafetyMargin ? "text-amber-500" : "text-muted-foreground"
-              )}>
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-500/40" />
-                Margen: {formatMargin(projectionData.margenSeguridad)}
-              </span>
-            )}
+            <span className="text-right">
+              <span className="font-mono tabular-nums text-foreground">
+                {formatCompact(Math.max(0, projectionResult.topeCategoria - projectionData.margenSeguridad - projectionResult.totalHistorico))}
+              </span>{" "}
+              libres hasta {projectionResult.categoriaObjetivo}
+            </span>
           </div>
         </div>
 
-        {/* Monthly Projection Table */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Proyección mensual</span>
+        {/* ── Los ajustes ─────────────────────────────────────────────────
+            Selects nativos con pinta de chip: se tocan una vez, no son una
+            decisión previa a ver la respuesta. Nativos y no popovers para no
+            reimplementar teclado, foco y mobile. */}
+        <div className="flex flex-wrap gap-2">
+          <ChipSelect
+            id="projection-target-categoria"
+            label="Objetivo"
+            value={projectionData.targetCategoria || ""}
+            onChange={(v) => setTargetCategoria(v || null)}
+          >
+            <option value="">Automático</option>
+            {categorias.map((cat) => (
+              <option key={cat.categoria} value={cat.categoria}>
+                {cat.categoria} · {formatMargin(cat.ingresosBrutos)}
+              </option>
+            ))}
+          </ChipSelect>
+
+          <ChipSelect
+            id="projection-margen-seguridad"
+            label="Margen"
+            value={String(projectionData.margenSeguridad)}
+            onChange={(v) => setMargenSeguridad(Number(v))}
+          >
+            {MARGENES.map((m) => (
+              <option key={m} value={m}>
+                {m === 0 ? "Sin margen" : formatMargin(m)}
+              </option>
+            ))}
+          </ChipSelect>
+
+          <ChipSelect
+            id="projection-target-recategorizacion"
+            label="Recategorización"
+            value={projectionData.targetRecategorizacion}
+            onChange={setTargetRecategorizacion}
+          >
+            {recategorizacionOptions.map((opt) => (
+              <option key={opt.month} value={opt.month}>
+                {opt.label}
+              </option>
+            ))}
+          </ChipSelect>
+        </div>
+
+        {/* ── El detalle, bajo demanda ────────────────────────────────────
+            <details> nativo: teclado y lectores de pantalla gratis. */}
+        <details data-testid="ajuste-mensual" className="border-t border-border pt-3 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground list-none flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-success rounded">
+            <span className="text-[10px] transition-transform group-open:rotate-90 motion-reduce:transition-none">▶</span>
+            Ajustar mes por mes
+          </summary>
+
+          <div className="mt-3 space-y-1.5">
+            {futureMonths.map((month) => {
+              const projectedValue = projectionData.monthlyProjections[month] || 0
+              // El mes en curso ya puede tener facturación real. Es el piso del
+              // mes —no se puede desfacturar— así que el input muestra el TOTAL
+              // del mes y la ayuda dice cuánto falta para llegar a ese total.
+              const yaFacturado = historicalMap.get(month) || 0
+              const falta = Math.max(0, projectedValue - yaFacturado)
+              return (
+                <div key={month} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-background border border-border">
+                  <span className="text-xs font-medium w-16 shrink-0">{getMonthShortLabel(month)}</span>
+                  <div className="flex-1">
+                    <CurrencyInput
+                      value={projectedValue}
+                      onChange={(val) => handleMonthEdit(month, val)}
+                      placeholder={formatCurrency(recommendedRounded)}
+                      ariaLabel={`Facturación proyectada para ${getMonthShortLabel(month)}`}
+                      name={`projection-${month}`}
+                      min={yaFacturado}
+                    />
+                    {yaFacturado > 0 && (
+                      <p data-testid={`ya-facturado-${month}`} className="mt-1 text-[11px] text-muted-foreground">
+                        Ya facturaste{" "}
+                        <span className="font-mono text-foreground">
+                          ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                        </span>{" "}
+                        · te quedan{" "}
+                        <span className="font-mono text-success">
+                          ${falta.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                        </span>{" "}
+                        para llegar a ese total
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
             {hasCustomProjections && (
-              <button
-                onClick={handleClear}
-                className="text-xs text-destructive hover:underline cursor-pointer"
-              >
+              <button onClick={handleClear} className="text-xs text-destructive hover:underline cursor-pointer">
                 Limpiar
               </button>
             )}
           </div>
 
-          {/* Historical months */}
-          {monthlyTotals.filter(m => !futureMonths.includes(m.month)).length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Histórico</p>
-              <div className="grid gap-1">
-                {projectionResult.ventana
-                  .filter(month => !futureMonths.includes(month))
-                  .map((month) => {
-                    const historicalValue = historicalMap.get(month) || 0
-                    return (
-                      <div
-                        key={month}
-                        className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/50"
-                      >
-                        <span className="text-xs text-muted-foreground w-16">
-                          {getMonthShortLabel(month)}
-                        </span>
-                        <span className="text-sm font-mono text-muted-foreground">
-                          ${historicalValue.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    )
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* Future months */}
-          {futureMonths.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">A proyectar</p>
-              <div className="grid gap-1.5">
-                {futureMonths.map((month) => {
-                  const projectedValue = projectionData.monthlyProjections[month] || 0
-                  // El mes en curso ya puede tener facturación real. Es el piso
-                  // del mes —no se puede desfacturar— así que se muestra al lado
-                  // del input: sin esto no aparecía en ninguna de las dos listas
-                  // y el usuario no tenía forma de ver que ya había facturado.
-                  const yaFacturado = historicalMap.get(month) || 0
-                  return (
-                    <div
-                      key={month}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-background border border-border"
-                    >
-                      <span className="text-xs font-medium w-16 shrink-0 text-foreground">
-                        {getMonthShortLabel(month)}
-                      </span>
-                      <div className="flex-1">
-                        <CurrencyInput
-                          value={projectedValue}
-                          onChange={(val) => handleMonthEdit(month, val)}
-                          placeholder={formatCurrency(recommendedRounded)}
-                          ariaLabel={`Facturación proyectada para ${getMonthShortLabel(month)}`}
-                          name={`projection-${month}`}
-                          min={yaFacturado}
-                        />
-                        {yaFacturado > 0 && (
-                          <p
-                            data-testid={`ya-facturado-${month}`}
-                            className="mt-1 text-[11px] text-muted-foreground"
-                          >
-                            Ya facturaste{" "}
-                            <span className="font-mono text-foreground">
-                              ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                            </span>{" "}
-                            este mes · es el mínimo del mes
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Summary */}
-        <div className="rounded-xl bg-muted/30 border border-border p-4 space-y-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-3">
-            Resumen de proyección
-          </div>
-
-          {/* Total and Category Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Total ventana 12 meses</p>
-              <p className="text-xl font-bold font-mono">
-                ${projectionResult.totalVentana.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                ${projectionResult.totalHistorico.toLocaleString("es-AR", { maximumFractionDigits: 0 })} histórico + ${projectionResult.totalProyectado.toLocaleString("es-AR", { maximumFractionDigits: 0 })} proyectado
-              </p>
-            </div>
-            <div className="space-y-1 text-right">
-              <p className="text-xs text-muted-foreground">Categoría objetivo</p>
-              <p className={cn(
-                "text-3xl font-bold",
-                isOverActualLimit ? "text-destructive" : "text-success"
-              )}>
-                {projectionResult.categoriaObjetivo}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Límite: ${projectionResult.topeCategoria.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-              </p>
-              {projectionResult.categoriaResultante !== projectionResult.categoriaObjetivo && (
-                <p className="text-xs text-muted-foreground">
-                  Resultante: <strong className="text-foreground">{projectionResult.categoriaResultante}</strong>
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Distance and Margin */}
-          <div className="flex flex-wrap gap-3 pt-2 border-t border-border">
-            <div className={cn(
-              "flex-1 min-w-[140px] rounded-lg px-3 py-2",
-              isOverActualLimit ? "bg-destructive/10" : "bg-success/10"
-            )}>
-              <p className="text-xs text-muted-foreground mb-0.5">Distancia al límite</p>
-              <p className={cn(
-                "font-mono font-bold",
-                isOverActualLimit ? "text-destructive" : "text-success"
-              )}>
-                {isOverActualLimit ? "-" : "+"}${Math.abs(distanciaAlLimite).toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-              </p>
-            </div>
-
-            {projectionData.margenSeguridad > 0 && (
-              <div className={cn(
-                "flex-1 min-w-[140px] rounded-lg px-3 py-2",
-                isOverSafetyMargin ? "bg-yellow-500/10" : "bg-success/10"
-              )}>
-                <p className="text-xs text-muted-foreground mb-0.5">
-                  Margen {formatMargin(projectionData.margenSeguridad)}
-                </p>
-                <p className={cn(
-                  "font-bold",
-                  isOverSafetyMargin ? "text-yellow-500" : "text-success"
-                )}>
-                  {isOverSafetyMargin ? "⚠️ Usado" : "✓ Respetado"}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Alert if over safety margin */}
-          {isOverSafetyMargin && !isOverActualLimit && (
-            <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 px-3 py-2 mt-2">
-              <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                ⚠️ Estás dentro de tu margen de seguridad. Considera facturar menos.
-              </p>
-            </div>
-          )}
-
-          {/* Alert if over actual limit */}
-          {isOverActualLimit && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 mt-2">
-              <p className="text-xs text-destructive">
-                ❌ Excedés el límite de la categoría {projectionResult.categoriaObjetivo}. Deberás subir de categoría.
-              </p>
-            </div>
-          )}
-        </div>
+          {mesesCerrados.length > 0 && <ClosedMonthsChart months={mesesCerrados} />}
+        </details>
 
         {/* Disclaimer */}
         <p className="text-xs text-muted-foreground/70 text-center">
@@ -595,6 +480,96 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 }
 
 // ============ Sub-components ============
+
+/**
+ * Select nativo con pinta de chip.
+ *
+ * Nativo y no un popover: teclado, foco y el picker de mobile vienen puestos, y
+ * no hay posicionamiento que mantener.
+ */
+function ChipSelect({
+  id,
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative inline-flex items-center gap-1.5 rounded-full border border-border bg-background pl-3 pr-2 py-1.5 text-xs focus-within:ring-2 focus-within:ring-success/50">
+      <label htmlFor={id} className="text-muted-foreground shrink-0">
+        {label}
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="bg-transparent font-semibold text-foreground focus:outline-none cursor-pointer max-w-[11rem]"
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
+/**
+ * Los meses ya cerrados de la ventana.
+ *
+ * Una sola serie —lo facturado por mes—, así que un solo color y sin leyenda: el
+ * título la nombra. El monto de cada mes va como TEXTO debajo de su barra, no
+ * como color ni como tooltip, así que la identidad nunca depende de ver bien.
+ * Las barras están para leer la forma del año de un vistazo; el número exacto lo
+ * da el texto.
+ */
+function ClosedMonthsChart({ months }: { months: { month: string; total: number }[] }) {
+  const max = Math.max(...months.map((m) => m.total), 0)
+  const suma = months.reduce((acc, m) => acc + m.total, 0)
+
+  return (
+    <div className="mt-4 max-w-lg rounded-lg border border-border bg-muted/30 p-3">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2.5">
+        Meses cerrados ·{" "}
+        <span className="font-mono tabular-nums text-foreground normal-case">
+          ${suma.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+        </span>
+      </p>
+
+      <div
+        className="grid gap-1.5"
+        style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
+      >
+        {months.map(({ month, total }) => {
+          const pct = max > 0 ? (total / max) * 100 : 0
+          return (
+            <div key={month} className="flex flex-col items-center gap-1 min-w-0">
+              <div className="flex h-20 w-full items-end">
+                <div
+                  data-testid={`barra-${month}`}
+                  className="w-full rounded-t-[3px] bg-success/70"
+                  style={{ height: total > 0 ? `${Math.max(pct, 4)}%` : 0 }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                {getMonthShortLabel(month).split(" ")[0]}
+              </span>
+              <span
+                data-testid={`cerrado-${month}`}
+                className="text-[10px] font-mono tabular-nums text-foreground truncate w-full text-center"
+              >
+                {formatCompact(total)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function CurrencyInput({
   value,
