@@ -6,6 +6,7 @@ import {
   addMonths,
   annualizeWindowTotal,
   buildRecommendationPlan,
+  buildRedistributionPlan,
   calculateProjection,
   countClosedMonths,
   distributeEvenly,
@@ -639,3 +640,94 @@ describe("projection utilities", () => {
 })
 
 
+
+describe("buildRedistributionPlan", () => {
+  const HOY = new Date("2026-09-15T12:00:00Z")
+  const FUTUROS = ["2026-09", "2026-10", "2026-11", "2026-12"]
+
+  it("reparte el disponible en partes iguales cuando no hay candados", () => {
+    const plan = buildRedistributionPlan(FUTUROS, [], {}, [], 40_000_000, HOY)
+
+    expect(plan["2026-09"]).toBe(10_000_000)
+    expect(plan["2026-10"]).toBe(10_000_000)
+    expect(plan["2026-11"]).toBe(10_000_000)
+    expect(plan["2026-12"]).toBe(10_000_000)
+  })
+
+  it("deja intacto el mes con candado y reparte el resto entre los abiertos", () => {
+    // El caso que motivó esto: sé que en septiembre no facturo más, y lo que
+    // sobra tiene que aparecer en los meses que siguen.
+    const historical = [{ month: "2026-09", totalArs: 12_000_000, invoiceCount: 9 }]
+    const projections = { "2026-09": 12_000_000 }
+
+    const plan = buildRedistributionPlan(
+      FUTUROS,
+      ["2026-09"],
+      projections,
+      historical,
+      33_643_660,
+      HOY
+    )
+
+    expect(plan["2026-09"]).toBe(12_000_000)
+    // Septiembre no consume nada nuevo: su total es exactamente su piso.
+    expect(plan["2026-10"]).toBeCloseTo(11_214_553.33, 1)
+    expect(plan["2026-11"]).toBeCloseTo(11_214_553.33, 1)
+    expect(plan["2026-12"]).toBeCloseTo(11_214_553.33, 1)
+  })
+
+  it("descuenta del disponible sólo la facturación NUEVA del mes bloqueado", () => {
+    // El piso del mes en curso ya está contado dentro del histórico: si se
+    // descontara entero, se restaría dos veces.
+    const historical = [{ month: "2026-09", totalArs: 10_000_000, invoiceCount: 5 }]
+    const projections = { "2026-09": 12_000_000 }
+
+    const plan = buildRedistributionPlan(
+      FUTUROS,
+      ["2026-09"],
+      projections,
+      historical,
+      20_000_000,
+      HOY
+    )
+
+    // Consume 2M nuevos; quedan 18M para tres meses.
+    expect(plan["2026-09"]).toBe(12_000_000)
+    expect(plan["2026-10"]).toBe(6_000_000)
+  })
+
+  it("respeta el piso del mes en curso cuando queda abierto", () => {
+    const historical = [{ month: "2026-09", totalArs: 12_000_000, invoiceCount: 9 }]
+
+    const plan = buildRedistributionPlan(FUTUROS, [], {}, historical, 4_000_000, HOY)
+
+    // Su total es piso + su parte, nunca menos que lo ya emitido.
+    expect(plan["2026-09"]).toBe(12_000_000 + 1_000_000)
+    expect(plan["2026-10"]).toBe(1_000_000)
+  })
+
+  it("no reparte negativos cuando los candados ya se pasaron del disponible", () => {
+    const projections = { "2026-09": 50_000_000 }
+
+    const plan = buildRedistributionPlan(
+      FUTUROS,
+      ["2026-09"],
+      projections,
+      [],
+      30_000_000,
+      HOY
+    )
+
+    expect(plan["2026-09"]).toBe(50_000_000)
+    expect(plan["2026-10"]).toBe(0)
+    expect(plan["2026-11"]).toBe(0)
+  })
+
+  it("no toca nada si están todos bloqueados", () => {
+    const projections = { "2026-09": 1, "2026-10": 2, "2026-11": 3, "2026-12": 4 }
+
+    const plan = buildRedistributionPlan(FUTUROS, FUTUROS, projections, [], 99_000_000, HOY)
+
+    expect(plan).toEqual(projections)
+  })
+})

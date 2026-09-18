@@ -190,11 +190,31 @@ describe("sanitizeProjectionData", () => {
     targetCategoria: "H",
     margenSeguridad: 200000,
     monthlyProjections: { "2026-01": 100, "2026-02": 200 },
+    lockedMonths: ["2026-01"],
     updatedAt: "2026-08-06T00:00:00.000Z",
   };
 
   it("deja pasar una proyección bien formada", () => {
     expect(sanitizeProjectionData(DATA)).toEqual(DATA);
+  });
+
+  it("le pone lockedMonths vacío a lo guardado antes de que existieran", () => {
+    // Sin esto queda undefined y cualquier .includes explota al hidratar.
+    const { lockedMonths: _omitido, ...viejo } = DATA;
+
+    expect(sanitizeProjectionData(viejo)).toMatchObject({ lockedMonths: [] });
+  });
+
+  it("descarta candados que no son meses válidos", () => {
+    const result = sanitizeProjectionData({ ...DATA, lockedMonths: ["2026-01", "nope", 7, null] });
+
+    expect(result?.lockedMonths).toEqual(["2026-01"]);
+  });
+
+  it("tolera un lockedMonths que no es lista", () => {
+    const result = sanitizeProjectionData({ ...DATA, lockedMonths: "2026-01" });
+
+    expect(result?.lockedMonths).toEqual([]);
   });
 
   it("devuelve null sin mes objetivo válido", () => {

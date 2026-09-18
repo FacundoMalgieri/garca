@@ -95,6 +95,8 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
     setMargenSeguridad,
     setMonthProjection,
     applyRecommendation,
+    toggleMonthLock,
+    redistribute,
     clearProjections,
     categorias,
   } = useProjection({
@@ -193,6 +195,13 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
   )
     .split(" ")[0]
     .toLowerCase()
+
+  // Plata del objetivo que no está asignada a ningún mes. No es un error:
+  // facturar menos del tope es una decisión válida, así que se ofrece repartirla
+  // sin teñirla de alerta.
+  const sinAsignar = Math.max(0, projectionResult.margenRestante)
+  const mesesAbiertos = futureMonths.filter((month) => !projectionData.lockedMonths.includes(month))
+  const puedeRedistribuir = sinAsignar > 0 && mesesAbiertos.length > 0
 
   // Meses ya cerrados de la ventana, para el mini-gráfico del desglose.
   const mesesCerrados = projectionResult.ventana
@@ -462,9 +471,31 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               // del mes y la ayuda dice cuánto falta para llegar a ese total.
               const yaFacturado = historicalMap.get(month) || 0
               const falta = Math.max(0, projectedValue - yaFacturado)
+              const conCandado = projectionData.lockedMonths.includes(month)
               return (
                 <div key={month} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-background border border-border">
                   <span className="text-xs font-medium w-16 shrink-0">{getMonthShortLabel(month)}</span>
+                  <button
+                    type="button"
+                    data-testid={`candado-${month}`}
+                    aria-pressed={conCandado}
+                    aria-label={
+                      conCandado
+                        ? `Soltar ${getMonthShortLabel(month)}: vuelve a entrar en el reparto`
+                        : `Fijar ${getMonthShortLabel(month)}: no lo toca el reparto`
+                    }
+                    title={conCandado ? "Fijo — el reparto no lo toca" : "Fijar este mes"}
+                    onClick={() => toggleMonthLock(month)}
+                    className={cn(
+                      "shrink-0 rounded-md px-1.5 py-1 text-sm cursor-pointer transition-colors",
+                      "focus-visible:outline-2 focus-visible:outline-success",
+                      conCandado
+                        ? "text-success bg-success/10"
+                        : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {conCandado ? "🔒" : "🔓"}
+                  </button>
                   <div className="flex-1">
                     <CurrencyInput
                       value={projectedValue}
@@ -479,18 +510,48 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                         Ya facturaste{" "}
                         <span className="font-mono text-foreground">
                           ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                        </span>{" "}
-                        · te quedan{" "}
-                        <span className="font-mono text-success">
-                          ${falta.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
-                        </span>{" "}
-                        para llegar a ese total
+                        </span>
+                        {falta > 0 ? (
+                          <>
+                            {" "}· te quedan{" "}
+                            <span className="font-mono text-success">
+                              ${falta.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                            </span>{" "}
+                            para llegar a ese total
+                          </>
+                        ) : (
+                          // Poner el total en lo ya emitido es decir "no facturo
+                          // más este mes"; "te quedan $0" no decía nada.
+                          <> · no proyectás nada más este mes</>
+                        )}
                       </p>
                     )}
                   </div>
                 </div>
               )
             })}
+
+            {puedeRedistribuir && (
+              <div
+                data-testid="sin-asignar"
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 mt-1 rounded-lg bg-muted/40 border border-border"
+              >
+                <span className="text-xs text-muted-foreground">
+                  Te quedan{" "}
+                  <span className="font-mono tabular-nums text-foreground">
+                    ${sinAsignar.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                  </span>{" "}
+                  sin asignar
+                </span>
+                <button
+                  type="button"
+                  onClick={redistribute}
+                  className="text-xs font-medium text-success hover:underline cursor-pointer focus-visible:outline-2 focus-visible:outline-success rounded"
+                >
+                  Redistribuir entre los {mesesAbiertos.length === 1 ? "meses abiertos" : `${mesesAbiertos.length} meses abiertos`}
+                </button>
+              </div>
+            )}
 
             {/* Editás arriba y el total se mueve acá: sin esto, tipear números no
                 tenía respuesta numérica en ningún lado. */}

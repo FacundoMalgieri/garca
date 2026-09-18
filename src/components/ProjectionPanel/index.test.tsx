@@ -24,10 +24,13 @@ const mocks: {
   /** Fuerza estados del resultado (excluido, sube de categoría, ventana cerrada). */
   resultOverrides: Partial<ProjectionResult>
   ventana: MonthKey[]
-} = { monthlyTotals: [], futureMonths: [], monthlyProjections: {}, resultOverrides: {}, ventana: ["2026-07", "2026-08", "2026-09"] }
+  lockedMonths: MonthKey[]
+} = { monthlyTotals: [], futureMonths: [], monthlyProjections: {}, resultOverrides: {}, ventana: ["2026-07", "2026-08", "2026-09"], lockedMonths: [] }
 
 /** Spy compartido: el factory del mock corre en CADA render del hook. */
 const setMonthProjection = vi.hoisted(() => vi.fn())
+const toggleMonthLock = vi.hoisted(() => vi.fn())
+const redistribute = vi.hoisted(() => vi.fn())
 
 const CAT_G = MONOTRIBUTO_DATA.categorias.find((c) => c.categoria === "G")
 if (!CAT_G) throw new Error("Categoría G no existe en MONOTRIBUTO_DATA")
@@ -39,6 +42,7 @@ vi.mock("@/hooks/useProjection", () => ({
       targetCategoria: "G",
       margenSeguridad: 0,
       monthlyProjections: mocks.monthlyProjections,
+      lockedMonths: mocks.lockedMonths,
       updatedAt: "2026-08-11T00:00:00.000Z",
     }
     const projectionResult: ProjectionResult = {
@@ -67,6 +71,8 @@ vi.mock("@/hooks/useProjection", () => ({
       setMargenSeguridad: vi.fn(),
       setMonthProjection,
       setAllProjections: vi.fn(),
+      toggleMonthLock,
+      redistribute,
       applyRecommendation: vi.fn(),
       clearProjections: vi.fn(),
       categorias: MONOTRIBUTO_DATA.categorias,
@@ -79,6 +85,7 @@ describe("ProjectionPanel", () => {
     vi.clearAllMocks()
     mocks.monthlyProjections = {}
     mocks.resultOverrides = {}
+    mocks.lockedMonths = []
     mocks.ventana = ["2026-07", "2026-08", "2026-09"]
   })
 
@@ -151,6 +158,7 @@ describe("ProjectionPanel · la respuesta primero", () => {
     mocks.monthlyProjections = {}
     mocks.monthlyTotals = []
     mocks.resultOverrides = {}
+    mocks.lockedMonths = []
     mocks.ventana = ["2026-07", "2026-08", "2026-09"]
     mocks.futureMonths = ["2026-08", "2026-09"]
   })
@@ -249,6 +257,7 @@ describe("ProjectionPanel · dónde termina la ventana", () => {
     mocks.monthlyProjections = {}
     mocks.monthlyTotals = []
     mocks.resultOverrides = {}
+    mocks.lockedMonths = []
     mocks.ventana = ["2026-07", "2026-08", "2026-09"]
     mocks.futureMonths = ["2026-08", "2026-09"]
   })
@@ -309,6 +318,7 @@ describe("ProjectionPanel · la frase no puede mentir sobre el plan", () => {
     vi.clearAllMocks()
     mocks.monthlyTotals = []
     mocks.resultOverrides = {}
+    mocks.lockedMonths = []
     mocks.ventana = ["2026-07", "2026-08", "2026-09"]
     mocks.futureMonths = ["2026-08", "2026-09"]
     mocks.monthlyProjections = {}
@@ -344,5 +354,85 @@ describe("ProjectionPanel · la frase no puede mentir sobre el plan", () => {
     render(<ProjectionPanel tipoActividad="servicios" />)
 
     expect(screen.getByTestId("frase-consecuencia")).toHaveTextContent(/a ese ritmo/i)
+  })
+})
+
+describe("ProjectionPanel · candados y redistribución", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.lockedMonths = []
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyProjections = {}
+  })
+
+  const abrirDesglose = () => fireEvent.click(screen.getByText("Ajustar mes por mes"))
+
+  it("no dice 'te quedan $0' cuando el mes en curso no proyecta nada nuevo", () => {
+    // Poner en el mes en curso exactamente lo ya facturado es decir "no facturo
+    // más". La frase quedaba sin sentido.
+    mocks.monthlyTotals = [{ month: "2026-08", totalArs: 12_000_000, invoiceCount: 9 }]
+    mocks.monthlyProjections = { "2026-08": 12_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    const hint = screen.getByTestId("ya-facturado-2026-08")
+    expect(hint).toHaveTextContent("12.000.000")
+    expect(hint).not.toHaveTextContent("$0")
+    expect(hint).toHaveTextContent(/no proyect/i)
+  })
+
+  it("cada mes tiene candado y avisa su estado", () => {
+    mocks.lockedMonths = ["2026-08"]
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.getByTestId("candado-2026-08")).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByTestId("candado-2026-09")).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("el candado se prende y se apaga", () => {
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    fireEvent.click(screen.getByTestId("candado-2026-09"))
+
+    expect(toggleMonthLock).toHaveBeenCalledWith("2026-09")
+  })
+
+  it("ofrece redistribuir cuando queda plata sin asignar", () => {
+    mocks.resultOverrides = { margenRestante: 8_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.getByTestId("sin-asignar")).toHaveTextContent("8.000.000")
+
+    fireEvent.click(screen.getByRole("button", { name: /redistribuir/i }))
+    expect(redistribute).toHaveBeenCalled()
+  })
+
+  it("no ofrece redistribuir cuando no sobra nada", () => {
+    mocks.resultOverrides = { margenRestante: 0 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.queryByTestId("sin-asignar")).not.toBeInTheDocument()
+  })
+
+  it("no ofrece redistribuir si están todos los meses con candado", () => {
+    // No habría dónde poner la plata.
+    mocks.resultOverrides = { margenRestante: 8_000_000 }
+    mocks.lockedMonths = ["2026-08", "2026-09"]
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    abrirDesglose()
+
+    expect(screen.queryByTestId("sin-asignar")).not.toBeInTheDocument()
   })
 })

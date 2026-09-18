@@ -463,3 +463,54 @@ export function roundToNearest(value: number, increment: number = 10000): number
 }
 
 
+
+/**
+ * Reparte el disponible entre los meses SIN candado, dejando intactos los que
+ * tienen.
+ *
+ * El candado es el usuario diciendo "de este mes ya sé cuánto va a ser". Su
+ * monto sale del disponible antes de repartir, así que bajar un mes libera plata
+ * que aparece en los otros — sin esto, bajar septiembre a lo ya facturado dejaba
+ * $8,4M que no agarraba nadie y el total simplemente bajaba.
+ *
+ * Del mes bloqueado se descuenta sólo su facturación NUEVA: su piso (lo ya
+ * emitido) ya está contado dentro del histórico, y restarlo entero lo contaría
+ * dos veces.
+ *
+ * @param disponible - Tope − margen − histórico de la ventana. Sale de
+ *   `margenRestante + totalProyectado` del resultado, que es la misma cuenta.
+ */
+export function buildRedistributionPlan(
+  futureMonths: MonthKey[],
+  lockedMonths: MonthKey[],
+  projections: Record<MonthKey, number>,
+  historical: MonthlyTotal[],
+  disponible: number,
+  today: Date = new Date()
+): Record<MonthKey, number> {
+  const currentMonth = formatMonthKey(today)
+  const historicalMap = new Map(historical.map(h => [h.month, h.totalArs]))
+
+  /** Lo ya emitido del mes en curso: su total no puede bajar de ahí. */
+  const pisoDe = (month: MonthKey): number =>
+    month === currentMonth ? historicalMap.get(month) || 0 : 0
+
+  const conCandado = new Set(lockedMonths)
+  const abiertos = futureMonths.filter(month => !conCandado.has(month))
+
+  const comprometido = futureMonths
+    .filter(month => conCandado.has(month))
+    .reduce((sum, month) => sum + Math.max(0, (projections[month] || 0) - pisoDe(month)), 0)
+
+  const paraRepartir = Math.max(0, disponible - comprometido)
+  const porMes = abiertos.length > 0 ? paraRepartir / abiertos.length : 0
+
+  const plan: Record<MonthKey, number> = {}
+  for (const month of futureMonths) {
+    plan[month] = conCandado.has(month)
+      ? projections[month] || 0
+      : pisoDe(month) + porMes
+  }
+
+  return plan
+}

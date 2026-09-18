@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias"
 import {
   buildRecommendationPlan,
+  buildRedistributionPlan,
   calculateProjection,
   formatMonthKey,
   getCategoriaByLetter,
@@ -127,6 +128,10 @@ interface UseProjectionReturn {
   setMonthProjection: (month: MonthKey, amount: number) => void
   setAllProjections: (projections: Record<MonthKey, number>) => void
   applyRecommendation: () => void
+  /** Prende/apaga el candado de un mes. */
+  toggleMonthLock: (month: MonthKey) => void
+  /** Reparte lo que sobra entre los meses sin candado. */
+  redistribute: () => void
   clearProjections: () => void
 
   // Helpers
@@ -145,13 +150,16 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
   // State
   const [projectionData, setProjectionData] = useState<ProjectionData>(() => {
     const stored = loadProjectionData()
-    if (stored) return stored
+    // `lockedMonths` es posterior al primer release: lo guardado antes no lo
+    // trae y quedaría `undefined`, rompiendo cualquier `.includes`.
+    if (stored) return { ...stored, lockedMonths: stored.lockedMonths ?? [] }
 
     return {
       targetRecategorizacion: defaultRecategorizacion,
       targetCategoria: null,
       margenSeguridad: DEFAULT_MARGEN,
       monthlyProjections: {},
+      lockedMonths: [],
       updatedAt: new Date().toISOString(),
     }
   })
@@ -198,6 +206,7 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
       ...prev,
       targetRecategorizacion: month,
       monthlyProjections: {}, // Clear projections when changing target
+      lockedMonths: [], // los candados eran de los meses de la ventana anterior
       updatedAt: new Date().toISOString(),
     }))
   }, [])
@@ -244,10 +253,48 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
     // es facturación nueva. Ver buildRecommendationPlan.
     setProjectionData(prev => ({
       ...prev,
-      monthlyProjections: buildRecommendationPlan(
+      // Los meses con candado quedan como están; el resto recibe el plan nuevo.
+      monthlyProjections: {
+        ...buildRecommendationPlan(
+          futureMonths,
+          projectionResult.montoRecomendadoMensual,
+          monthlyTotals
+        ),
+        ...Object.fromEntries(
+          prev.lockedMonths
+            .filter(month => futureMonths.includes(month))
+            .map(month => [month, prev.monthlyProjections[month] || 0])
+        ),
+      },
+      updatedAt: new Date().toISOString(),
+    }))
+  }, [projectionResult, futureMonths, monthlyTotals])
+
+  const toggleMonthLock = useCallback((month: MonthKey) => {
+    setProjectionData(prev => ({
+      ...prev,
+      lockedMonths: prev.lockedMonths.includes(month)
+        ? prev.lockedMonths.filter(m => m !== month)
+        : [...prev.lockedMonths, month],
+      updatedAt: new Date().toISOString(),
+    }))
+  }, [])
+
+  const redistribute = useCallback(() => {
+    if (!projectionResult || futureMonths.length === 0) return
+
+    // Tope − margen − histórico. `margenRestante` ya descuenta lo proyectado,
+    // así que devolvérselo reconstruye el disponible entero de la ventana.
+    const disponible = projectionResult.margenRestante + projectionResult.totalProyectado
+
+    setProjectionData(prev => ({
+      ...prev,
+      monthlyProjections: buildRedistributionPlan(
         futureMonths,
-        projectionResult.montoRecomendadoMensual,
-        monthlyTotals
+        prev.lockedMonths,
+        prev.monthlyProjections,
+        monthlyTotals,
+        disponible
       ),
       updatedAt: new Date().toISOString(),
     }))
@@ -257,6 +304,7 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
     setProjectionData(prev => ({
       ...prev,
       monthlyProjections: {},
+      lockedMonths: [],
       updatedAt: new Date().toISOString(),
     }))
   }, [])
@@ -273,6 +321,8 @@ export function useProjection({ invoices, tipoActividad: _tipoActividad, manualE
     setMonthProjection,
     setAllProjections,
     applyRecommendation,
+    toggleMonthLock,
+    redistribute,
     clearProjections,
     categorias,
   }

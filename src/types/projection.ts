@@ -22,6 +22,13 @@ export interface ProjectionData {
   margenSeguridad: number
   /** Projected amounts per month (YYYY-MM -> amount in ARS) */
   monthlyProjections: Record<MonthKey, number>
+  /**
+   * Meses con candado: los que el usuario ya sabe cuánto va a facturar.
+   *
+   * Ni la recomendación ni la redistribución los tocan; su monto sale del
+   * disponible antes de repartir el resto entre los meses abiertos.
+   */
+  lockedMonths: MonthKey[]
   /** Last updated timestamp */
   updatedAt: string
 }

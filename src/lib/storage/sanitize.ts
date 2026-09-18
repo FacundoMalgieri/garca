@@ -224,11 +224,18 @@ export function sanitizeProjectionData(raw: unknown): ProjectionData | null {
     }
   }
 
+  // Los candados se guardaron después del primer release: lo escrito antes no
+  // trae el campo y tiene que quedar como lista vacía, nunca undefined.
+  const lockedMonths = Array.isArray(raw.lockedMonths)
+    ? raw.lockedMonths.filter((month): month is MonthKey => typeof month === "string" && isMonthKey(month))
+    : [];
+
   return {
     targetRecategorizacion: target,
     targetCategoria: typeof raw.targetCategoria === "string" ? raw.targetCategoria : null,
     margenSeguridad: asFiniteNumber(raw.margenSeguridad),
     monthlyProjections: monthlyProjections as Record<MonthKey, number>,
+    lockedMonths,
     updatedAt: asString(raw.updatedAt),
   };
 }
