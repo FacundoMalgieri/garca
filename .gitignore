@@ -109,3 +109,7 @@ docs/
 
 # Visual brainstorm companion
 .superpowers/
+
+# Lista de datos personales que los git hooks usan para bloquear commits.
+# Nunca se versiona: es justamente lo que no puede publicarse.
+.claude/private-values.txt

@@ -104,8 +104,8 @@ describe("ProjectionPanel", () => {
   })
 
   it("el mes en curso dice cuánto FALTA, no sólo lo ya facturado", () => {
-    // El input muestra el total del mes, así que "$20.000.000" se leía como
-    // "facturá 22 palos". El número que el usuario busca es el delta.
+    // El input muestra el TOTAL del mes, así que se leía como si hubiera que
+    // facturar todo eso de nuevo. El número que el usuario busca es el delta.
     mocks.futureMonths = ["2026-08"]
     mocks.monthlyTotals = [{ month: "2026-08", totalArs: 12_000_000, invoiceCount: 9 }]
     mocks.monthlyProjections = { "2026-08": 20_000_000 }

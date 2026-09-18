@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Revisa lo que se está por commitear: sólo las líneas AGREGADAS, para no
+# bloquear por algo que ya estaba en el archivo.
+set -uo pipefail
+raiz=$(git rev-parse --show-toplevel)
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
+git diff --cached --unified=0 | grep '^+' | grep -v '^+++' > "$tmp" || true
+
+exec "$raiz/.githooks/scan-private-data.sh" "el código que estás commiteando" "$tmp"

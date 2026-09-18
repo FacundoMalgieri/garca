@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Revisa el mensaje del commit antes de que exista.
+# Ve el mensaje REAL, sin importar si vino por -m, por -F, por heredoc o del editor.
+exec "$(git rev-parse --show-toplevel)/.githooks/scan-private-data.sh" \
+  "el mensaje del commit" "$1" mensaje
