@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { SlotAbandonedError } from "@/lib/concurrency";
 import { createIdempotencyStore } from "@/lib/facturador/idempotency";
 
 describe("createIdempotencyStore", () => {
@@ -72,5 +73,30 @@ describe("createIdempotencyStore", () => {
     const res = await store.run("k1", fn);
     expect(res).toBe("cae-ok");
     expect(fn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("createIdempotencyStore · trabajo abandonado", () => {
+  it("NO borra la entrada cuando el slot se abandona: la emisión sigue en vuelo", async () => {
+    // El backstop del limitador rechaza con SlotAbandonedError mientras el
+    // scrape SIGUE corriendo contra ARCA. Si se borrara la key como una falla
+    // genuina, el reintento del cliente re-emitiría y duplicaría el comprobante.
+    const store = createIdempotencyStore<string>();
+    const fn = vi.fn().mockRejectedValue(new SlotAbandonedError());
+
+    await expect(store.run("k1", fn)).rejects.toBeInstanceOf(SlotAbandonedError);
+    expect(store.size()).toBe(1);
+
+    // El reintento con la misma key recibe el mismo rechazo y NO re-ejecuta.
+    await expect(store.run("k1", fn)).rejects.toBeInstanceOf(SlotAbandonedError);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("sigue borrando ante una falla genuina", async () => {
+    const store = createIdempotencyStore<string>();
+    const fn = vi.fn().mockRejectedValue(new Error("RCEL rechazó el formulario"));
+
+    await expect(store.run("k2", fn)).rejects.toThrow("RCEL rechazó el formulario");
+    expect(store.size()).toBe(0);
   });
 });
