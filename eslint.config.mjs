@@ -107,6 +107,8 @@ export default [
                 TextDecoder: 'readonly',
                 ReadableStream: 'readonly',
                 AbortController: 'readonly',
+                AbortSignal: 'readonly',
+                PromiseRejectionEvent: 'readonly',
                 // Browser events
                 BeforeUnloadEvent: 'readonly',
                 PopStateEvent: 'readonly',
