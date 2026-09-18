@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import type { TipoActividad } from "@/types/monotributo"
 
 import { exportProjectionToCSV, exportProjectionToJSON, exportProjectionToPDF } from "./exporters"
+import { ProjectionHelpModal } from "./HelpModal"
 
 function formatMargin(value: number): string {
   if (value >= 1000000) {
@@ -115,6 +116,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 
   const [userHasCustomized, setUserHasCustomized] = useState(false)
   const [pdfReady, setPdfReady] = useState<File | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
   const lastRecommendation = useRef(0)
 
   useEffect(() => {
@@ -275,6 +277,7 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 
   return (
     <>
+      <ProjectionHelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
       {pdfReady && (
         <PdfReadySplash
           onShare={handleSharePdf}
@@ -289,11 +292,22 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
             <ProjectIcon />
             Proyectar
           </CardTitle>
-          <ExportDropdown
-            onExportPDF={handleExportPDF}
-            onExportCSV={handleExportCSV}
-            onExportJSON={handleExportJSON}
-          />
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              aria-label="Cómo usar Proyectar"
+              title="Cómo usar Proyectar"
+              className="rounded-full border border-border p-1.5 text-muted-foreground cursor-pointer hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-success"
+            >
+              <HelpIcon />
+            </button>
+            <ExportDropdown
+              onExportPDF={handleExportPDF}
+              onExportCSV={handleExportCSV}
+              onExportJSON={handleExportJSON}
+            />
+          </div>
         </div>
       </CardHeader>
 
@@ -805,6 +819,19 @@ function CurrencyInput({
 }
 
 // ============ Icons ============
+
+function HelpIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  )
+}
 
 function ProjectIcon() {
   return (

@@ -563,3 +563,29 @@ describe("ProjectionPanel · ruido y referencias", () => {
     expect(aviso).toHaveTextContent(/recortar/i)
   })
 })
+
+describe("ProjectionPanel · ayuda", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.lockedMonths = []
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyProjections = {}
+  })
+
+  it("el modal de ayuda no está abierto de entrada", () => {
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("abre la ayuda desde el header", () => {
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    fireEvent.click(screen.getByRole("button", { name: /cómo usar proyectar/i }))
+
+    expect(screen.getByRole("dialog")).toHaveAccessibleName("Cómo usar Proyectar")
+  })
+})
