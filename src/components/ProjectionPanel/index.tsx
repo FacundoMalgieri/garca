@@ -512,12 +512,17 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                           ${yaFacturado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                         </span>
                         {falta > 0 ? (
+                          // "te quedan $X" se leía como aire contra el tope —que
+                          // es como habla el resto del panel ("te sobran",
+                          // "libres hasta H")— cuando es facturación nueva de
+                          // ESTE mes. Con el total en rojo por pasarse, la frase
+                          // parecía decir lo contrario de lo que pasaba.
                           <>
-                            {" "}· te quedan{" "}
+                            {" "}· proyectás{" "}
                             <span className="font-mono text-success">
                               ${falta.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                             </span>{" "}
-                            para llegar a ese total
+                            más este mes
                           </>
                         ) : (
                           // Poner el total en lo ya emitido es decir "no facturo

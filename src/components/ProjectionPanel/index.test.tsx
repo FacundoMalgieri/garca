@@ -117,6 +117,23 @@ describe("ProjectionPanel", () => {
     expect(hint).toHaveTextContent("8.000.000")
   })
 
+  it("no describe el delta del mes como margen disponible", () => {
+    // "te quedan $X" se leía como aire contra el tope —que es como habla el
+    // resto del panel: "te sobran", "libres hasta H"— cuando en realidad es
+    // facturación nueva de ESE mes. Con el total en rojo, la contradicción era
+    // total.
+    mocks.futureMonths = ["2026-08"]
+    mocks.monthlyTotals = [{ month: "2026-08", totalArs: 12_000_000, invoiceCount: 9 }]
+    mocks.monthlyProjections = { "2026-08": 22_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    const hint = screen.getByTestId("ya-facturado-2026-08")
+    expect(hint).toHaveTextContent("10.000.000")
+    expect(hint).not.toHaveTextContent(/te quedan/i)
+    expect(hint).toHaveTextContent(/proyect/i)
+  })
+
   it("al salir del input, el mes en curso no puede quedar abajo de lo facturado", () => {
     // Es el caso que confundía: con la categoría objetivo baja, la recomendación
     // ponía $265.646 en un mes con $7.500.000 ya emitidos. El campo mostraba un
