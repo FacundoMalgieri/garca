@@ -11,6 +11,19 @@ export const DEFAULT_TIMEOUT = 120000; // 2 minutes - overall navigation timeout
 export const ELEMENT_TIMEOUT = 60000; // 1 minute - timeout for waiting for individual elements
 export const NEW_TAB_TIMEOUT = 60000; // 1 minute - timeout for waiting for new tabs to open
 /**
+ * Techo para guardar en disco un XML ya empezado a descargar.
+ *
+ * `download.saveAs()` de Playwright NO acepta timeout: espera a que la
+ * transferencia termine, sin límite. Si ARCA deja la descarga colgada a mitad,
+ * ese await no resuelve nunca — era el único await sin techo del camino de
+ * comprobantes y el sospechoso del incidente del 2026-09-17, donde dos slots de
+ * concurrencia quedaron tomados para siempre.
+ *
+ * Con este techo, un XML colgado cuesta 30s y UNA factura: el `catch` por
+ * factura de `downloadXMLs` ya existe para eso.
+ */
+export const XML_SAVE_TIMEOUT = 30000;
+/**
  * Timeout para LEER texto/atributos de un nodo que ya deberia estar en el DOM.
  *
  * `locator.textContent()` / `getAttribute()` sin `timeout` usan el default de

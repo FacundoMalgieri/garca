@@ -271,3 +271,43 @@ export async function withTimeout<T>(
     if (timer) clearTimeout(timer);
   }
 }
+
+/** Cualquier cosa de Playwright que se cierre: browser, contexto, página. */
+export interface Closeable {
+  close(): Promise<unknown>;
+}
+
+/**
+ * Cierra un recurso de Playwright cuando se aborta la señal.
+ *
+ * Cerrar el browser es la forma de cancelar un scrape colgado: hace rechazar
+ * toda operación pendiente, con lo cual el scrape se desenrolla por su propio
+ * `catch`/`finally` y libera el slot de concurrencia. Ver `SLOT_BUDGET` en
+ * `@/lib/concurrency`.
+ *
+ * @param signal - Si es `undefined`, no registra nada (flujos sin presupuesto).
+ * @param getCloseable - Getter, no el recurso: se lee al abortar, así toma el
+ *   valor actual de la variable del scraper y no el que había al registrarse.
+ */
+export function closeOnAbort(
+  signal: AbortSignal | undefined,
+  getCloseable: () => Closeable | null
+): void {
+  if (!signal) return;
+
+  // Sin await: esto corre en un listener y el cierre puede colgarse. El backstop
+  // del limitador cubre ese caso.
+  const close = () => {
+    void getCloseable()?.close().catch(() => {});
+  };
+
+  // Una señal ya abortada no vuelve a disparar "abort": el listener no correría
+  // nunca y el browser quedaría vivo. Pasa cuando el presupuesto vence durante
+  // `chromium.launch()`, que es justo lo que se cuelga bajo presión de memoria.
+  if (signal.aborted) {
+    close();
+    return;
+  }
+
+  signal.addEventListener("abort", close, { once: true });
+}

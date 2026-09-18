@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
           }
 
           // Run with concurrency limit
-          const result = await withConcurrencyLimit(async () => {
-            return getAFIPCompaniesWithEvents({ cuit, password }, { onEvent: sendEvent, isCancelled });
+          const result = await withConcurrencyLimit(async (signal) => {
+            return getAFIPCompaniesWithEvents({ cuit, password }, { onEvent: sendEvent, isCancelled, signal });
           });
 
           // Send final result

@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Run scraper with concurrency limit
-          const result = await withConcurrencyLimit(async () => {
+          const result = await withConcurrencyLimit(async (signal) => {
             return scrapeAFIPInvoicesWithEvents(credentials, filters, {
               headless: headlessOverride,
               downloadXML,
@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
               companyIndex,
               onEvent: sendEvent,
               isCancelled,
+              signal,
             });
           });
 

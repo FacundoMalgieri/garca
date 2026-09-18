@@ -114,6 +114,12 @@ export async function POST(request: NextRequest) {
     // Idempotencia (C1/H2): la misma key devuelve el result cacheado sin re-emitir;
     // un doble request concurrente comparte la misma promise. Cubre el retry
     // post-error del cliente (misma key) contra el mismo lambda caliente.
+    // A propósito SIN `signal`: emitir es irreversible. Si el presupuesto de slot
+    // matara el browser a mitad de la confirmación, ARCA podría quedar con un
+    // comprobante emitido que el usuario nunca ve. Este flujo se queda sólo con
+    // el backstop del limitador, que rechaza con SlotAbandonedError — y el store
+    // de idempotencia NO borra la entrada ante ese error, así que el reintento
+    // del cliente no puede duplicar el comprobante.
     const result = await emissionStore.run(idempotencyKey, () =>
       withConcurrencyLimit(() =>
         confirmEmissionFlow(credentials, plantillaFinal as Plantilla, { fecha, companyIndex, ...extraOpts })

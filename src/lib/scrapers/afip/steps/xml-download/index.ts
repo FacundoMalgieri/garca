@@ -8,7 +8,8 @@ import type { Download, Page } from "playwright";
 
 import type { AFIPInvoice } from "@/types/afip-scraper";
 
-import { ELEMENT_TIMEOUT, SELECTORS, TIMING } from "../../constants";
+import { ELEMENT_TIMEOUT, SELECTORS, TIMING, XML_SAVE_TIMEOUT } from "../../constants";
+import { withTimeout } from "../../utils";
 import { parseAfipXml } from "../../xml-parser";
 
 /**
@@ -65,7 +66,19 @@ async function downloadInvoiceXML(page: Page, invoice: AFIPInvoice, _index: numb
 async function processDownload(download: Download, invoice: AFIPInvoice): Promise<void> {
   // Save to temp location and read content
   const tempPath = join("/tmp", `afip-${Date.now()}.xml`);
-  await download.saveAs(tempPath);
+
+  // saveAs() no acepta timeout y espera para siempre si ARCA deja la
+  // transferencia a medias. El throw cae en el catch por-factura de
+  // downloadXMLs: se pierde este XML, no el scrape entero.
+  const guardado = await withTimeout(
+    download.saveAs(tempPath).then(() => true),
+    XML_SAVE_TIMEOUT,
+    false
+  );
+
+  if (!guardado) {
+    throw new Error(`La descarga del XML excedió ${XML_SAVE_TIMEOUT}ms`);
+  }
 
   // Read and parse XML content
   const xmlContent = await fs.readFile(tempPath, "utf-8");
