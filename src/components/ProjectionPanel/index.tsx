@@ -173,6 +173,21 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
 
   const mesesLabel = mesesEnPalabras(futureMonths.length)
 
+  // ¿El plan cargado sigue siendo el recomendado, o lo editaste a mano?
+  //
+  // El titular muestra SIEMPRE el recomendado. Si la frase dijera "a ese ritmo"
+  // con meses editados, estaría atribuyéndole al recomendado un resultado que
+  // produce otro plan — con Oct en $25M la frase anunciaba categoría J "a ese
+  // ritmo" de $5,75M, que en realidad cae en H.
+  //
+  // El piso del mes en curso entra en la cuenta: su plan recomendado es
+  // piso + recomendado, no el recomendado pelado.
+  const planEsElRecomendado = futureMonths.every((month) => {
+    const piso = historicalMap.get(month) || 0
+    const esperado = piso + projectionResult.montoRecomendadoMensual
+    return Math.abs((projectionData.monthlyProjections[month] || 0) - esperado) <= 1
+  })
+
   const mesRecategorizacion = (
     recategorizacionOptions.find((o) => o.month === projectionData.targetRecategorizacion)?.label ?? ""
   )
@@ -306,7 +321,8 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               <span className="font-sans text-lg font-medium text-muted-foreground tracking-normal">por mes</span>
             </p>
             <p className="text-sm" data-testid="frase-consecuencia">
-              {mesesLabel} a ese ritmo y cerrás el año en categoría{" "}
+              {planEsElRecomendado ? `${mesesLabel} a ese ritmo y cerrás` : "Con lo que cargaste cerrás"}{" "}
+              el año en categoría{" "}
               <strong className={cn(subeDeCategoria ? "text-destructive" : "text-success")}>
                 {projectionResult.categoriaResultante}
               </strong>
@@ -351,18 +367,35 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
               />
             )}
           </div>
-          <div className="flex justify-between gap-3 mt-1.5 text-xs text-muted-foreground">
+          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 mt-1.5 text-xs text-muted-foreground">
+            {/* Izquierda: de qué está hecha la barra. */}
             <span>
               <span className="font-mono tabular-nums text-foreground">
                 {formatCompact(projectionResult.totalHistorico)}
               </span>{" "}
-              ya facturado
+              facturado
+              {projectionResult.totalProyectado > 0 && (
+                <>
+                  {" · "}
+                  <span className="font-mono tabular-nums text-foreground">
+                    {formatCompact(projectionResult.totalProyectado)}
+                  </span>{" "}
+                  proyectado
+                </>
+              )}
             </span>
-            <span className="text-right">
-              <span className="font-mono tabular-nums text-foreground">
-                {formatCompact(Math.max(0, projectionResult.topeCategoria - projectionData.margenSeguridad - projectionResult.totalHistorico))}
+            {/* Derecha: dónde termina la ventana. Exacto y no abreviado — es el
+                número que contesta "¿en cuánto quedo?", y antes no estaba. */}
+            <span data-testid="total-ventana" className="text-right">
+              <span
+                className={cn(
+                  "font-mono tabular-nums font-medium",
+                  isOverActualLimit ? "text-destructive" : "text-foreground"
+                )}
+              >
+                ${projectionResult.totalVentana.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
               </span>{" "}
-              libres hasta {projectionResult.categoriaObjetivo}
+              de ${projectionResult.topeCategoria.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
             </span>
           </div>
         </div>
@@ -458,6 +491,32 @@ export function ProjectionPanel({ tipoActividad }: ProjectionPanelProps) {
                 </div>
               )
             })}
+
+            {/* Editás arriba y el total se mueve acá: sin esto, tipear números no
+                tenía respuesta numérica en ningún lado. */}
+            <div
+              data-testid="total-desglose"
+              className="flex items-baseline justify-between gap-3 px-3 pt-3 mt-1 border-t border-border"
+            >
+              <span className="text-xs text-muted-foreground">Total de la ventana</span>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "font-mono tabular-nums font-semibold",
+                    isOverActualLimit ? "text-destructive" : "text-foreground"
+                  )}
+                >
+                  ${projectionResult.totalVentana.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                </p>
+                <p className={cn("text-[11px]", isOverActualLimit ? "text-destructive" : "text-muted-foreground")}>
+                  {isOverActualLimit ? "te pasás por " : "te sobran "}
+                  <span className="font-mono">
+                    ${Math.abs(distanciaAlLimite).toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                  </span>{" "}
+                  {isOverActualLimit ? "del" : "para el"} tope de {projectionResult.categoriaObjetivo}
+                </p>
+              </div>
+            </div>
 
             {hasCustomProjections && (
               <button onClick={handleClear} className="text-xs text-destructive hover:underline cursor-pointer">

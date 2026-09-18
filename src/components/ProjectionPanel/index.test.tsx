@@ -242,3 +242,107 @@ describe("ProjectionPanel · la respuesta primero", () => {
     expect(screen.getByTestId("barra-2026-07")).toHaveStyle({ height: "50%" })
   })
 })
+
+describe("ProjectionPanel · dónde termina la ventana", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyProjections = {}
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+  })
+
+  it("muestra el total de la ventana contra el tope, sin desplegar nada", () => {
+    // Al sacar el bloque "Resumen de proyección" se había perdido el número que
+    // contesta "¿en cuánto termino?".
+    mocks.resultOverrides = { totalVentana: 16_000_000, topeCategoria: 53_995_798 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    const total = screen.getByTestId("total-ventana")
+    expect(total).toHaveTextContent("16.000.000")
+    expect(total).toHaveTextContent("53.995.798")
+  })
+
+  it("el total refleja lo que se proyecta, no sólo lo facturado", () => {
+    // El label de la derecha calculaba sobre el histórico, así que decía
+    // "libres" mientras la barra ya mostraba ese espacio ocupado.
+    mocks.resultOverrides = {
+      totalVentana: 40_000_000,
+      totalHistorico: 16_000_000,
+      totalProyectado: 24_000_000,
+      topeCategoria: 53_995_798,
+    }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    expect(screen.getByTestId("total-ventana")).toHaveTextContent("40.000.000")
+  })
+
+  it("el desglose cierra con el total y cuánto sobra para el tope", () => {
+    mocks.resultOverrides = { totalVentana: 16_000_000, topeCategoria: 53_995_798 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    fireEvent.click(screen.getByText("Ajustar mes por mes"))
+
+    const cierre = screen.getByTestId("total-desglose")
+    expect(cierre).toHaveTextContent("16.000.000")
+    expect(cierre).toHaveTextContent("37.995.798")
+    expect(cierre).toHaveTextContent(/te sobran/i)
+  })
+
+  it("avisa cuando el total se pasa del tope", () => {
+    mocks.resultOverrides = { totalVentana: 60_000_000, topeCategoria: 53_995_798 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+    fireEvent.click(screen.getByText("Ajustar mes por mes"))
+
+    const cierre = screen.getByTestId("total-desglose")
+    expect(cierre).toHaveTextContent(/te pasás/i)
+    expect(cierre).toHaveTextContent("6.004.202")
+  })
+})
+
+describe("ProjectionPanel · la frase no puede mentir sobre el plan", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.monthlyTotals = []
+    mocks.resultOverrides = {}
+    mocks.ventana = ["2026-07", "2026-08", "2026-09"]
+    mocks.futureMonths = ["2026-08", "2026-09"]
+    mocks.monthlyProjections = {}
+  })
+
+  it("dice 'a ese ritmo' sólo cuando el plan ES el recomendado", () => {
+    mocks.monthlyProjections = { "2026-08": 1_000_000, "2026-09": 1_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    expect(screen.getByTestId("frase-consecuencia")).toHaveTextContent(/a ese ritmo/i)
+  })
+
+  it("deja de decir 'a ese ritmo' cuando editaste los meses", () => {
+    // El titular sigue mostrando el recomendado, así que "a ese ritmo" apuntaría
+    // a un número que ya no es el que produce el resultado de la frase.
+    mocks.monthlyProjections = { "2026-08": 9_000_000, "2026-09": 1_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    const frase = screen.getByTestId("frase-consecuencia")
+    expect(frase).not.toHaveTextContent(/a ese ritmo/i)
+    expect(frase).toHaveTextContent(/lo que cargaste/i)
+  })
+
+  it("respeta el piso del mes en curso al comparar contra el recomendado", () => {
+    // El plan recomendado para el mes en curso es piso + recomendado, no el
+    // recomendado pelado: sin esto, un mes con facturación real siempre parecía
+    // editado a mano.
+    mocks.monthlyTotals = [{ month: "2026-08", totalArs: 4_000_000, invoiceCount: 3 }]
+    mocks.monthlyProjections = { "2026-08": 5_000_000, "2026-09": 1_000_000 }
+
+    render(<ProjectionPanel tipoActividad="servicios" />)
+
+    expect(screen.getByTestId("frase-consecuencia")).toHaveTextContent(/a ese ritmo/i)
+  })
+})
