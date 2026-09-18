@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getConcurrencyStats, withConcurrencyLimit } from "./index";
+import {
+  __resetConcurrencyForTests,
+  getConcurrencyStats,
+  SLOT_BUDGET,
+  SLOT_KILL_GRACE,
+  SlotAbandonedError,
+  withConcurrencyLimit,
+} from "./index";
 
 describe("concurrency", () => {
   beforeEach(() => {
@@ -9,6 +16,10 @@ describe("concurrency", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    // El contador es estado de módulo y sobrevive entre casos: sin esto, un
+    // test que deja un slot tomado hace fallar a los siguientes por timeout en
+    // vez de por assertion, y la causa real queda enterrada.
+    __resetConcurrencyForTests();
   });
 
   describe("getConcurrencyStats", () => {
@@ -170,6 +181,136 @@ describe("concurrency", () => {
 
       expect(result1).toBe("blocking");
       expect(result2).toBe("second");
+    });
+  });
+
+  // El 2026-09-17 los 2 slots quedaron tomados sin nada corriendo y toda
+  // consulta de facturas murió con "El servidor está ocupado" hasta reiniciar
+  // el contenedor: el slot sólo se liberaba si la función envuelta terminaba, y
+  // un await colgado adentro de Playwright no termina nunca.
+  describe("presupuesto de slot", () => {
+    /** Se cuelga para siempre, como el scrape del incidente. */
+    const seCuelga = () => new Promise<string>(() => {});
+
+    it("libera el slot cuando la función envuelta nunca resuelve", async () => {
+      const colgada = withConcurrencyLimit(seCuelga).catch((err: Error) => err);
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(getConcurrencyStats().active).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(SLOT_BUDGET + SLOT_KILL_GRACE);
+
+      await expect(colgada).resolves.toBeInstanceOf(SlotAbandonedError);
+      expect(getConcurrencyStats().active).toBe(0);
+
+      // Y un request nuevo entra sin pagar la cola.
+      await expect(withConcurrencyLimit(async () => "entra")).resolves.toBe("entra");
+    });
+
+    it("aborta la señal al vencer el presupuesto", async () => {
+      let vista: AbortSignal | undefined;
+
+      const colgada = withConcurrencyLimit((signal) => {
+        vista = signal;
+        return seCuelga();
+      }).catch(() => "abandonada");
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vista?.aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(SLOT_BUDGET);
+      expect(vista?.aborted).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(SLOT_KILL_GRACE);
+      await colgada;
+    });
+
+    it("libera el slot en cuanto el scrape se desenrolla tras el abort", async () => {
+      // Camino feliz del guard: el scraper escucha el abort, cierra el browser y
+      // su promise resuelve dentro de la gracia. El backstop no llega a correr,
+      // así que no queda huérfano.
+      const cooperativa = withConcurrencyLimit(
+        (signal) =>
+          new Promise<string>((resolve) => {
+            signal.addEventListener("abort", () => resolve("cancelada"), { once: true });
+          })
+      );
+
+      await vi.advanceTimersByTimeAsync(SLOT_BUDGET);
+
+      await expect(cooperativa).resolves.toBe("cancelada");
+      expect(getConcurrencyStats().active).toBe(0);
+      expect(getConcurrencyStats().orphaned).toBe(0);
+    });
+
+    it("no aborta ni deja timers cuando la función termina a tiempo", async () => {
+      const timersAntes = vi.getTimerCount();
+      let vista: AbortSignal | undefined;
+
+      const result = await withConcurrencyLimit(async (signal) => {
+        vista = signal;
+        return "ok";
+      });
+
+      expect(result).toBe("ok");
+      expect(vista?.aborted).toBe(false);
+      expect(getConcurrencyStats().active).toBe(0);
+      expect(vi.getTimerCount()).toBe(timersAntes);
+    });
+  });
+
+  describe("slots abandonados", () => {
+    const seCuelga = () => new Promise<string>(() => {});
+
+    it("reserva capacidad mientras el trabajo abandonado siga vivo", async () => {
+      // Cada backstop que dispara deja un Chromium vivo: si el limitador
+      // siguiera admitiendo de a 2, el contenedor termina por OOM.
+      const uno = withConcurrencyLimit(seCuelga).catch(() => "1");
+      const dos = withConcurrencyLimit(seCuelga).catch(() => "2");
+
+      await vi.advanceTimersByTimeAsync(SLOT_BUDGET + SLOT_KILL_GRACE);
+      await uno;
+      await dos;
+
+      const stats = getConcurrencyStats();
+      expect(stats.active).toBe(0);
+      expect(stats.orphaned).toBe(2);
+      expect(stats.available).toBe(0);
+
+      // Con la capacidad tomada, el request nuevo falla rápido y con un mensaje
+      // honesto en vez de tumbar el proceso.
+      let mensaje = "";
+      const tercera = withConcurrencyLimit(async () => "entra").catch((err: Error) => {
+        mensaje = err.message;
+      });
+
+      for (let i = 0; i < 130; i++) {
+        await vi.advanceTimersByTimeAsync(500);
+      }
+      await tercera;
+
+      expect(mensaje).toMatch(/El servidor está ocupado/);
+      expect(mensaje).toMatch(/1 solicitudes en espera/);
+    });
+
+    it("devuelve la capacidad si el trabajo abandonado termina tarde", async () => {
+      let resolverTarde: (value: string) => void = () => {};
+      const tarde = new Promise<string>((resolve) => {
+        resolverTarde = resolve;
+      });
+
+      const abandonada = withConcurrencyLimit(() => tarde).catch(() => "abandonada");
+      await vi.advanceTimersByTimeAsync(SLOT_BUDGET + SLOT_KILL_GRACE);
+      await abandonada;
+
+      expect(getConcurrencyStats().orphaned).toBe(1);
+      expect(getConcurrencyStats().available).toBe(1);
+
+      resolverTarde("al fin");
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(getConcurrencyStats().orphaned).toBe(0);
+      expect(getConcurrencyStats().available).toBe(2);
     });
   });
 });
