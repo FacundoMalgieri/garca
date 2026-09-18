@@ -131,6 +131,12 @@ export interface AFIPScraperOptions {
   downloadXML?: boolean;
   /** Company index to select if multiple companies available (default: 0) */
   companyIndex?: number;
+  /**
+   * Corta el scrape a la fuerza cerrando el browser. La dispara el presupuesto
+   * de slot de `withConcurrencyLimit`; es distinta de `isCancelled`, que es la
+   * cancelación cooperativa por desconexión del cliente.
+   */
+  signal?: AbortSignal;
 }
 
 /**

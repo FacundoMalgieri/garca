@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
     console.log("[AFIP Companies API] Starting login and company fetch...");
 
     // Get companies from AFIP (with concurrency limit)
-    const result = await withConcurrencyLimit(() => 
-      getAFIPCompanies({ cuit, password })
+    const result = await withConcurrencyLimit((signal) =>
+      getAFIPCompanies({ cuit, password }, { signal })
     );
 
     if (!result.success) {

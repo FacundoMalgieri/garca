@@ -26,7 +26,7 @@ import { scrapeMonotributoInfo } from "./steps/monotributo";
 import { scrapeMonotributoBestEffort } from "./steps/monotributo/best-effort";
 import { navigateToCompanySelection, navigateToInvoices } from "./steps/navigation";
 import { downloadXMLs } from "./steps/xml-download";
-import { handleError, withTimeout } from "./utils";
+import { closeOnAbort, handleError, withTimeout } from "./utils";
 
 /**
  * Extended options for streaming scraper.
@@ -57,10 +57,15 @@ export interface GetCompaniesResult {
  */
 export async function getAFIPCompaniesWithEvents(
   credentials: AFIPCredentials,
-  options?: { onEvent?: EventEmitter; isCancelled?: () => boolean }
+  options?: { onEvent?: EventEmitter; isCancelled?: () => boolean; signal?: AbortSignal }
 ): Promise<GetCompaniesResult> {
   const emit = options?.onEvent ?? noopEmitter;
-  const isCancelled = options?.isCancelled ?? (() => false);
+  // `signal` es la cancelación FORZOSA (se agotó el presupuesto de slot);
+  // `isCancelled` es la cooperativa (el cliente cerró el stream). Componerlas acá
+  // hace que TODOS los checkpoints del scrape respeten las dos, sin duplicar
+  // condiciones ni olvidarse de alguna.
+  const isCancelled = () =>
+    (options?.isCancelled?.() ?? false) || (options?.signal?.aborted ?? false);
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -81,6 +86,10 @@ export async function getAFIPCompaniesWithEvents(
       headless: DEFAULT_HEADLESS,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+
+    // Cerrar el browser es lo que hace rechazar las operaciones colgadas de
+    // Playwright: sin eso, un `await` sin techo retiene el slot para siempre.
+    closeOnAbort(options?.signal, () => browser);
 
     context = await browser.newContext({
       userAgent: USER_AGENT,
@@ -180,6 +189,10 @@ export async function getAFIPCompaniesWithEvents(
     emit(SCRAPER_EVENTS.companiesFound(availableCompanies.length));
     console.log("[AFIP Companies] ✅ Found", availableCompanies.length, "company(ies)");
 
+    if (isCancelled()) {
+      return { success: false, companies: [], monotributoInfo, error: "Operación cancelada" };
+    }
+
     return {
       success: true,
       companies: availableCompanies,
@@ -209,8 +222,11 @@ export async function getAFIPCompaniesWithEvents(
  *
  * Convenience wrapper that doesn't emit progress events (but still logs to console).
  */
-export async function getAFIPCompanies(credentials: AFIPCredentials): Promise<GetCompaniesResult> {
-  return getAFIPCompaniesWithEvents(credentials);
+export async function getAFIPCompanies(
+  credentials: AFIPCredentials,
+  options?: { signal?: AbortSignal }
+): Promise<GetCompaniesResult> {
+  return getAFIPCompaniesWithEvents(credentials, options);
 }
 
 /**
@@ -228,7 +244,12 @@ export async function scrapeAFIPInvoicesWithEvents(
   options?: StreamingScraperOptions
 ): Promise<AFIPScraperResultWithCompany> {
   const emit = options?.onEvent ?? noopEmitter;
-  const isCancelled = options?.isCancelled ?? (() => false);
+  // `signal` es la cancelación FORZOSA (se agotó el presupuesto de slot);
+  // `isCancelled` es la cooperativa (el cliente cerró el stream). Componerlas acá
+  // hace que TODOS los checkpoints del scrape respeten las dos, sin duplicar
+  // condiciones ni olvidarse de alguna.
+  const isCancelled = () =>
+    (options?.isCancelled?.() ?? false) || (options?.signal?.aborted ?? false);
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -265,6 +286,10 @@ export async function scrapeAFIPInvoicesWithEvents(
       headless,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+
+    // Cerrar el browser es lo que hace rechazar las operaciones colgadas de
+    // Playwright: sin eso, un `await` sin techo retiene el slot para siempre.
+    closeOnAbort(options?.signal, () => browser);
 
     context = await browser.newContext({
       userAgent: USER_AGENT,
@@ -378,6 +403,15 @@ export async function scrapeAFIPInvoicesWithEvents(
     if (!isCancelled()) {
       emit(SCRAPER_EVENTS.monotributoRefresh());
       monotributoInfo = await scrapeMonotributoBestEffort(context);
+    }
+
+    // Un abort a mitad de la descarga de XMLs no corta el loop: `downloadXMLs`
+    // se traga el rechazo por factura y sigue. Sin este chequeo el scrape
+    // terminaría por el camino feliz devolviendo `success: true` con las
+    // facturas SIN `xmlData` — y como `xmlData.exchangeRate` es lo que convierte
+    // a ARS, las facturas en USD valdrían 0 sin un solo error a la vista.
+    if (isCancelled()) {
+      return cancelledResult();
     }
 
     // Complete event

@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AFIPErrorCode } from "@/types/afip-scraper";
 
 import {
+  closeOnAbort,
   createErrorResult,
   createSuccessResult,
   handleError,
@@ -276,5 +277,77 @@ describe("withTimeout", () => {
 
     // Si el rechazo tardío quedara sin handler, Node lo reportaría acá.
     await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+});
+
+describe("closeOnAbort", () => {
+  it("cierra el recurso cuando se aborta la señal", () => {
+    const close = vi.fn().mockResolvedValue(undefined);
+    const controller = new AbortController();
+
+    closeOnAbort(controller.signal, () => ({ close }));
+    expect(close).not.toHaveBeenCalled();
+
+    controller.abort();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it("cierra en el acto si la señal ya venía abortada", () => {
+    // Una señal ya abortada nunca vuelve a disparar "abort", así que un
+    // addEventListener pelado no correría jamás. La ventana real es
+    // chromium.launch(), que es justo lo que se cuelga bajo presión de memoria:
+    // sin esto el browser quedaba vivo y el slot se abandonaba seguro.
+    const close = vi.fn().mockResolvedValue(undefined);
+    const controller = new AbortController();
+    controller.abort();
+
+    closeOnAbort(controller.signal, () => ({ close }));
+
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it("no hace nada si no hay señal", () => {
+    const close = vi.fn().mockResolvedValue(undefined);
+
+    expect(() => closeOnAbort(undefined, () => ({ close }))).not.toThrow();
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it("tolera que el recurso todavía no exista", () => {
+    const controller = new AbortController();
+    closeOnAbort(controller.signal, () => null);
+
+    expect(() => controller.abort()).not.toThrow();
+  });
+
+  it("no deja sin manejar el rechazo de close", async () => {
+    const close = vi.fn().mockRejectedValue(new Error("browser colgado"));
+    const controller = new AbortController();
+    const sinManejar: unknown[] = [];
+    const onUnhandled = (event: PromiseRejectionEvent) => {
+      sinManejar.push(event.reason);
+    };
+    window.addEventListener("unhandledrejection", onUnhandled);
+
+    closeOnAbort(controller.signal, () => ({ close }));
+    controller.abort();
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    window.removeEventListener("unhandledrejection", onUnhandled);
+
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(sinManejar).toHaveLength(0);
+  });
+
+  it("lee el recurso al abortar, no al registrarse", () => {
+    const close = vi.fn().mockResolvedValue(undefined);
+    let recurso: { close: () => Promise<unknown> } | null = null;
+    const controller = new AbortController();
+
+    closeOnAbort(controller.signal, () => recurso);
+    recurso = { close };
+    controller.abort();
+
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });

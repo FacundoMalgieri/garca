@@ -103,12 +103,13 @@ export async function POST(request: NextRequest) {
     };
 
     // Scrape with concurrency limit to prevent memory exhaustion
-    const result = await withConcurrencyLimit(() =>
+    const result = await withConcurrencyLimit((signal) =>
       scrapeAFIPInvoices(credentials, filters, {
         headless: headlessOverride,
         downloadXML,
         timeout: 60000,
         companyIndex,
+        signal,
       })
     );
 
