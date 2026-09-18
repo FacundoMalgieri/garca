@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
@@ -387,6 +388,15 @@ export default async function CuantoFacturarPorMesPage({
           </h2>
           <FaqAccordion items={faqEntries} />
         </section>
+
+        {/* Estas páginas se enlazaban sólo entre sí y con la calculadora.
+            "Trámites" es la categoría más cercana: recategorización y qué pasa
+            si te pasás son la pregunta siguiente de quien llega acá. */}
+        <RelatedGuides
+          currentHref={`/monotributo/cuanto-puedo-facturar-por-mes/${letra}`}
+          category="Trámites"
+          className="mb-12"
+        />
     </div>
   );
 }

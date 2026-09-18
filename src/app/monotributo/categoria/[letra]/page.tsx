@@ -6,6 +6,7 @@ import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
+import { RelatedGuides } from "@/components/ui/RelatedGuides";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 import { getCategoriaByLetter } from "@/lib/projection";
@@ -395,6 +396,15 @@ export default async function CategoriaPage({
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Preguntas frecuentes — Categoría {upper}</h2>
           <FaqAccordion items={faqEntries} />
         </section>
+
+        {/* Estas páginas se enlazaban sólo entre sí y con la calculadora.
+            "Trámites" es la categoría más cercana: recategorización y qué pasa
+            si te pasás son la pregunta siguiente de quien llega acá. */}
+        <RelatedGuides
+          currentHref={`/monotributo/categoria/${letra}`}
+          category="Trámites"
+          className="mb-12"
+        />
     </div>
   );
 }

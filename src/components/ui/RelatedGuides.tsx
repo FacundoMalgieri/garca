@@ -1,9 +1,17 @@
 import Link from "next/link";
 
-import { type Guide,GUIDES } from "@/app/guias/guides-data";
+import { type Category,type Guide,GUIDES } from "@/app/guias/guides-data";
 
 type RelatedGuidesProps = {
   currentHref: string;
+  /**
+   * Categoría a priorizar cuando `currentHref` no está en GUIDES.
+   *
+   * Las rutas dinámicas (`cuanto-puedo-facturar-por-mes/[letra]`,
+   * `categoria/[letra]`) no viven en GUIDES: sin esto caerían siempre en las
+   * mismas guías, sin relación con el tema de la página.
+   */
+  category?: Category;
   title?: string;
   subtitle?: string;
   /** Max number of guides to show. Defaults to 3. */
@@ -21,6 +29,7 @@ type RelatedGuidesProps = {
  */
 export function RelatedGuides({
   currentHref,
+  category,
   title = "Seguí leyendo",
   subtitle = "Otras guías que te pueden servir",
   limit = 3,
@@ -29,8 +38,9 @@ export function RelatedGuides({
   const current = GUIDES.find((g) => g.href === currentHref);
   const others = GUIDES.filter((g) => g.href !== currentHref);
 
-  const sameCategory = current
-    ? others.filter((g) => g.category === current.category)
+  const preferida = current?.category ?? category;
+  const sameCategory = preferida
+    ? others.filter((g) => g.category === preferida)
     : [];
   const rest = others.filter((g) => !sameCategory.includes(g));
 

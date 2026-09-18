@@ -8,6 +8,7 @@ type FooterLink = { href: string; label: string; external?: boolean };
 const FOOTER_LINKS: Array<FooterLink> = [
   { href: "/calculadora-monotributo", label: "Calculadora" },
   { href: "/monotributo", label: "Monotributo" },
+  { href: "/guias", label: "Guías" },
   { href: "/about", label: "Autor" },
   { href: "/privacidad", label: "Privacidad" },
   { href: "/terminos", label: "Términos" },
@@ -90,11 +91,11 @@ export function Footer() {
 
           {/* Links */}
           <nav className="flex flex-col items-center justify-center gap-y-2 text-sm md:flex-row">
-            <FooterLinkGroup links={FOOTER_LINKS.slice(0, 3)} />
+            <FooterLinkGroup links={FOOTER_LINKS.slice(0, 4)} />
             <span aria-hidden className="hidden md:inline text-slate-400 dark:text-slate-600 select-none mx-3">
               ·
             </span>
-            <FooterLinkGroup links={FOOTER_LINKS.slice(3)} />
+            <FooterLinkGroup links={FOOTER_LINKS.slice(4)} />
           </nav>
 
           {/* Divider */}
