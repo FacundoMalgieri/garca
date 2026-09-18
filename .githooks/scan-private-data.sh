@@ -56,20 +56,20 @@ if [ -f "$denylist" ]; then
 fi
 
 # ── 2. Patrones que siempre son datos personales ─────────────────────────────
-if grep -qE '\b(20|23|24|27|30|33|34)-?[0-9]{8}-?[0-9]\b' "$archivo"; then
-  hallazgos+=("algo con forma de CUIT/CUIL")
-fi
+# NO hay regla genérica de CUIT a propósito. Este repo trata sobre CUITs: los
+# fixtures de tests y la demo están llenos de números con esa forma
+# (20111111110, 20345678901, 20-30123456-3...). Un patrón genérico marca todo y
+# deja de leerse. El CUIT que importa —el tuyo— va en private-values.txt, que no
+# tiene falsos positivos por definición.
 
 if grep -qE 'BEGIN [A-Z ]*PRIVATE KEY' "$archivo"; then
   hallazgos+=("una clave privada")
 fi
 
-# Mails, salvo los de servicio que el repo sí usa a propósito.
-if grep -qEo '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$archivo" 2>/dev/null; then
-  if grep -Eo '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$archivo" \
-      | grep -qvE '@(noreply\.)?(anthropic\.com|users\.noreply\.github\.com|example\.(com|org)|garca\.app|arca\.gob\.ar)$'; then
-    hallazgos+=("una dirección de mail personal")
-  fi
+# Mails de proveedores personales. Un fixture usa "c@x.com" o "test@example.com";
+# nadie pone una casilla de Gmail en un test por accidente.
+if grep -qiE '[A-Za-z0-9._%+-]+@(gmail|hotmail|outlook|live|yahoo|icloud|me|proton(mail)?|gmx|aol)\.[A-Za-z.]{2,}' "$archivo"; then
+  hallazgos+=("una dirección de mail personal")
 fi
 
 # ── 3. Importes, sólo en mensajes de commit ──────────────────────────────────
