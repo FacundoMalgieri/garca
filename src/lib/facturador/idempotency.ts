@@ -17,7 +17,15 @@
  * falló antes/durante el fill (confirmEmissionFlow NUNCA throw-ea cuando el CAE
  * ya fue asignado — devuelve `cae:""`, ver Contrato B), así que es seguro permitir
  * un reintento genuino con la misma key.
+ *
+ * ⚠️ Excepción: `SlotAbandonedError`. El presupuesto de slot de
+ * `withConcurrencyLimit` rechaza mientras la emisión SIGUE corriendo contra
+ * ARCA, así que ese throw no significa "falló" sino "no sé cómo terminó". Esa
+ * entrada NO se borra: si se borrara, el reintento del cliente con la misma key
+ * re-emitiría y duplicaría el comprobante.
  */
+
+import { SlotAbandonedError } from "@/lib/concurrency";
 
 /** TTL de las entradas del store (~10 min). */
 export const IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
@@ -75,6 +83,15 @@ export function createIdempotencyStore<T>(opts: { ttlMs?: number } = {}): Idempo
         map.set(key, { status: "done", result, ts: now });
         return result;
       } catch (err) {
+        // El slot se abandonó, pero la emisión SIGUE corriendo contra ARCA: no
+        // es una falla, es un "no sé cómo terminó". Borrar acá dejaría que el
+        // reintento del cliente con la misma key re-emita y duplique el
+        // comprobante — justo lo que este store existe para evitar. La entrada
+        // queda, así que el reintento recibe este mismo rechazo sin re-ejecutar.
+        if (err instanceof SlotAbandonedError) {
+          throw err;
+        }
+
         // Falla genuina → borrar para permitir un reintento real con la misma key.
         map.delete(key);
         throw err;
