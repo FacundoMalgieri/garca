@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -123,6 +124,7 @@ export default async function CategoriaPage({
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path={`/monotributo/categoria/${letra}`} />
         <Breadcrumbs
           className="mb-6"
           items={[

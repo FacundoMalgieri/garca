@@ -1,4 +1,5 @@
 import { NativeAd } from "@/components/ads/NativeAd";
+import { PageJsonLd } from "@/components/JsonLd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
 import { HomeSections } from "@/components/landing/HomeSections";
@@ -14,6 +15,7 @@ import { ArrowRightIcon } from "@/components/ui/icons";
 export default function Home() {
   return (
     <div className="relative overflow-x-clip bg-background">
+      <PageJsonLd path="/" />
       {/* ========== HERO SECTION (server-rendered HTML) ========== */}
       {/* En desktop el hero queda pegado (sticky) bajo el navbar y la sección
           siguiente sube por encima tapándolo (overlap progresivo). overflow-x-clip

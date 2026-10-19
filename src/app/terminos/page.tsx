@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { TermsContent } from "@/components/TermsContent";
 
 export default function TerminosPage() {
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-12">
+      <PageJsonLd path="/terminos" />
       <h1 className="text-3xl font-bold text-foreground mb-2">Términos y Condiciones de Uso</h1>
       <p className="text-sm text-muted-foreground mb-8">Última actualización: Abril 2026</p>
 
