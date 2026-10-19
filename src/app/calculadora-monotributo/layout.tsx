@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias"
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app"
@@ -64,5 +65,10 @@ export const metadata: Metadata = {
 }
 
 export default function CalculadoraLayout({ children }: { children: React.ReactNode }) {
-  return children
+  return (
+    <>
+      <PageJsonLd path="/calculadora-monotributo" />
+      {children}
+    </>
+  )
 }

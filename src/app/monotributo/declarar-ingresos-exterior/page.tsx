@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
+import { PageJsonLd } from "@/components/JsonLd";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -66,6 +67,7 @@ export const metadata: Metadata = {
 export default function DeclararIngresosExteriorPage() {
   return (
     <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path="/monotributo/declarar-ingresos-exterior" />
       <Breadcrumbs
         className="mb-6"
         items={[

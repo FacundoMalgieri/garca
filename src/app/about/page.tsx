@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SupportBanner } from "@/components/ui/SupportBanner";
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
@@ -56,6 +57,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path="/about" />
       <Breadcrumbs
         className="mb-6"
         items={[

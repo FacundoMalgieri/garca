@@ -1,8 +1,11 @@
 import Link from "next/link";
 
+import { PageJsonLd } from "@/components/JsonLd";
+
 export default function PrivacidadPage() {
   return (
     <div className="w-full max-w-3xl mx-auto px-6 py-12">
+      <PageJsonLd path="/privacidad" />
       <h1 className="text-3xl font-bold text-foreground mb-2">Política de Privacidad</h1>
       <p className="text-sm text-muted-foreground mb-8">Última actualización: Agosto 2026</p>
 

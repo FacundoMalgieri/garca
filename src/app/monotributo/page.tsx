@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { TrackedLandingCtaLink } from "@/components/landing/TrackedLandingCtaLink";
 import { CategoriaCard } from "@/components/monotributo/CategoriaCard";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
@@ -31,6 +32,7 @@ export default function MonotributoIndexPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path="/monotributo" />
         <Breadcrumbs
           className="mb-6"
           items={[

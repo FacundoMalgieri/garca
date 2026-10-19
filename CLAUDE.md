@@ -93,7 +93,7 @@ Tailwind CSS v4 with `clsx` + `tailwind-merge` for conditional classes. Dark mod
 ### SEO checklist — nueva guía (`/monotributo/...` o `/guias`)
 
 1. **Página** — `src/app/monotributo/<ruta>/page.tsx` (metadata, canonical absoluto con `NEXT_PUBLIC_SITE_URL`, OG/Twitter).
-2. **JSON-LD** — `src/lib/seo/page-schemas.ts`: FAQ entries, `Article` con `image: buildArticleImage("<slug-og>")` y `mainEntityOfPage: buildMainEntityOfPage(url, buildArticleImage("<slug-og>"))`, breadcrumb; registrar la ruta en `getSchemasForPath`.
+2. **JSON-LD** — `src/lib/seo/page-schemas.ts`: FAQ entries, `Article` con `image: buildArticleImage("<slug-og>")` y `mainEntityOfPage: buildMainEntityOfPage(url, buildArticleImage("<slug-og>"))`, breadcrumb; registrar la ruta en `getSchemasForPath`. La página tiene que renderizar `<PageJsonLd path="/monotributo/<ruta>" />` (lo verifica `src/lib/seo/page-json-ld.test.ts`).
 3. **Índice `/guias`** — `src/app/guias/guides-data.ts` (`GUIDES`) y el `ItemList` dentro de `guiasCollectionPageSchema` (misma lista de URLs).
 4. **Sitemap** — `src/app/sitemap.ts` si la URL es estática (las rutas dinámicas `categoria/[letra]` ya salen de datos).
 5. **OG** — `public/og/<slug>.png` (1200×630) alineado al slug usado en `buildArticleImage`.

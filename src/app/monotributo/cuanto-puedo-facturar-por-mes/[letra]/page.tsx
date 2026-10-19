@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PageJsonLd } from "@/components/JsonLd";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -126,6 +127,7 @@ export default async function CuantoFacturarPorMesPage({
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path={`/monotributo/cuanto-puedo-facturar-por-mes/${letra}`} />
         <Breadcrumbs
           className="mb-6"
           items={[

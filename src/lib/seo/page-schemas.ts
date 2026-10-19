@@ -1,23 +1,10 @@
 /**
  * Page-level JSON-LD schemas and FAQ data.
  *
- * Why this file exists:
- * In Next.js 16 + React 19, `<script type="application/ld+json">` tags
- * rendered inside a page or child-layout component get serialized into
- * the RSC streaming payload instead of the initial HTML response.
- * That means the first byte of HTML that Googlebot / Bing / Yandex see
- * contains only the root-layout schemas — page-specific structured data
- * only materializes after hydration.
- *
- * To fix that, we:
- *  1. Centralize every page-specific schema here.
- *  2. Let the root layout's `JsonLd` component read the current pathname
- *     (via a middleware-set `x-pathname` header) and emit the matching
- *     schemas inside `<head>`. Anything rendered inside `<head>` at the
- *     root layout ends up in the initial server-rendered HTML.
- *
- * Pages that render FAQ UI import their `faqEntries` from here so there is
- * a single source of truth for every schema + visible FAQ.
+ * Single source of truth for every page-specific schema + visible FAQ. Each
+ * page renders `<PageJsonLd path="..." />` with its own route; the root layout
+ * only emits the site-wide schemas (reading the pathname there with
+ * `headers()` made every route dynamic).
  */
 
 import { MONOTRIBUTO_DATA, MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";

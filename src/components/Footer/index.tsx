@@ -74,12 +74,15 @@ export function Footer() {
         ref={ref}
         className="fixed inset-x-0 bottom-0 z-0 overflow-hidden bg-background border-t border-slate-200 dark:border-border shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-none py-8"
       >
-      {/* Atmósfera de marca (misma del hero, sin grilla) anclada abajo */}
+      {/* Atmósfera de marca (misma del hero, sin grilla) anclada abajo. Glows con
+          radial-gradient, NO filter: blur: WebKit compone los blur de un elemento
+          fixed en capas aparte y al volver a scrollear hacia arriba falla el
+          repaint (mismo bug que tuvo el hero). */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-cyan-50/80 via-transparent to-transparent dark:from-[#1b2347] dark:via-[#111]/0 dark:to-transparent" />
-        <div className="absolute -left-40 bottom-[-16rem] h-[40rem] w-[40rem] rounded-full bg-[#64D3DE]/15 blur-[150px] dark:bg-[#2E3A66]/70" />
-        <div className="absolute -right-24 bottom-[-18rem] h-[40rem] w-[40rem] rounded-full bg-[#64D3DE]/25 blur-[140px] dark:bg-[#64D3DE]/20" />
-        <div className="absolute left-1/3 top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-[#FF6B5C]/12 blur-[150px] dark:bg-[#FF6B5C]/10" />
+        <div className="absolute -left-40 bottom-[-16rem] h-[40rem] w-[40rem] bg-[radial-gradient(circle,rgba(100,211,222,0.15),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(46,58,102,0.7),transparent_70%)]" />
+        <div className="absolute -right-24 bottom-[-18rem] h-[40rem] w-[40rem] bg-[radial-gradient(circle,rgba(100,211,222,0.25),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(100,211,222,0.2),transparent_70%)]" />
+        <div className="absolute left-1/3 top-[-12rem] h-[30rem] w-[30rem] bg-[radial-gradient(circle,rgba(255,107,92,0.12),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(255,107,92,0.1),transparent_70%)]" />
       </div>
       <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
         <div className="flex flex-col items-center gap-6">

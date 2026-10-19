@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { NativeAd } from "@/components/ads/NativeAd";
+import { PageJsonLd } from "@/components/JsonLd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
@@ -61,6 +62,7 @@ export const metadata: Metadata = {
 export default function FacturaCvsEPage() {
   return (
     <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <PageJsonLd path="/monotributo/factura-c-vs-factura-e" />
       <Breadcrumbs
         className="mb-6"
         items={[

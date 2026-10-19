@@ -5,8 +5,6 @@
  * understand the content and purpose of GARCA.
  */
 
-import { headers } from "next/headers";
-
 import { MONOTRIBUTO_DATA } from "@/data/monotributo-categorias";
 import { getSchemasForPath } from "@/lib/seo/page-schemas";
 
@@ -162,28 +160,25 @@ const personSchema = {
   ],
 };
 
-export async function JsonLd() {
-  const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-pathname");
-  // Without middleware's `x-pathname`, defaulting to "/" would inject the home FAQ/WebPage on every URL.
-  const pageSchemas = pathname != null && pathname !== "" ? getSchemasForPath(pathname) : [];
-
+function SchemaScripts({ schemas }: { schemas: Array<unknown> }) {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeSchema(softwareApplicationSchema) }}
-      />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(webSiteSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(organizationSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(personSchema) }} />
-      {pageSchemas.map((schema, index) => (
-        <script
-          key={index}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeSchema(schema) }}
-        />
+      {schemas.map((schema, index) => (
+        <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeSchema(schema) }} />
       ))}
     </>
   );
+}
+
+/** Schemas globales del sitio, en el `<head>` del root layout. */
+export function JsonLd() {
+  return <SchemaScripts schemas={[softwareApplicationSchema, webSiteSchema, organizationSchema, personSchema]} />;
+}
+
+/**
+ * Schemas propios de una ruta. Cada page lo renderiza con su path: leerlo de
+ * `headers()` en el layout volvía dinámico todo el sitio.
+ */
+export function PageJsonLd({ path }: { path: string }) {
+  return <SchemaScripts schemas={getSchemasForPath(path)} />;
 }
