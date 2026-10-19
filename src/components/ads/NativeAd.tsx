@@ -22,7 +22,10 @@ interface NativeAdProps {
 }
 
 export function NativeAd({ className }: NativeAdProps) {
-  const [height, setHeight] = useState(260);
+  // Arranca sin alto en px: el CSS reserva el alto que el anuncio termina teniendo
+  // (medido: ~0.74 × ancho + 30px en mobile, 445px desde md). Con 260 fijo el
+  // iframe crecía 40-180px al cargar y el contenido saltaba al scrollear.
+  const [height, setHeight] = useState<number | null>(null);
 
   useEffect(() => {
     function onMsg(e: globalThis.MessageEvent) {
@@ -45,10 +48,11 @@ export function NativeAd({ className }: NativeAdProps) {
         title="Publicidad"
         src={`${ADS_ORIGIN}/ads/native.html`}
         width="100%"
-        height={height}
+        height={height ?? undefined}
         sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         loading="lazy"
         scrolling="no"
+        className={height == null ? "h-[min(calc(74vw+30px),445px)]" : undefined}
         style={{ border: 0, display: "block", width: "100%" }}
       />
     </div>
