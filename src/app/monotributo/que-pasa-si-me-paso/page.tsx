@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { NativeAd } from "@/components/ads/NativeAd";
 import { PageJsonLd } from "@/components/JsonLd";
 import { TrackedGuideCtaLink } from "@/components/monotributo/TrackedGuideCtaLink";
 import { ArticleHero } from "@/components/ui/ArticleHero";
@@ -224,7 +223,6 @@ export default function QuePasaSiMePasoPage() {
         </section>
 
         {/* Ad mid-content (native, responsive) */}
-        <NativeAd className="my-12" />
 
         {/* Cuándo se detecta */}
         <section className="mb-12">

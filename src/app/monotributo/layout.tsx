@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { NativeAd } from "@/components/ads/NativeAd";
 import { MONOTRIBUTO_YEAR } from "@/data/monotributo-categorias";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://garca.app";
@@ -53,19 +51,5 @@ export default function MonotributoSectionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      {/* Ad superior (leaderboard, solo desktop — el 728 no entra en mobile).
-          Aplica al hub y a todas las guías de /monotributo/*. */}
-      <div className="mx-auto hidden max-w-5xl px-4 pt-6 md:block">
-        <AdsterraBanner format="leaderboard" />
-      </div>
-      {children}
-      {/* Ad de cierre (native, responsive) — hub y todas las guías.
-          Nunca en producto (/panel, /ingresar) ni en la calculadora. */}
-      <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
-        <NativeAd />
-      </div>
-    </>
-  );
+  return children;
 }

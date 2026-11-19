@@ -1,4 +1,3 @@
-import { NativeAd } from "@/components/ads/NativeAd";
 import { PageJsonLd } from "@/components/JsonLd";
 import { HeroDemoButton } from "@/components/landing/HeroDemoButton";
 import { HeroParallax } from "@/components/landing/HeroParallax";
@@ -102,10 +101,6 @@ export default function Home() {
       <div className="relative z-10 bg-background">
         <HomeSections />
 
-        {/* Ad de cierre (native, responsive) — al fondo, fuera del flujo de conversión. */}
-        <div className="mx-auto max-w-5xl px-4 md:px-6 pb-12">
-          <NativeAd />
-        </div>
       </div>
     </div>
   );

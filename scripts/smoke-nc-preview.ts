@@ -119,7 +119,7 @@ async function main() {
     console.log("→ capturePreview (Resumen, sin confirmar)...");
     const preview = await capturePreview(rcel, {
       puntoVenta: plantilla.puntoDeVenta,
-      tipoComprobante: universoToOficial(opts.universo!) ?? 13,
+      tipoComprobante: (opts.universo ? universoToOficial(opts.universo) : null) ?? 13,
     });
     watch.mark("capturePreview");
 

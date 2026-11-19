@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { NativeAd } from "@/components/ads/NativeAd";
 import { PageJsonLd } from "@/components/JsonLd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -307,7 +306,6 @@ export default function WiseVsPayoneerVsDeelPage() {
       </section>
 
       {/* Ad mid-content */}
-      <NativeAd className="my-12" />
 
       {/* Wise */}
       <section className="mb-12">

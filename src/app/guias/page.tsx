@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AdsterraBanner } from "@/components/ads/AdsterraBanner";
-import { NativeAd } from "@/components/ads/NativeAd";
 import { PageJsonLd } from "@/components/JsonLd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -93,11 +91,6 @@ export default function GuiasPage() {
         }
       />
 
-      {/* Ad superior (leaderboard, solo desktop) */}
-      <div className="hidden md:block mb-8">
-        <AdsterraBanner format="leaderboard" />
-      </div>
-
       {/* Interactive category filter + guides grid */}
       <GuidesExplorer />
 
@@ -131,10 +124,6 @@ export default function GuiasPage() {
           </div>
         </div>
       </section>
-
-      <div className="mb-12">
-        <NativeAd />
-      </div>
 
       <div className="mb-12">
         <SupportBanner />

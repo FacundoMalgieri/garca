@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { NativeAd } from "@/components/ads/NativeAd";
 import { PageJsonLd } from "@/components/JsonLd";
 import { ArticleHero } from "@/components/ui/ArticleHero";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -163,7 +162,6 @@ export default function ArcaVsAfipPage() {
       </section>
 
       {/* Ad mid-content (native, responsive) */}
-      <NativeAd className="my-12" />
 
       {/* Qué cambió y qué no */}
       <section className="mb-12">

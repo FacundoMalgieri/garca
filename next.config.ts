@@ -1,21 +1,9 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV === "development";
-
 /**
- * NOTE: Content-Security-Policy is NOT set here. It's applied per-route in
- * `src/middleware.ts` via `@/lib/security/csp` so content routes can allow the
- * Adsterra banner loader while `/ingresar` and `/panel` stay strict. The static
- * `headers()` config below cannot vary by pathname, so CSP cannot live here.
- *
- * Exception: the `/ads/*` ad-host documents (served on the ads.garca.app origin)
- * get their own header block — they must be framable by garca.app, so they are
- * excluded from the global `X-Frame-Options: DENY` and instead pin embedding to
- * garca.app via `frame-ancestors`.
+ * NOTE: Content-Security-Policy is NOT set here; it lives in `src/middleware.ts`
+ * via `@/lib/security/csp`.
  */
-
-/** Who may frame the ad-host documents. */
-const adFrameAncestors = ["https://garca.app", ...(isDev ? ["http://localhost:3000"] : [])].join(" ");
 
 const nextConfig: NextConfig = {
   images: {
@@ -59,18 +47,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Ad-host documents (ads.garca.app/ads/*) — must be framable by garca.app.
-        // Excluded from the global X-Frame-Options: DENY below.
-        source: "/ads/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-          { key: "Content-Security-Policy", value: `frame-ancestors ${adFrameAncestors}` },
-        ],
-      },
-      {
-        source: "/((?!ads/).*)",
+        source: "/(.*)",
         headers: [
           // Prevent clickjacking
           {
